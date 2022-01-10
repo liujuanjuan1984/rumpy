@@ -6,7 +6,7 @@ import sys
 
 sys.path.append(r"D:\Jupyter\rum-py")
 
-from rumpy import RumClient
+from rumpy import RumClient, WhoSays
 
 
 kwgs = {
@@ -45,6 +45,8 @@ class TestNode(object):
         r = client.node.create_group("新增测试组")
         assert "genesis_block" in r
         client.node.join_group(r)
+        r = client.group.create("nihao")
+        client.group.join(r)
 
 
 class TestGroup(object):
@@ -64,3 +66,31 @@ class TestGroup(object):
         client.group.send_note(group_id, imgs=[], trx_id=trx_id)
         client.group.like(group_id, trx_id)
         client.group.dislike(group_id, trx_id)
+
+    def test_trx(self):
+        group_id = "bf005ff2-291e-4d4f-859d-fa5ba3e1c747"
+        trxs = client.group.content(group_id)
+        for trxdata in trxs[:50]:
+            print(client.trx.trx_type(trxdata))
+
+    def test_whosays(self):
+        # 构建人物
+        names_info = {
+            "3bb7a3be-d145-44af-94cf-e64b992ff8f0": [
+                "CAISIQODbcx2zjXC6AVGFNk3rzfoydQrIfXUu5FDD092fICQLA=="
+            ],
+            "bd119dd3-081b-4db6-9d9b-e19e3d6b387e": [
+                "CAISIQN88AYbpppS6WuaYCE0/2OX+QSzq6IYgigwAodETppmGQ=="
+            ],
+        }
+        # 对 huoju 的称呼
+        name = "Huoju"
+        # 本地数据文件，用来标记哪些动态已转发
+        filepath = r"D:\Jupyter\my_auto_task\data\huoju_says_new.json"
+        # 测试用，如果你也尝试，改为自己创建的组
+        toshare_group_id = "f534c07c-4539-4739-8af6-6c0ded140d11"
+
+        WhoSays(**kwgs).do(filepath, name, names_info, toshare_group_id)
+
+
+TestGroup().test_whosays()

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from typing import List, Dict
-
 
 class BaseRumAPI:
     def __init__(self, client=None):
@@ -16,3 +14,8 @@ class BaseRumAPI:
     @property
     def baseurl(self) -> str:
         return self._client.baseurl
+
+    @property
+    def node(self):
+        return self._client.node
+

@@ -38,3 +38,21 @@ class RumTrx(BaseRumAPI):
                     return "image_text"
             return "text_only"
         return trxtype.lower()  # "like","dislike"
+
+    def trxdata(self, trx_id, trxs):
+        for trxdata in trxs:
+            if trxdata["TrxId"] == trx_id:
+                return trxdata
+        return {}
+
+    def trx_text(self, trxdata):
+        try:
+            text = trxdata["Content"]["content"]
+        except:
+            text = ""
+        return text
+
+    def get_trx_content(self, trxs, trx_id):
+        trxdata = self.trxdata(trx_id, trxs)
+        text = self.trx_text(trxdata)
+        return text

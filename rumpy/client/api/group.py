@@ -3,6 +3,7 @@
 import base64
 import datetime
 import uuid
+import os
 from typing import List, Dict
 from rumpy.client.api.base import BaseRumAPI
 
@@ -10,9 +11,15 @@ from rumpy.client.api.base import BaseRumAPI
 
 
 class RumGroup(BaseRumAPI):
-    def leave(self, group_id: str):  # todo:seed检查
-        """加入种子网络"""
-        return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
+    def create(
+        self, group_name: str, consensus_type=None, encryption_type=None, app_key=None
+    ):
+        return self.node.create_group(
+            group_name, consensus_type, encryption_type, app_key
+        )
+
+    def join(self, seed: Dict):
+        return self.node.join_group(seed)
 
     def seed(self, group_id: str):  # todo：需要依赖 quorum 新版本
         """获取种子网络的种子"""
@@ -59,13 +66,13 @@ class RumGroup(BaseRumAPI):
         if text:
             obj["content"] = text
         if imgs:
-            for imgpath in imgs:
-                ix = self._image(imgpath)
-                if ix:
+            for img in imgs:
+                if type(img) == str:
+                    img = self._image(img)
+                if type(img) == dict:
                     if "image" not in obj:
                         obj["image"] = []
-                    obj["image"].append(ix)
-
+                    obj["image"].append(img)
         if trx_id:
             obj["inreplyto"] = {"trxid": trx_id}
 
@@ -83,3 +90,7 @@ class RumGroup(BaseRumAPI):
 
     def deniedlist(self, group_id: str):
         return self._get(f"{self.baseurl}/group/{group_id}/deniedlist")
+
+    def leave(self, group_id: str):  # todo:seed检查
+        """leave gropu"""
+        return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
