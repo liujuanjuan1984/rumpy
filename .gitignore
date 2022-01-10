@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# TBC
+/temp
+/examples
+/docs
+/Makefile
+requirements*
+*version.cfg 
+setup.py 
+*/JsonFile.py 
