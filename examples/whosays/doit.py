@@ -24,7 +24,7 @@ def main():
             ],
         },
         "name": "Huoju",
-        "filepath": r"D:\Jupyter\rum-py\examples\whosays\huoju_says.json",
+        "filepath": r"D:\Jupyter\rumpy\examples\whosays\huoju_says.json",
         "toshare_group_id": client.group.create("测试whosays")["group_id"],
     }
 

@@ -3,7 +3,7 @@ from typing import List, Dict
 import json
 import sys
 
-sys.path.append(r"D:\Jupyter\rum-py")
+sys.path.append(r"D:\Jupyter\rumpy")
 from rumpy import RumClient
 from rumpy import JsonFile
 

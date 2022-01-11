@@ -1,4 +1,4 @@
-# rum-py
+# rumpy
 
 [QuoRum](https://github.com/rumsystem/quorum) 第三方 Python SDK。
 
@@ -6,7 +6,7 @@
 
 ## 问题反馈
 
-请您使用 [GitHub issues](https://github.com/liujuanjuan1984/rum-py/issues)
+请您使用 [GitHub issues](https://github.com/liujuanjuan1984/rumpy/issues)
 
 ## License
 

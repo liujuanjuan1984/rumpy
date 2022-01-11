@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 import sys
 
-sys.path.append(r"D:\Jupyter\rum-py")
+sys.path.append(r"D:\Jupyter\rumpy")
 
 from rumpy import RumClient, WhoSays
 
