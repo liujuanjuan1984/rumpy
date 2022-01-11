@@ -9,7 +9,7 @@ def main():
         "appid": "my-live-rum-app",
         "host": "127.0.0.1",
         "port": 55043,
-        "cacert": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
+        "cacert": r"D:\RUM2-DATA\certs\server.crt",
     }
 
     client = WhoSays(**kwgs)
