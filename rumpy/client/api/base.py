@@ -18,4 +18,3 @@ class BaseRumAPI:
     @property
     def node(self):
         return self._client.node
-

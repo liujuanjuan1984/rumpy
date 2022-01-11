@@ -1,6 +1,9 @@
 import datetime
 from typing import List, Dict
 import json
+import sys
+
+sys.path.append(r"D:\Jupyter\rum-py")
 from rumpy import RumClient
 from rumpy import JsonFile
 

@@ -12,7 +12,6 @@ def _is_api_endpoint(obj):
 
 class RumClient:
 
-    BASEURL = ""
     group = api.RumGroup()
     node = api.RumNode()
     trx = api.RumTrx()

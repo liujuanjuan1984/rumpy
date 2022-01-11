@@ -130,7 +130,6 @@ dmypy.json
 
 # TBC
 /temp
-/examples
 /docs
 /Makefile
 requirements*

@@ -7,8 +7,6 @@ import os
 from typing import List, Dict
 from rumpy.client.api.base import BaseRumAPI
 
-# from rumpy.client.api.node import RumNode
-
 
 class RumGroup(BaseRumAPI):
     def create(

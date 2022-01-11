@@ -9,7 +9,7 @@ class JsonFile:
     def __init__(self, filepath):
         self.filepath = filepath
 
-    def read(self, nulldata=[]):
+    def read(self, nulldata={}):
         """读取 json 文件，nulldata 可以指定文件不存在时返回的数据"""
         if not os.path.exists(self.filepath):
             return nulldata
