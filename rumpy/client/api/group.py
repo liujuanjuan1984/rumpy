@@ -11,27 +11,42 @@ from rumpy.client.api.base import BaseRumAPI
 class RumGroup(BaseRumAPI):
     def create(
         self, group_name: str, consensus_type=None, encryption_type=None, app_key=None
-    ):
+    ) -> Dict:
+        """
+        create a group, return the seed of the group.
+
+        kwargs = {
+            "group_name":"test_rumpy",
+            "consensus_type":"poa",
+            "encryption_type":"public",
+            "app_key":"group_timeline",
+        }
+
+        """
         return self.node.create_group(
             group_name, consensus_type, encryption_type, app_key
         )
 
     def join(self, seed: Dict):
+        """join a group with the seed of the group"""
         return self.node.join_group(seed)
 
-    def seed(self, group_id: str):  # todo：需要依赖 quorum 新版本
-        """获取种子网络的种子"""
-        return self._get(f"{self.baseurl}/group/{group_id}/seed")
+    def seed(self, group_id: str) -> Dict:
+        """get the seed of a group which you've joined in."""
+        if self.node.is_joined(group_id):
+            return self._get(f"{self.baseurl}/group/{group_id}/seed")
+        return {}
 
-    def content(self, group_id: str):
-        """获取种子网络的内容（返回由 trx 构成的列表）"""
-        return self._get(f"{self.baseurl}/group/{group_id}/content")
+    def content(self, group_id: str) -> List:
+        """get the content trxs of a group,return the list of the trxs data."""
+        return self._get(f"{self.baseurl}/group/{group_id}/content") or []
 
-    def _send(self, data):
+    def _send(self, data: Dict) -> Dict:
+        """return the {"trx_id":"xxx"}"""
         return self._post(f"{self.baseurl}/group/content", data)
 
-    def like(self, group_id: str, trx_id: str, is_like=True):
-        """喜欢一条内容"""
+    def like(self, group_id: str, trx_id: str, is_like=True) -> Dict:
+        """like a object(e.g.content/reply,any trx)"""
         if is_like:
             is_like = "Like"
         else:
@@ -43,10 +58,12 @@ class RumGroup(BaseRumAPI):
         }
         return self._send(data)
 
-    def dislike(self, group_id: str, trx_id: str):
+    def dislike(self, group_id: str, trx_id: str) -> Dict:
+        """dislike"""
         return self.like(group_id, trx_id, False)
 
     def _image(self, imgpath: str):
+        """init a image object from imgpath(the path of a image)"""
         with open(imgpath, "rb") as f:
             imgbytes = f.read()
 
@@ -57,8 +74,12 @@ class RumGroup(BaseRumAPI):
         }
 
     def send_note(self, group_id: str, text=None, imgs=None, trx_id=None):
+        """send note to a group. can be used to send: text only,image only,text with image,reply...etc"""
         if not (text or imgs):
-            return print(datetime.datetime.now(), "图片、文本都为空")
+            error = {
+                "error": "imgs and text are both None. should: imgs or text or both."
+            }
+            return error
 
         obj = {"type": "Note"}
         if text:
@@ -84,11 +105,13 @@ class RumGroup(BaseRumAPI):
         return self._send(data)
 
     def block(self, group_id: str, block_id: str):
+        """get the info of a block in a group"""
         return self._get(f"{self.baseurl}/block/{group_id}/{block_id}")
 
     def deniedlist(self, group_id: str):
+        """get the deniedlist of a group"""
         return self._get(f"{self.baseurl}/group/{group_id}/deniedlist")
 
-    def leave(self, group_id: str):  # todo:seed检查
-        """leave gropu"""
+    def leave(self, group_id: str):
+        """leave a group"""
         return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})

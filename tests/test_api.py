@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
+from time import sleep
 import pytest
 import sys
 
 sys.path.append(r"D:\Jupyter\rumpy")
 
-from rumpy import RumClient, WhoSays
-
+from rumpy import RumClient
 
 kwgs = {
-    "appid": "my-live-rum-app",
+    "appid": "peer",
     "host": "127.0.0.1",
     "port": 55043,
     "cacert": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
@@ -19,78 +18,73 @@ kwgs = {
 client = RumClient(**kwgs)
 
 
-class TestNode(object):
-    def test_node(self):
-        client.node.info()
-        client.node.status
-        client.node.id
-        client.node.pubkey
+class TestCase(object):
+    def test_api(self):
 
-    def test_node_network(self):
-        client.node.network
+        r0 = client.node.status
+        assert r0.lower().find("online") >= 0
 
-    def test_node_groups(self):
-        client.node.groups()
-        r = client.node.groups_id
+        r1 = client.node.create_group("新增测试组")
+        assert "genesis_block" in r1
+        client.node.join_group(r1)
 
-    def test_node_is_joined(self):
-        group_id = "5d53968c-3b48-44c5-953f-0abe0b7ad73d"
-        r1 = client.node.is_joined(group_id)
-        assert r1 == True
-        group_id = "5d53968c-3b48-44c5-953f-0abe0b7ad73e"
+        group_id = r1["group_id"]
         r2 = client.node.is_joined(group_id)
-        assert r2 == False
+        assert r2 == True
 
-    def test_group_create(self):
-        r = client.node.create_group("新增测试组")
-        assert "genesis_block" in r
-        client.node.join_group(r)
-        r = client.group.create("nihao")
-        client.group.join(r)
+        seed = client.group.seed(group_id)
+        assert "genesis_block" in seed
 
+        r3 = client.node.is_joined(group_id.replace(group_id[:5], "b" * 5))
+        assert r3 == False
 
-class TestGroup(object):
-    def test_content(self):
-        # 种子
-        group_id = "bf005ff2-291e-4d4f-859d-fa5ba3e1c747"
-        client.group.seed(group_id)
+        r4 = client.node.groups_id
+        assert group_id in r4
+
+        for i in range(10):
+            kwargs = {"text": f"你好 {i}"}
+            r5 = client.group.send_note(group_id, **kwargs)
+            assert "trx_id" in r5
+
+        trx_id = r5["trx_id"]
+        kwargs = {"text": "回复一下", "trx_id": trx_id}
+        r6 = client.group.send_note(group_id, **kwargs)
+        assert "trx_id" in r6
 
         # 发文
         resp = client.group.send_note(group_id, "你好")
-        # client.group.send_note(group_id, "",[])
-        client.group.send_note(group_id, imgs=["D:\\test-sample.png"])
+        assert "trx_id" in resp
+
+        resp = client.group.send_note(group_id, "", [])
+        assert "trx_id" not in resp
+
+        resp = client.group.send_note(group_id, imgs=["D:\\test-sample.png"])
+        assert "trx_id" in resp
+
         # 回复
         trx_id = resp["trx_id"]
-        client.group.send_note(group_id, "我回复你了", [], trx_id)
-        # client.group.send_note(group_id, "",[],trx_id)
-        client.group.send_note(group_id, imgs=[], trx_id=trx_id)
-        client.group.like(group_id, trx_id)
-        client.group.dislike(group_id, trx_id)
+        resp = client.group.send_note(group_id, "我回复你了", [], trx_id)
+        assert "trx_id" in resp
 
-    def test_trx(self):
-        group_id = "bf005ff2-291e-4d4f-859d-fa5ba3e1c747"
+        resp = client.group.send_note(group_id, "", [], trx_id)
+        assert "trx_id" not in resp
+
+        resp = client.group.send_note(group_id, imgs=[], trx_id=trx_id)
+        assert "trx_id" not in resp
+
+        for i in range(5):
+            resp = client.group.like(group_id, trx_id)
+            assert "trx_id" in resp
+
+        for i in range(3):
+            resp = client.group.dislike(group_id, trx_id)
+            assert "trx_id" in resp
+
         trxs = client.group.content(group_id)
-        for trxdata in trxs[:50]:
-            print(client.trx.trx_type(trxdata))
+        for trxdata in trxs:
+            trxtype = client.trx.trx_type(trxdata)
+            assert type(trxtype) == str
 
-    def test_whosays(self):
-        # 构建人物
-        names_info = {
-            "3bb7a3be-d145-44af-94cf-e64b992ff8f0": [
-                "CAISIQODbcx2zjXC6AVGFNk3rzfoydQrIfXUu5FDD092fICQLA=="
-            ],
-            "bd119dd3-081b-4db6-9d9b-e19e3d6b387e": [
-                "CAISIQN88AYbpppS6WuaYCE0/2OX+QSzq6IYgigwAodETppmGQ=="
-            ],
-        }
-        # 对 huoju 的称呼
-        name = "Huoju"
-        # 本地数据文件，用来标记哪些动态已转发
-        filepath = r"D:\Jupyter\my_auto_task\data\huoju_says_new.json"
-        # 测试用，如果你也尝试，改为自己创建的组
-        toshare_group_id = "f534c07c-4539-4739-8af6-6c0ded140d11"
-
-        WhoSays(**kwgs).do(filepath, name, names_info, toshare_group_id)
-
-
-TestGroup().test_whosays()
+        resp = client.group.leave(group_id)
+        r2 = client.node.is_joined(group_id)
+        assert r2 == False
