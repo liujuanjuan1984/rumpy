@@ -2,3 +2,5 @@
 
 from rumpy.client import RumClient
 from rumpy.jsonfile import JsonFile
+from rumpy.dir import Dir
+from rumpy.img import Img

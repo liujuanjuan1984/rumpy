@@ -56,3 +56,58 @@ class RumTrx(BaseRumAPI):
         trxdata = self.trxdata(trx_id, trxs)
         text = self.trx_text(trxdata)
         return text
+
+    def person_name(self, trx_id, trxs, since=None):
+        """get the lastest name of the person published the trx_id"""
+        trxdata = self.trxdata(trx_id, trxs)
+        print(trxdata)
+
+        pubkey = trxdata["Publisher"]
+        rlt = []
+        for trxdata in trxs:
+            if (
+                trxdata["Publisher"] == pubkey
+                and trxdata["TypeUrl"] == "quorum.pb.Person"
+            ):
+                rlt.append(trxdata)
+        if since == None:
+            since = str(datetime.datetime.now())[:19]
+        for trxdata in rlt:
+            if "name" in trxdata["Content"]:
+                if self.timestamp(trxdata) <= since:
+                    return trxdata["Content"]["name"]
+        return ""
+
+    def export(self, trxdata: Dict, trxs: List) -> Dict:
+        """export data with refer_to data"""
+        ts = self.timestamp(trxdata)
+        info = {
+            "trx_id": trxdata["TrxId"],
+            "trx_time": ts,
+            "trx_type": self.trx_type(trxdata),
+        }
+
+        _content = trxdata["Content"]
+        if "id" in _content:
+            jid = _content["id"]
+            info["refer_to"] = {
+                "trx_id": jid,
+                "text": self.get_trx_content(trxs, jid),
+                "name": self.person_name(jid, trxs, ts),
+            }
+        elif "inreplyto" in _content:
+            jid = _content["inreplyto"]["trxid"]
+            info["refer_to"] = {
+                "trx_id": jid,
+                "text": self.get_trx_content(trxs, jid),
+                "name": self.person_name(jid, trxs, ts),
+            }
+
+        if "content" in _content:
+            info["text"] = _content["content"]
+        if "image" in _content:
+            if type(_content["image"]) == dict:
+                info["imgs"] = [_content["image"]]
+            else:
+                info["imgs"] = _content["image"]
+        return info
