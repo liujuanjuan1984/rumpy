@@ -2,6 +2,7 @@
 from typing import List, Dict
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.client.api.group import RumGroup
+import dataclasses
 
 
 class RumNode(BaseRumAPI):
@@ -41,25 +42,9 @@ class RumNode(BaseRumAPI):
             return True
         return False
 
-    def create_group(
-        self, group_name: str, consensus_type=None, encryption_type=None, app_key=None
-    ) -> Dict:
-        """创建种子网络"""
-        if consensus_type not in ["poa"]:  # ["poa","pos","pow"]:
-            consensus_type = "poa"
-        if encryption_type not in ["public"]:  # ["public","private"]
-            encryption_type = "public"
-        if app_key not in ["group_timeline", "group_bbs", "group_note"]:
-            app_key = "group_timeline"
-
-        data = {
-            "group_name": group_name,
-            "consensus_type": consensus_type,
-            "encryption_type": encryption_type,
-            "app_key": app_key,
-        }
-        seed = self._post(f"{self.baseurl}/group", data)
-        return seed
+    def create_group(self, group_name, **kargs):
+        data = CreateGroupParam(group_name, **kargs).__dict__
+        return self._post(f"{self.baseurl}/group", data)
 
     def is_seed(self, seed: Dict) -> bool:
         # todo:seed检查
@@ -68,3 +53,19 @@ class RumNode(BaseRumAPI):
     def join_group(self, seed: Dict) -> Dict:
         """加入种子网络"""
         return self._post(f"{self.baseurl}/group/join", seed)
+
+
+@dataclasses.dataclass
+class CreateGroupParam:
+    group_name: str
+    consensus_type: str = "poa"
+    encryption_type: str = "public"
+    app_key: str = "group_timeline"
+
+    def __post_init__(self):
+        if self.consensus_type not in ["poa"]:  # ["poa","pos","pow"]:
+            self.consensus_type = "poa"
+        if self.encryption_type not in ["public"]:  # ["public","private"]:
+            self.encryption_type = "public"
+        if self.app_key not in ["group_timeline", "group_bbs", "group_note"]:
+            self.app_key = "group_timeline"

@@ -88,3 +88,22 @@ class TestCase(object):
         resp = client.group.leave(group_id)
         r2 = client.node.is_joined(group_id)
         assert r2 == False
+
+        group_id = "5dc03d23-f0bf-4b82-ba05-f440fae7585f"
+        r = client.group.send_img(group_id, "D:\\test-sample.png")
+        assert "trx_id" in r
+
+        r = client.node.create_group("测试一下下")
+        assert "group_id" in r
+
+        data = {"group_name": "nihao3", "app_key": "group_note"}
+        r = client.node.create_group(**data)
+        assert "group_id" in r
+
+        r = client.group.create(**{"group_name": "nihao3", "app_key": "group_note"})
+        assert "group_id" in r
+
+
+if __name__ == "__main__":
+
+    pass
