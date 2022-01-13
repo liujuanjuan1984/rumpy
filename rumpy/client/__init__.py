@@ -4,10 +4,19 @@ import inspect
 import requests
 from rumpy.client import api
 from rumpy.client.api.base import BaseRumAPI
+import dataclasses
 
 
 def _is_api_endpoint(obj):
     return isinstance(obj, BaseRumAPI)
+
+
+@dataclasses.dataclass
+class ClientParams:
+    port: int
+    crtfile: str  # Rum 服务的 server.crt 文件的绝对路径
+    host: str = "127.0.0.1"
+    appid: str = "peer"  # Rum 客户端标识，自定义，随便写
 
 
 class RumClient:
@@ -25,7 +34,7 @@ class RumClient:
             setattr(self, name, api)
         return self
 
-    def __init__(self, appid, host, port, cacert):
+    def __init__(self, **kwargs):
         """
         :param appid, Rum 客户端标识，自定义，随便写
         :param port，Rum 服务 端口号
@@ -33,9 +42,10 @@ class RumClient:
         :param cacert，本地 Rum 的 server.crt 文件的绝对路径
         """
 
-        self.appid = appid
+        cp = ClientParams(**kwargs)
+        self.appid = cp.appid
         self._session = requests.Session()
-        self._session.verify = cacert
+        self._session.verify = cp.crtfile
         self._session.headers.update(
             {
                 "USER-AGENT": "python.api",
@@ -43,7 +53,7 @@ class RumClient:
             }
         )
 
-        self.baseurl = f"https://{host}:{port}/api/v1"
+        self.baseurl = f"https://{cp.host}:{cp.port}/api/v1"
 
     def _request(self, method, url, **kwargs):
         resp = self._session.request(method=method, url=url, **kwargs)

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 import datetime
 import uuid
+import sys
 
-sys.path.append(r"D:\Jupyter\rumpy")  # 修改为你本地的 rumpy 地址
+sys.path.append(os.path.realpath("."))
+
 from rumpy import RumClient, JsonFile, Dir, Img
+from examples.config import client_params
 
 
 def export():
@@ -101,7 +103,7 @@ def trans():
     for ifile in todofiles:
         idata = JsonFile(ifile).read()
         jfile = ifile.replace(json_dir, md_dir).replace(".json", ".md")
-        gname, gid, gtime = ifile.replace(json_dir, "").split("_")
+        gname, gid, gtime = ifile.replace(json_dir + "\\", "").split("_")
         jnote = [f"<!--group_id:{gid} update_at:{gtime}-->\n\n# {gname}\n\n"]
 
         for i in idata:
@@ -115,22 +117,12 @@ def trans():
 
 if __name__ == "__main__":
 
-    # 初始化
-    kwargs = {
-        "appid": "peer",
-        "host": "127.0.0.1",
-        "port": 55043,  # 修改为你的 quorum 的网络端口号
-        "cacert": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",  # 修改为你的本地 server.crt 文件路径
-    }
-
-    client = RumClient(**kwargs)
+    client = RumClient(**client_params)
     save_dir = r"D:\Jupyter\rumpy\Makefile\data"
     json_dir = save_dir + "\\json"
     md_dir = save_dir + "\\markdown"
     img_dir = save_dir + "\\markdown\\images"
-    Dir(save_dir).check_dir()
     Dir(json_dir).check_dir()
-    Dir(md_dir).check_dir()
     Dir(img_dir).check_dir()
     export()
     trans()

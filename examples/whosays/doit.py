@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import os
+import sys
 
+sys.path.append(os.path.realpath("."))
 from whosays import WhoSays
 from rumpy import JsonFile
+from examples.config import client_params
 
 
 def main():
-    kwgs = {
-        "appid": "my-live-rum-app",
-        "host": "127.0.0.1",
-        "port": 55043,
-        "cacert": r"D:\RUM2-DATA\certs\server.crt",
-    }
 
     names_info = {
         "3bb7a3be-d145-44af-94cf-e64b992ff8f0": [
@@ -24,7 +22,7 @@ def main():
     name = "Huoju"
     filepath = r"D:\Jupyter\rumpy\examples\whosays\huoju_says.json"
 
-    client = WhoSays(**kwgs)
+    client = WhoSays(**client_params)
 
     data = JsonFile(filepath).read()
 

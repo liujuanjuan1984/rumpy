@@ -1,20 +1,15 @@
 # -*- coding: utf-8 -*-
-
+import os
 import sys
 
-sys.path.append(r"D:\Jupyter\rumpy")  # 修改为你本地的 rumpy 地址
+sys.path.append(os.path.realpath("."))
 from rumpy import RumClient
+from examples.config import client_params
 
 
 def main(is_create_new=False):
     # 初始化
-    kwargs = {
-        "appid": "peer",
-        "host": "127.0.0.1",
-        "port": 55043,  # 修改为你的 quorum 的网络端口号
-        "cacert": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",  # 修改为你的本地 server.crt 文件路径
-    }
-    client = RumClient(**kwargs)
+    client = RumClient(**client_params)
 
     my_test_groups = [
         "测试hellorum",
