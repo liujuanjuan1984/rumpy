@@ -13,10 +13,17 @@ def _is_api_endpoint(obj):
 
 @dataclasses.dataclass
 class ClientParams:
+    """
+    :param appid, str, Rum 客户端标识，自定义，随便写
+    :param port, int, Rum 服务 端口号
+    :param host,str, Rum 服务 host，通常是 127.0.0.1
+    :param crtfile, str, Rum 的 server.crt 文件的绝对路径
+    """
+
     port: int
-    crtfile: str  # Rum 服务的 server.crt 文件的绝对路径
+    crtfile: str
     host: str = "127.0.0.1"
-    appid: str = "peer"  # Rum 客户端标识，自定义，随便写
+    appid: str = "peer"
 
 
 class RumClient:
@@ -35,13 +42,6 @@ class RumClient:
         return self
 
     def __init__(self, **kwargs):
-        """
-        :param appid, Rum 客户端标识，自定义，随便写
-        :param port，Rum 服务 端口号
-        :param host，Rum 服务 host，通常是 127.0.0.1
-        :param cacert，本地 Rum 的 server.crt 文件的绝对路径
-        """
-
         cp = ClientParams(**kwargs)
         self.appid = cp.appid
         self._session = requests.Session()
