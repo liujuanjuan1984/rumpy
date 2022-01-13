@@ -50,7 +50,7 @@ def _save_img(imgs, note):
         ixname = f"{uuid.uuid4()}-{str(datetime.datetime.now())[:10]}"
         imgpath = f"{img_dir}\\{ixname}.png"
         Img().save(i["content"], imgpath)
-        note += f"\n\n![](./images/{i['name']})\n\n"
+        note += f"\n\n![](./images/{ixname}.png)\n\n"
     return note
 
 
@@ -118,7 +118,7 @@ def trans():
 if __name__ == "__main__":
 
     client = RumClient(**client_params)
-    save_dir = r"D:\Jupyter\rumpy\Makefile\data"
+    save_dir = r"D:\Jupyter\rumpy\examples\export_data\data"
     json_dir = save_dir + "\\json"
     md_dir = save_dir + "\\markdown"
     img_dir = save_dir + "\\markdown\\images"
