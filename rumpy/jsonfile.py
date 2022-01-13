@@ -49,5 +49,4 @@ class JsonFile:
 
     def rewrite(self):
         """重新读写数据文件，通常是为了规范格式，以方便检查改动"""
-        data = self.read_file_by_json()
-        self.write_file_by_json(data)
+        self.write(self.read())

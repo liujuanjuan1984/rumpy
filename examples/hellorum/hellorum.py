@@ -23,30 +23,30 @@ def main():
     group_id = seed["group_id"]
 
     # 往组内发布内容、点赞、评论等
-    kwargs = {"text": str(datetime.datetime.now()) + " 只有文本"}
+    kwargs = {"content": str(datetime.datetime.now()) + " 只有文本"}
     resp1 = bot.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "text": str(datetime.datetime.now()) + " 有文有图",
-        "imgs": [r"D:\Jupyter\rumpy\examples\hellorum\girl.png"],
+        "content": str(datetime.datetime.now()) + " 有文有图",
+        "image": [r"D:\Jupyter\rumpy\examples\hellorum\girl.png"],
     }
     resp2 = bot.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "text": str(datetime.datetime.now()) + " 评论`只有文本`的那条",
-        "trx_id": resp1["trx_id"],
+        "content": str(datetime.datetime.now()) + " 评论`只有文本`的那条",
+        "inreplyto": resp1["trx_id"],
     }
     resp3 = bot.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "text": str(datetime.datetime.now()) + " 评论`有文有图`的那条",
-        "trx_id": resp2["trx_id"],
+        "content": str(datetime.datetime.now()) + " 评论`有文有图`的那条",
+        "inreplyto": resp2["trx_id"],
     }
     resp4 = bot.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "text": str(datetime.datetime.now()) + " 对评论的回复",
-        "trx_id": resp4["trx_id"],
+        "content": str(datetime.datetime.now()) + " 对评论的回复",
+        "inreplyto": resp4["trx_id"],
     }
     resp5 = bot.group.send_note(group_id, **kwargs)
 

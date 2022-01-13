@@ -1,9 +1,65 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-from typing import List, Dict
+from typing import List, Dict, Any
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.img import Img
+import dataclasses
+
+
+@dataclasses.dataclass
+class ContentObjParams:
+    """
+    content: str,text
+    name:str, title for group_bbs if need
+    image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
+    inreplyto:str,trx_id
+    type: `Note`
+    """
+
+    content: str = None
+    name: str = None
+    image: List = None
+    inreplyto: Any = None
+    type: str = "Note"
+
+    def __post_init__(self):
+        if self.image != None:
+            ximgs = []
+            for img in self.image:
+                ximgs.append(Img().encode(img))
+            self.image = ximgs
+
+        if self.inreplyto != None:
+            self.inreplyto = {"trxid": self.inreplyto}
+
+
+@dataclasses.dataclass
+class ContentParams:
+    type: Any
+    object: Dict
+    target: str  # group_id
+
+    def __post_init__(self):
+        if self.type not in [4, "Add", "Like", "Dislike"]:
+            self.type = "Add"
+        self.target = {"id": self.target, "type": "Group"}
+
+
+@dataclasses.dataclass
+class GroupInfo:
+    group_id: str
+    group_name: str
+    owner_pubkey: str
+    user_pubkey: str
+    consensus_type: str
+    encryption_type: str
+    cipher_key: str
+    app_key: str
+    last_updated: int
+    highest_height: int
+    highest_block_id: str
+    group_status: str
 
 
 class RumGroup(BaseRumAPI):
@@ -15,7 +71,7 @@ class RumGroup(BaseRumAPI):
         """get the seed of a group which you've joined in."""
         if self.node.is_joined(group_id):
             return self._get(f"{self.baseurl}/group/{group_id}/seed")
-        return {}
+        return {"error": "you are not in this group."}
 
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
@@ -23,71 +79,45 @@ class RumGroup(BaseRumAPI):
 
     def leave(self, group_id: str):
         """leave a group"""
-        return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
+        if self.node.is_joined(group_id):
+            return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
+        return {"info": "you are not in this group."}
 
     def content(self, group_id: str) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
         return self._get(f"{self.baseurl}/group/{group_id}/content") or []
 
-    def _send(self, data: Dict) -> Dict:
-        """return the {"trx_id":"xxx"}"""
+    def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
+        """return the {trx_id:trx_id} of this action if send successed"""
+        if not self.node.is_joined(group_id):
+            return {"error": "you are not in this group."}
+        p = {"type": sendtype, "object": obj, "target": group_id}
+        data = ContentParams(**p).__dict__
         return self._post(f"{self.baseurl}/group/content", data)
 
-    def like(self, group_id: str, trx_id: str, is_like=True) -> Dict:
-        """like a object(e.g.content/reply,any trx)"""
-        if is_like:
-            is_like = "Like"
-        else:
-            is_like = "Dislike"
-        data = {
-            "type": is_like,
-            "object": {"id": trx_id},
-            "target": {"id": group_id, "type": "Group"},
-        }
-        return self._send(data)
+    def like(self, group_id: str, trx_id: str) -> Dict:
+        return self._send(group_id, {"id": trx_id}, "Like")
 
     def dislike(self, group_id: str, trx_id: str) -> Dict:
-        """dislike"""
-        return self.like(group_id, trx_id, False)
+        return self._send(group_id, {"id": trx_id}, "Dislike")
 
-    def send_note(
-        self, group_id: str, text: str = None, imgs: list = None, trx_id: str = None
-    ):
+    def send_note(self, group_id: str, **kwargs):
         """send note to a group. can be used to send: text only,image only,text with image,reply...etc"""
-        if not (text or imgs):
-            error = {
-                "error": "imgs and text are both None. should: imgs or text or both."
-            }
-            return error
+        p = ContentObjParams(**kwargs)
+        if p.content == None and p.image == None:
+            return {"error": "need some content. images,text,or both."}
+        return self._send(group_id, p.__dict__, "Add")
 
-        obj = {"type": "Note"}
-        if text:
-            obj["content"] = text
-        if imgs:
-            for img in imgs:
-                if "image" not in obj:
-                    obj["image"] = []
-                obj["image"].append(Img().encode(img))
-        if trx_id:
-            obj["inreplyto"] = {"trxid": trx_id}
+    def reply(self, group_id: str, content: str, trx_id: str):
+        return self.send_note(group_id, content=content, inreplyto=trx_id)
 
-        # todo:检查trx_id是否在当前group
+    def send_text(self, group_id: str, content: str, name: str = None):
+        """post text cotnent to group"""
+        return self.send_note(group_id, content=content, name=name)
 
-        data = {
-            "type": "Add",
-            "object": obj,
-            "target": {"id": group_id, "type": "Group"},
-        }
-        return self._send(data)
-
-    def reply(self, group_id: str, text, trx_id):
-        return self.send_note(group_id, text, None, trx_id)
-
-    def send_txt(self, group_id, text):
-        return self.send_note(group_id, text)
-
-    def send_img(self, group_id, image):
-        return self.send_note(group_id, None, [image], None)
+    def send_img(self, group_id: str, image):
+        """post an image to group"""
+        return self.send_note(group_id, image=[image])
 
     def block(self, group_id: str, block_id: str):
         """get the info of a block in a group"""
@@ -96,3 +126,8 @@ class RumGroup(BaseRumAPI):
     def deniedlist(self, group_id: str):
         """get the deniedlist of a group"""
         return self._get(f"{self.baseurl}/group/{group_id}/deniedlist")
+
+    def info(self, group_id: str):
+        """return group info,type: datacalss"""
+        info = self.node.group_info(group_id)
+        return GroupInfo(**info)
