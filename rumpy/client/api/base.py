@@ -18,3 +18,11 @@ class BaseRumAPI:
     @property
     def node(self):
         return self._client.node
+
+    @property
+    def trx(self):
+        return self._client.trx
+
+    @property
+    def group(self):
+        return self._client.group

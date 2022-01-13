@@ -138,3 +138,14 @@ class RumGroup(BaseRumAPI):
         if g.owner_pubkey == g.user_pubkey:
             return True
         return False
+
+    def trxs_by(self, group_id, pubkeys):
+        trxs = self.content(group_id)
+        trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
+        return trxs_by
+
+    def content_by(self, group_id, pubkeys):
+        trxs = self.content(group_id)
+        trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
+        content_by = [self.trx.export(i, trxs) for i in trxs_by]
+        return content_by

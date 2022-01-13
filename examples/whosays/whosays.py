@@ -4,114 +4,82 @@ import datetime
 from typing import List, Dict
 import json
 import sys
+from time import sleep
 
 sys.path.append(r"D:\Jupyter\rumpy")
 from rumpy import RumClient
-from rumpy import JsonFile
 
 
 class WhoSays(RumClient):
     """Rum 产品想法：筛选某人所说，并转发到指定组"""
 
-    def do(
-        self,
-        filepath: str,
-        name: str,
-        names_info: Dict[str, List],
-        toshare_group_id: str,
-    ):
-        """
-        filepath: 数据存储文件 .json
-        name：这个人的昵称/名字，构建转发文本某某说
-        names_info：这个人在多个group的多个 pubkey，用来标记who是他
-        toshare_group_id：转发到指定的那个组
-        """
-
-        data = JsonFile(filepath).read({})  # 读取本地已有数据
+    def search(self, names_info, data):
         for group_id in names_info:
-            pubkeys = names_info[group_id]
-            trxs = self.group.content(group_id)  # 获取链上数据 group chain
-            data = self._search(pubkeys, group_id, data, trxs)
-            JsonFile(filepath).write(data)
-            data = self._send(name, toshare_group_id, data, trxs)
-            JsonFile(filepath).write(data)
-
-    def _search(self, pubkeys: List, group_id: str, data: Dict, trxs: List) -> Dict:
-
-        for trxdata in trxs:
-            if trxdata["Publisher"] not in pubkeys:  # 不是此人发的
-                continue
-            if trxdata["TrxId"] in data:  # 已经被抓取过了
-                continue
-            data[trxdata["TrxId"]] = {
-                "seed": self.group.seed(group_id),
-                "trx": trxdata,
-                "created_at": str(datetime.datetime.now()),
-            }
+            if group_id not in data:
+                data[group_id] = {"seed": self.group.seed(group_id), "trxs": {}}
+            # 筛选此人发布的内容
+            content_by = self.group.content_by(group_id, names_info[group_id])
+            for ic in content_by:
+                if ic["trx_id"] not in data[group_id]["trxs"]:
+                    data[group_id]["trxs"][ic["trx_id"]] = ic
         return data
 
-    def _send(self, name: str, toshare_group_id: str, data: Dict, trxs: List) -> Dict:
+    def send(self, name: str, toshare_group_id: str, data: Dict) -> Dict:
         """发布内容并更新发布状态"""
-        for trx_id in data:
-            if "shared" not in data[trx_id]:
-                data[trx_id]["shared"] = []
-            if toshare_group_id in data[trx_id]["shared"]:
-                continue
-            obj = self._obj(data[trx_id]["trx"], trxs)
-            obj["text"] = f"{name} {obj['text']}\n\n来源: " + json.dumps(
-                data[trx_id]["seed"]
-            )
+        for group_id in data:
+            gtrxs = data[group_id]["trxs"]
+            seed = data[group_id]["seed"]
+            for trx_id in gtrxs:
+                if "shared" not in gtrxs[trx_id]:
+                    data[group_id]["trxs"][trx_id]["shared"] = []
+                if toshare_group_id in data[group_id]["trxs"][trx_id]["shared"]:
+                    continue
+                obj = self._trans(gtrxs[trx_id])
+                obj["content"] = f"{name} {obj['content']}来源" + json.dumps(seed)
 
-            if self.group.send_note(toshare_group_id, **obj):
-                data[trx_id]["shared"].append(toshare_group_id)
-        return data
+                resp = self.group.send_note(toshare_group_id, **obj)
+                if "error" not in resp:
+                    data[group_id]["trxs"][trx_id]["shared"].append(toshare_group_id)
+                else:
+                    print(resp, obj)
+            return data
 
-    def _obj(self, trxdata: Dict, trxs: List) -> Dict:
-
-        ts = self.trx.timestamp(trxdata)
-        trxtype = self.trx.trx_type(trxdata)
-
-        # 点赞/踩
+    def _trans(self, one):
+        obj = {"image": []}
+        note = one["trx_time"] + " "
         _info = {"like": "赞", "dislike": "踩"}
-        if trxtype in _info:
-            jid = trxdata["Content"]["id"]
-            jnote = self.trx.get_trx_content(trxs, jid)
-            text = f"{ts} 点{_info[trxtype]}给：\n{jnote}"
-            return {"text": text}
+        t = one["trx_type"]
+        if t in _info:
+            name = one["refer_to"]["name"] or "某人"
+            note += f"点{_info[t]}给 `{name}` 发布的内容。\n"
+            if "text" in one["refer_to"]:
+                note += "> " + "\n> ".join(one["refer_to"]["text"].split("\n")) + "\n"
+            if "imgs" in one["refer_to"]:
+                obj["image"].extend(one["refer_to"]["imgs"])
 
-        # 个人信息
-        if trxtype in ["person"]:
-            return {"text": f"{ts} 更新了个人信息。"}
+        elif t == "person":
+            note += "修改了个人信息。\n"
+        elif t == "annouce":
+            note += "处理了链上请求。\n"
+        elif t == "reply":
+            note += "回复说：\n"
+            if "text" in one:
+                note += one["text"] + "\n"
+            if "imgs" in one:
+                obj["image"].extend(one["refer_to"]["imgs"])
 
-        if trxtype in ["announce"]:
-            return {"text": f"{ts} 处理了通知请求。"}
+            name = one["refer_to"]["name"] or "某人"
+            note += f"\n回复给 `{name}` 所发布的内容：\n"
+            if "text" in one["refer_to"]:
+                note += "> " + "\n> ".join(one["refer_to"]["text"].split("\n")) + "\n"
+            if "imgs" in one["refer_to"]:
+                obj["image"].extend(one["refer_to"]["imgs"])
 
-        obj = {}
-        _content = trxdata["Content"]
-        if "content" in _content:
-            obj["text"] = f"{ts} 说：\n" + _content["content"]
-        if "image" in _content:
-            obj["imgs"] = _content["image"]
-            if "content" not in _content:
-                obj["text"] = f"{ts} 发布了图片："
-
-        if "text" not in obj:
-            obj["text"] = f"{ts} 冒了个泡。"
-
-        # 回复
-        if trxtype == "reply":
-            jid = _content["inreplyto"]["trxid"]
-            jnote = self.trx.get_trx_content(trxs, jid)
-            obj["text"] += f"\n\n回复给：\n{jnote}"
-
-        return obj
-
-        if trxtype in ["text_only", "image_text"]:
-            inote = trxdata["Content"]["content"]
-            text = f"{name} {ts} 说：\n{inote}"
-
-        elif trxtype == "person":
-            text = f"{name} {ts} 修改了个人信息"
         else:
-            text = ""
-        return text
+            note += "说：\n"
+            if "text" in one:
+                note += one["text"] + "\n"
+            if "imgs" in one:
+                obj["image"].extend(one["imgs"])
+        obj["content"] = note
+        return obj

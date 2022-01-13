@@ -4,6 +4,7 @@ import io
 import uuid
 import datetime
 import dataclasses
+from typing import Any
 
 
 class Img:
@@ -22,7 +23,7 @@ class Img:
 
 @dataclasses.dataclass
 class ImgObj:
-    content: str
+    content: Any
     mediaType: str = "image/png"
     name: str = f"{uuid.uuid4()}-{str(datetime.datetime.now())[:19]}"
 

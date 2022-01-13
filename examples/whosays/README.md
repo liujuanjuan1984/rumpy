@@ -1,14 +1,22 @@
-# whosays
+# 案例：whosays.py
 
 筛选某人在多个种子网络的动态，并转发到自定义的种子网络。
 
 
-[源码](./whosays.py)
-[实例](./doit.py)
-[数据文件](./huoju_says.json)
+- [源码](./whosays.py)
+- [实例](./doit.py)
+- [实例产生的数据文件](./huoju_says.json)
+
+### 如何使用？
+
+请先修改 `doit.py` 中的参数，再运行。
+
+```bash
+python .\examples\whosays\doit.py
+```
 
 
-### 实现细节：
+### 实现细节:
 
 - 参数：此人在种子网络的多个 pubkey 所构成的参数
 

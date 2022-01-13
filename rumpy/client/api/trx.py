@@ -60,8 +60,6 @@ class RumTrx(BaseRumAPI):
     def person_name(self, trx_id, trxs, since=None):
         """get the lastest name of the person published the trx_id"""
         trxdata = self.trxdata(trx_id, trxs)
-        print(trxdata)
-
         pubkey = trxdata["Publisher"]
         rlt = []
         for trxdata in trxs:
