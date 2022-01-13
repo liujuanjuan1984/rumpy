@@ -1,6 +1,14 @@
-# leave_groups.py
+# 案例: leave_groups.py
 
 批量离开组：
 
-- 任何人创建的，久未更新的组（2021 年 10 月 1 日前）
-- 自己创建的、已经不再有用的测试组（指定组名）
+- 创建一批测试用的组（种子网络）
+- 离开这些测试组
+
+### 如何使用？
+
+请先修改 `leave_groups.py` 中的参数，再运行。
+
+```bash
+python .\examples\leave_groups\leave_groups.py
+```

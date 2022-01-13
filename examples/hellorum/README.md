@@ -1,4 +1,4 @@
-hellorum.py
+# 案例: hellorum.py
 
 
 对 `rumpy` 的一个极简尝试。

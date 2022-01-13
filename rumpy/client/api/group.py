@@ -131,3 +131,10 @@ class RumGroup(BaseRumAPI):
         """return group info,type: datacalss"""
         info = self.node.group_info(group_id)
         return GroupInfo(**info)
+
+    def is_mygroup(self, group_id: str) -> bool:
+        """return True if I create this group else False"""
+        g = self.info(group_id)
+        if g.owner_pubkey == g.user_pubkey:
+            return True
+        return False
