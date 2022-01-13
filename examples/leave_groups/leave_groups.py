@@ -6,7 +6,7 @@ sys.path.append(r"D:\Jupyter\rumpy")  # 修改为你本地的 rumpy 地址
 from rumpy import RumClient
 
 
-def main():
+def main(is_create_new=False):
     # 初始化
     kwargs = {
         "appid": "peer",
@@ -16,22 +16,40 @@ def main():
     }
     client = RumClient(**kwargs)
 
+    my_test_groups = [
+        "测试hellorum",
+        "测试whosays",
+        "新增测试组",
+        "nihao",
+        "nihao3",
+        "测试一下",
+        "测试一下下",
+    ]
+
     # 创建一些组用来测试
-    my_test_groups = ["测试hellorum", "测试whosays", "新增测试组", "nihao", "nihao3"]
-    for i in my_test_groups:
-        group_id = client.group.create(i)["group_id"]
-        print("已创建种子网络", i, group_id)
+    if is_create_new:
+        for i in my_test_groups:
+            group_id = client.group.create(i)["group_id"]
+            print("已创建种子网络", i, group_id)
 
     # 离开满足某些条件的组
     for group_id in client.node.groups_id:
+        info = client.group.info(group_id)
+        name = info.group_name
+
+        # 退出本人创建的测试组
         if client.group.is_mygroup(group_id):  # 是本人创建的
-            name = client.group.info(group_id).group_name
             if name in my_test_groups:  # 名字在上述列表中
                 client.group.leave(group_id)
                 print("已离开种子网络", name, group_id)
+
+        # 退出区块数为 0 的 group
+        if info.highest_height == 0:
+            client.group.leave(group_id)
+            print("已离开种子网络", name, group_id)
 
     print("TIPS: 如果你正开着桌面应用观察效果，可以点击左上角的“重新加载”刷新页面。")
 
 
 if __name__ == "__main__":
-    main()
+    main(is_create_new=False)

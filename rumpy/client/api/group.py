@@ -57,7 +57,7 @@ class GroupInfo:
     cipher_key: str
     app_key: str
     last_updated: int
-    highest_height: int
+    highest_height: int  # 区块数
     highest_block_id: str
     group_status: str
 
