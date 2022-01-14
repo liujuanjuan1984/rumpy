@@ -4,84 +4,8 @@ import datetime
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.img import Img
-import dataclasses
+from rumpy.client.data import ContentObjParams,ContentParams,GroupInfo,DeniedlistUpdateParams,ProducerAnnounceParams,ProducerUpdateParams
 
-
-@dataclasses.dataclass
-class ContentObjParams:
-    """
-    content: str,text
-    name:str, title for group_bbs if need
-    image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
-    inreplyto:str,trx_id
-    type: `Note`
-    """
-
-    content: str = None
-    name: str = None
-    image: List = None
-    inreplyto: Any = None
-    type: str = "Note"
-
-    def __post_init__(self):
-        if self.image != None:
-            ximgs = []
-            for img in self.image:
-                ximgs.append(Img().encode(img))
-            self.image = ximgs
-
-        if self.inreplyto != None:
-            self.inreplyto = {"trxid": self.inreplyto}
-
-
-@dataclasses.dataclass
-class ContentParams:
-    type: Any
-    object: Dict
-    target: str  # group_id
-
-    def __post_init__(self):
-        if self.type not in [4, "Add", "Like", "Dislike"]:
-            self.type = "Add"
-        self.target = {"id": self.target, "type": "Group"}
-
-
-@dataclasses.dataclass
-class GroupInfo:
-    group_id: str
-    group_name: str
-    owner_pubkey: str
-    user_pubkey: str
-    consensus_type: str
-    encryption_type: str
-    cipher_key: str
-    app_key: str
-    last_updated: int
-    highest_height: int  # 区块数
-    highest_block_id: str
-    group_status: str
-
-
-@dataclasses.dataclass
-class DeniedlistUpdateParams:
-    peer_id: str  # node_id ???QmQZcijmay86LFCDFiuD8ToNhZwCYZ9XaNpeDWVWWJY222
-    group_id: str
-    action: str  # "del" or add
-
-
-@dataclasses.dataclass
-class ProducerAnnounceParams:
-    group_id: str
-    action: str = "add"
-    type: str = "producer"
-    memo: str = "producer, realiable and cheap, online 24hr"
-
-
-@dataclasses.dataclass
-class ProducerUpdateParams:
-    producer_pubkey: str
-    group_id: str
-    action: str  # "add" or "remove"
 
 
 class RumGroup(BaseRumAPI):

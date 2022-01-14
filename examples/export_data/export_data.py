@@ -29,9 +29,6 @@ def export():
 
     # 把不同trxtype的数据导出，图片decode包装为方法
 
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
     for group_id, group_name in my_trxs:
         gtrxs = my_trxs[(group_id, group_name)]
         if gtrxs == []:

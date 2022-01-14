@@ -3,57 +3,7 @@
 from typing import List, Dict
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.client.api.group import RumGroup
-import dataclasses
-
-
-@dataclasses.dataclass
-class CreateGroupParam:
-    group_name: str
-    consensus_type: str = "poa"
-    encryption_type: str = "public"
-    app_key: str = "group_timeline"
-
-    def __post_init__(self):
-        if self.consensus_type not in ["poa"]:  # ["poa","pos","pow"]:
-            self.consensus_type = "poa"
-        if self.encryption_type not in ["public"]:  # ["public","private"]:
-            self.encryption_type = "public"
-        if self.app_key not in ["group_timeline", "group_bbs", "group_note"]:
-            self.app_key = "group_timeline"
-
-
-@dataclasses.dataclass
-class Block:
-    BlockId: str
-    GroupId: str
-    ProducerPubKey: str
-    Hash: str
-    Signature: str
-    TimeStamp: str
-
-
-@dataclasses.dataclass
-class Seed:
-    genesis_block: Block.__dict__
-    group_id: str
-    group_name: str
-    owner_pubkey: str
-    owner_encryptpubkey: str
-    consensus_type: str
-    encryption_type: str
-    cipher_key: str
-    app_key: str
-    signature: str
-
-
-@dataclasses.dataclass
-class NodeInfo:
-    node_id: str
-    node_publickey: str
-    node_status: str
-    node_type: str
-    node_version: str
-    peers: Dict
+from rumpy.client.data import CreateGroupParam,Block,Seed,NodeInfo
 
 
 class RumNode(BaseRumAPI):

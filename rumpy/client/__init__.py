@@ -4,26 +4,10 @@ import inspect
 import requests
 from rumpy.client import api
 from rumpy.client.api.base import BaseRumAPI
-import dataclasses
-
+from rumpy.client.data import ClientParams
 
 def _is_api_endpoint(obj):
     return isinstance(obj, BaseRumAPI)
-
-
-@dataclasses.dataclass
-class ClientParams:
-    """
-    :param appid, str, Rum 客户端标识，自定义，随便写
-    :param port, int, Rum 服务 端口号
-    :param host,str, Rum 服务 host，通常是 127.0.0.1
-    :param crtfile, str, Rum 的 server.crt 文件的绝对路径
-    """
-
-    port: int
-    crtfile: str
-    host: str = "127.0.0.1"
-    appid: str = "peer"
 
 
 class RumClient:
