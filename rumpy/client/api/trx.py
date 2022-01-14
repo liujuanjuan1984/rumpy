@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import re
+import json
 import time
 from typing import List, Dict
 from rumpy.client.api.base import BaseRumAPI
@@ -109,3 +111,22 @@ class RumTrx(BaseRumAPI):
             else:
                 info["imgs"] = _content["image"]
         return info
+
+    def search_seeds(self, trxdata: Dict) -> List:
+        """search seeds from trx data"""
+        text = self.trx_text(trxdata).replace("\n", " ")
+
+        if text == "":
+            return []
+
+        # 只能识别单个种子，但依然采用列表来处理结果
+        seeds = []
+        pt = r"^[^\{]*?(\{[\s\S]*?\})[^\}]*?$"
+        for i in re.findall(pt, text):
+            try:
+                iseed = json.loads(i)
+                if self.node.is_seed(iseed):
+                    seeds.append(iseed)
+            except Exception as e:
+                pass  # print(e)
+        return seeds

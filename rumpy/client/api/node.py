@@ -113,7 +113,7 @@ class RumNode(BaseRumAPI):
             for ginfo in self.groups():
                 if ginfo["group_id"] == group_id:
                     return ginfo
-        return {"info": "you are not in this group."}
+        return {"error": "you are not in this group."}
 
     def is_joined(self, group_id: str) -> bool:
         if group_id in self.groups_id:
@@ -129,7 +129,7 @@ class RumNode(BaseRumAPI):
             Seed(**seed)
             return True
         except Exception as e:
-            print(e)
+            # print(e)
             return False
 
     def join_group(self, seed: Dict) -> Dict:
@@ -137,3 +137,10 @@ class RumNode(BaseRumAPI):
         if self.is_seed(seed):
             return self._post(f"{self.baseurl}/group/join", seed)
         return {"error": "not a seed"}
+
+    def search_seeds(self) -> Dict:
+        rlt = {}
+        for group_id in self.groups_id:
+            irlt = self.group.search_seeds(group_id)
+            rlt.update(irlt)
+        return rlt

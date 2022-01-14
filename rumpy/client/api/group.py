@@ -201,3 +201,15 @@ class RumGroup(BaseRumAPI):
     def update_producer(self, **kwargs):
         p = ProducerUpdateParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/producer", p)
+
+    def search_seeds(self, group_id: str) -> Dict:
+        """search seeds from group"""
+        rlt = {}
+        for trxdata in self.content(group_id):
+            iseeds = self.trx.search_seeds(trxdata)
+            for iseed in iseeds:
+                if iseed["group_id"] not in rlt:
+                    rlt[iseed["group_id"]] = iseed
+        if group_id not in rlt:
+            rlt[group_id] = self.seed(group_id)
+        return rlt

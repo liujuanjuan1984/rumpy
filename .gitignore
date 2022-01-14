@@ -136,3 +136,4 @@ requirements*
 *version.cfg 
 setup.py 
 *temp*
+examples/search_seeds/data/search_seeds_and_joined_data.json
