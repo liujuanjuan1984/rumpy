@@ -3,7 +3,7 @@
 from typing import List, Dict
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.client.api.group import RumGroup
-from rumpy.client.data import CreateGroupParam,Block,Seed,NodeInfo
+from rumpy.client.data import CreateGroupParam, Block, Seed, NodeInfo
 
 
 class RumNode(BaseRumAPI):

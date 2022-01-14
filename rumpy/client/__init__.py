@@ -6,6 +6,7 @@ from rumpy.client import api
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.client.data import ClientParams
 
+
 def _is_api_endpoint(obj):
     return isinstance(obj, BaseRumAPI)
 

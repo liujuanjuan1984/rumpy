@@ -1,5 +1,7 @@
-import dataclasses 
-from typing import Dict,List,Any 
+import dataclasses
+from typing import Dict, List, Any
+from rumpy.img import Img
+
 
 @dataclasses.dataclass
 class ClientParams:
@@ -14,7 +16,6 @@ class ClientParams:
     crtfile: str
     host: str = "127.0.0.1"
     appid: str = "peer"
-
 
 
 @dataclasses.dataclass
@@ -142,4 +143,3 @@ class NodeInfo:
     node_type: str
     node_version: str
     peers: Dict
-
