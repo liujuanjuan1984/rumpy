@@ -62,6 +62,28 @@ class GroupInfo:
     group_status: str
 
 
+@dataclasses.dataclass
+class DeniedlistUpdateParams:
+    peer_id: str  # node_id ???QmQZcijmay86LFCDFiuD8ToNhZwCYZ9XaNpeDWVWWJY222
+    group_id: str
+    action: str  # "del" or add
+
+
+@dataclasses.dataclass
+class ProducerAnnounceParams:
+    group_id: str
+    action: str = "add"
+    type: str = "producer"
+    memo: str = "producer, realiable and cheap, online 24hr"
+
+
+@dataclasses.dataclass
+class ProducerUpdateParams:
+    producer_pubkey: str
+    group_id: str
+    action: str  # "add" or "remove"
+
+
 class RumGroup(BaseRumAPI):
     def create(self, group_name: str, **kargs) -> Dict:
         """create a group, return the seed of the group."""
@@ -149,3 +171,33 @@ class RumGroup(BaseRumAPI):
         trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
         content_by = [self.trx.export(i, trxs) for i in trxs_by]
         return content_by
+
+    def announced_producers(self, group_id: str):
+        return self._get(f"{self.baseurl}/group/{group_id}/announced/producers")
+
+    def producers(self, group_id: str):
+        return self._get(f"{self.baseurl}/group/{group_id}/producers")
+
+    def announced_users(self, group_id: str):
+        return self._get(f"{self.baseurl}/group/{group_id}/announced/users")
+
+    def keylist(self, group_id: str):
+        return self._get(f"{self.baseurl}/group/{group_id}/config/keylist")
+
+    def keyname(self, group_id: str, keyname: str):
+        return self._get(f"{self.baseurl}/group/{group_id}/config/{keyname}")
+
+    def schema(self, group_id: str):
+        return self._get(f"{self.baseurl}/group/{group_id}/schema")
+
+    def update_deniedlist(self, **kwargs):
+        p = DeniedlistUpdateParams(**kwargs).__dict__
+        return self._post(f"{self.baseurl}/group/deniedlist", p)
+
+    def announce_producer(self, **kwargs):
+        p = ProducerAnnounceParams(**kwargs).__dict__
+        return self._post(f"{self.baseurl}/group/announce", p)
+
+    def update_producer(self, **kwargs):
+        p = ProducerUpdateParams(**kwargs).__dict__
+        return self._post(f"{self.baseurl}/group/producer", p)
