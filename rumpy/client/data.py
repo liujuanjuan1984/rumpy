@@ -22,7 +22,7 @@ class ClientParams:
 class ContentObjParams:
     """
     content: str,text
-    name:str, title for group_bbs if need
+    name:str, title for group_post if need
     image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
     inreplyto:str,trx_id
     type: `Note`
@@ -97,6 +97,8 @@ class ProducerUpdateParams:
 
 @dataclasses.dataclass
 class CreateGroupParam:
+    """app_key: 可以为自定义字段，只是如果不是 group_timeline,group_post,group_note 这三种，可能无法在 rumapp 中识别，如果是自己开发客户端，则可以自定义类型"""
+
     group_name: str
     consensus_type: str = "poa"
     encryption_type: str = "public"
@@ -107,7 +109,7 @@ class CreateGroupParam:
             self.consensus_type = "poa"
         if self.encryption_type not in ["public"]:  # ["public","private"]:
             self.encryption_type = "public"
-        if self.app_key not in ["group_timeline", "group_bbs", "group_note"]:
+        if self.app_key not in ["group_timeline", "group_post", "group_note"]:
             self.app_key = "group_timeline"
 
 
