@@ -109,8 +109,8 @@ class CreateGroupParam:
             self.consensus_type = "poa"
         if self.encryption_type not in ["public"]:  # ["public","private"]:
             self.encryption_type = "public"
-        if self.app_key not in ["group_timeline", "group_post", "group_note"]:
-            self.app_key = "group_timeline"
+        # if self.app_key not in ["group_timeline", "group_post", "group_note"]:
+        #    self.app_key = "group_timeline"
 
 
 @dataclasses.dataclass
@@ -128,13 +128,13 @@ class Seed:
     genesis_block: Block.__dict__
     group_id: str
     group_name: str
-    owner_pubkey: str
-    owner_encryptpubkey: str
     consensus_type: str
     encryption_type: str
     cipher_key: str
     app_key: str
     signature: str
+    owner_pubkey: str
+    owner_encryptpubkey: str = None  # 新版本似乎弃用该字段了
 
 
 @dataclasses.dataclass

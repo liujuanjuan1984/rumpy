@@ -79,7 +79,7 @@ class RumNode(BaseRumAPI):
             Seed(**seed)
             return True
         except Exception as e:
-            # print(e)
+            print(e)
             return False
 
     def join_group(self, seed: Dict) -> Dict:
