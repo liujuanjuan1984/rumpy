@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import inspect
 import requests
 from rumpy.client import api
@@ -49,3 +50,7 @@ class RumClient:
 
     def post(self, url, data):
         return self._request("post", url, json=data)
+
+    def ts2datetime(self, ts):
+        # 把 rum 中的时间戳（纳米级）转换一下
+        return datetime.datetime.fromtimestamp(int(int(ts) / 1000000000))

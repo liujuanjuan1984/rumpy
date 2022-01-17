@@ -45,7 +45,7 @@ class ToDoList(RumClient):
                 continue
 
             trxtype = self.trx.trx_type(trx)
-            ts = self.trx.timestamp(trx)
+            ts = str(self.ts2datetime(trx["TimeStamp"]))
 
             if trxtype in _info:
                 todoid = trx["Content"]["id"]

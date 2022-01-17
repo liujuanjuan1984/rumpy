@@ -11,15 +11,6 @@ class RumTrx(BaseRumAPI):
     def info(self, group_id: str, trx_id: str):
         return self._get(f"{self.baseurl}/trx/{group_id}/{trx_id}")
 
-    def _timestamp(self, timestamp):
-        """把 rum 中的时间戳（纳米级）转换为年月日时分秒的字符串"""
-        timeArray = time.localtime(int(timestamp / 1000000000))
-        strtime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
-        return strtime
-
-    def timestamp(self, trxdata: Dict):
-        return self._timestamp(trxdata["TimeStamp"])
-
     def trx_type(self, trxdata: Dict):
         """get type of trx, trx is one of group content list"""
         if trxdata["TypeUrl"] == "quorum.pb.Person":
@@ -74,13 +65,13 @@ class RumTrx(BaseRumAPI):
             since = str(datetime.datetime.now())[:19]
         for trxdata in rlt:
             if "name" in trxdata["Content"]:
-                if self.timestamp(trxdata) <= since:
+                if self.ts2datetime(trxdata["TimeStamp"]) <= since:
                     return trxdata["Content"]["name"]
         return ""
 
     def export(self, trxdata: Dict, trxs: List) -> Dict:
         """export data with refer_to data"""
-        ts = self.timestamp(trxdata)
+        ts = str(self.ts2datetime(trxdata["TimeStamp"]))
         info = {
             "trx_id": trxdata["TrxId"],
             "trx_time": ts,
