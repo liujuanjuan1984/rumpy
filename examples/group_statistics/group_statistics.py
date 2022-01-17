@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from pylab import *
 from typing import List, Dict
+import io
 import os
 import sys
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import MultipleLocator
 
 sys.path.append(os.path.realpath("."))
 from rumpy import RumClient, JsonFile
@@ -68,41 +72,61 @@ class GroupStatistics(RumClient):
             "daily_pubkeys": self._count_daily_pubkeys(trxs),
         }
 
-    def view_to_save(self, group_id, filepath):
-        rlt = self.group_view(group_id)
-        # 把 datetime 数据类型转换为字符串，才能写入 json 文件
-        rlt["daily_trxs"] = {str(k): rlt["daily_trxs"][k] for k in rlt["daily_trxs"]}
-        rlt["daily_pubkeys"] = {
-            str(k): rlt["daily_pubkeys"][k] for k in rlt["daily_pubkeys"]
+    def view_to_save(self, group_id, filepath, imgpath=None):
+        data = self.group_view(group_id)
+
+        # 数据存入 json 文件。把 datetime 数据类型转换为字符串，才能写入 json 文件
+        data["daily_trxs"] = {str(k): data["daily_trxs"][k] for k in data["daily_trxs"]}
+        data["daily_pubkeys"] = {
+            str(k): data["daily_pubkeys"][k] for k in data["daily_pubkeys"]
         }
-        JsonFile(filepath).write(rlt)
+        JsonFile(filepath).write(data)
+
+        # 绘图
+        title = f"{data['info']['group_name']} Daily Trxs and Users Counts"
+        daily_trxs = data["daily_trxs"]
+        daily_pubkeys = {
+            i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]
+        }
+        imgbytes = self.plot_lines(title, daily_trxs, daily_pubkeys)
+        if imgpath == None:
+            imgpath = filepath.replace(".json", ".png")
+
+        with open(imgpath, "wb") as f:
+            f.write(imgbytes)
+
+    def plot_lines(self, title, *data):
+        mpl.rcParams["font.sans-serif"] = ["SimHei"]  # 指定默认字体
+        mpl.rcParams["axes.unicode_minus"] = False  # 解决保存图像是负号'-'显示为方块的问题
+        plt.tick_params(axis="x", labelsize=10)  # 设置x轴字号大小
+
+        for idata in data:
+            ax = pd.Series(idata).plot(figsize=(15, 8), title=title)
+            ax.xaxis.set_major_locator(MultipleLocator(7))  # 设置x轴的间隔为7
+            fig = ax.get_figure()
+
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format="png")  # 把数据写入字节流
+        imgbytes = buffer.getvalue()
+        plt.close(fig)
+        return imgbytes
 
     def view_to_post(self, toview_group_id, toshare_group_id=None):
         data = self.group_view(toview_group_id)
 
-        k = max(data["pubkeys"].values())
-        # pubkeys = [i for i in data['pubkeys'] if data['pubkeys'][i] == k]
+        # 绘图
+        title = f"{data['info']['group_name']} Daily Trxs and Users Counts"
+        daily_trxs = data["daily_trxs"]
+        daily_pubkeys = {
+            i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]
+        }
+        imgbytes = self.plot_lines(title, daily_trxs, daily_pubkeys)
 
-        note = f"""【{data['info']['group_name']}】数据概况\n创建 {data['create_at']}\n更新 {data['update_at']}\n区块 {data['info']['highest_height']} Trxs {sum(data['trxtype'].values())} 用户 {len(data['pubkeys'])}\n"""
+        # 文本
+        note = f"""【{data['info']['group_name']}】数据概况\n创建 {data['create_at']}\n更新 {data['update_at']}\n区块 {data['info']['highest_height']} Trxs {sum(list(data['trxtype'].values()))} 用户 {len(data['pubkeys'])}"""
 
-        imgpath1 = "temptemp1.png"
-        imgpath2 = "temptemp2.png"
-        pd.Series(data["daily_trxs"]).plot(
-            figsize=(10, 7), title=f"Daily Trxs Counts", grid=False, stacked=False
-        ).get_figure().savefig(imgpath1)
-
-        daily_pubkeys = {}
-        for i in data["daily_pubkeys"]:
-            daily_pubkeys[i] = len(data["daily_pubkeys"][i])
-
-        pd.Series(daily_pubkeys).plot(
-            figsize=(15, 8),
-            title=f"Daily Trxs and Users Counts",
-            grid=False,
-            stacked=False,
-        ).get_figure().savefig(imgpath2)
-
-        kwargs = {"content": note, "image": [imgpath2]}
+        # 推送结果到指定组
+        kwargs = {"content": note, "image": [imgbytes]}
         if toshare_group_id == None:
             toshare_group_id = toview_group_id
-        self.group.send_note(toshare_group_id, **kwargs)
+        return self.group.send_note(toshare_group_id, **kwargs)
