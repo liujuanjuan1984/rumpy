@@ -121,3 +121,16 @@ class RumTrx(BaseRumAPI):
             except Exception as e:
                 pass  # print(e)
         return seeds
+
+    def search_user(self, trxdata: Dict, xname):
+        """
+        搜寻昵称包含 xname 的用户，历史昵称也会搜索~
+        返回 {pubkey:昵称} 作为结果
+        """
+
+        if trxdata["TypeUrl"] == "quorum.pb.Person":
+            if "name" in trxdata["Content"]:
+                name = trxdata["Content"]["name"]
+                if name.lower().find(xname.lower()) >= 0:
+                    return {trxdata["Publisher"]: name}
+        return {}

@@ -94,3 +94,15 @@ class RumNode(BaseRumAPI):
             irlt = self.group.search_seeds(group_id)
             rlt.update(irlt)
         return rlt
+
+    def search_user(self, xname):
+        """
+        搜寻昵称包含 xanme 的用户，历史记录也会搜寻到
+        返回{group_id : {pubkey:[昵称]}
+        """
+        rlt = {}
+        for group_id in self.groups_id:
+            irlt = self.group.search_user(group_id, xname)
+            if len(irlt) > 0:
+                rlt[group_id] = irlt
+        return rlt

@@ -9,6 +9,7 @@
 - [hellorum 你好 RUM](./examples/hellorum)：新手友好，展示如何自动创建组，自动发布内容。
 - [whosays 重点关注](./examples/whosays)：想要重点关注某人或某些人在各个组的动态并把动态归拢到一起方便查阅？这个工具适合你。
 - [leave groups 批量清理种子网络](./examples/leave_groups)：不小心创建了大量测试组？想要清理同步失败的组？这个工具适合你。
+- [search user 搜寻用户](./examples/search_user)：在你加入的所有种子网络中搜寻当前和曾经的昵称包含某个片段的用户，返回它们所在的 group_id 和 pubkey。
 - [search seeds 搜寻种子](./examples/search_seeds)：根据你已经加入的种子网络，自动搜寻并加入更多公开的种子网络，还可以把这些种子进一步扩散出去。想要自动探索 Rum，这个工具适合你。
 - [group statistics 种子网络数据概况](./examples/group_statistics)：统计指定组的数据概况，并生成图文发布，或保存到文件中。
 - [export data 批量数据导出](./examples/export_data)：你所加入的 所有 groups 的数据其实已经保存在你的本地。这个工具帮你把数据导出为排版良好的 markdown 文件及图片。
