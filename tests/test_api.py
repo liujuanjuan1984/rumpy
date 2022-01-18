@@ -3,22 +3,17 @@
 from time import sleep
 import pytest
 import sys
+import os
 
-sys.path.append(r"D:\Jupyter\rumpy")
+sys.path.append(os.path.realpath("."))
+from rumpy import JsonFile, Dir, RumClient
+from examples.config import client_params
+import dataclasses
 
-from rumpy import RumClient
-
-kwgs = {
-    "appid": "peer",
-    "host": "127.0.0.1",
-    "port": 55043,
-    "cacert": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
-}
-
-client = RumClient(**kwgs)
+client = RumClient(**client_params)
 
 
-class TestCase(object):
+class TestCase():
     def test_api(self):
 
         r = client.node.info
@@ -45,12 +40,12 @@ class TestCase(object):
         assert group_id in r4
 
         for i in range(10):
-            kwargs = {"text": f"你好 {i}"}
+            kwargs = {"content": f"你好 {i}"}
             r5 = client.group.send_note(group_id, **kwargs)
             assert "trx_id" in r5
 
         trx_id = r5["trx_id"]
-        kwargs = {"text": "回复一下", "trx_id": trx_id}
+        kwargs = {"content": "回复一下", "inreplyto": trx_id}
         r6 = client.group.send_note(group_id, **kwargs)
         assert "trx_id" in r6
 
@@ -69,7 +64,7 @@ class TestCase(object):
         resp = client.group.reply(group_id, "我回复你了", trx_id)
         assert "trx_id" in resp
 
-        resp = client.group.send_note(group_id, content="", image=[], trx_id=trx_id)
+        resp = client.group.send_note(group_id, content="", image=[], inreplyto=trx_id)
         assert "trx_id" not in resp
 
         resp = client.group.like(group_id, trx_id)
@@ -79,8 +74,12 @@ class TestCase(object):
         assert "trx_id" in resp
 
         trxs = client.group.content(group_id)
-        trxtype = client.trx.trx_type(trxs[-1])
-        assert type(trxtype) == str
+        try:
+            trxtype = client.trx.trx_type(trxs[-1])
+            assert type(trxtype) == str
+        except IndexError as e:
+            print(e)
+            pass
 
         r = client.group.send_img(group_id, "D:\\test-sample.png")
         assert "trx_id" in r
