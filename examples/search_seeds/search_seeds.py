@@ -99,7 +99,7 @@ class SearchSeeds(RumClient):
             return False
         # 最后更新时间在 7 天前
         sometime = datetime.datetime.now() + datetime.timedelta(days=-7)
-        lu = self.ts2datetime(info.last_updated)
+        lu = super().ts2datetime(info.last_updated)
         if lu < sometime:
             return False
 

@@ -14,4 +14,4 @@ client = RumClient(**client_params)
 
 for xname in ["xiaolai", "huoju"]:
     rlt = client.node.search_user(xname)
-    JsonFile(f"examples/search/data/search_user_{xname}.json").write(rlt)
+    JsonFile(f"examples/search_user/data/search_user_{xname}.json").write(rlt)

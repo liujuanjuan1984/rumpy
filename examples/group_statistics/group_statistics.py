@@ -38,7 +38,7 @@ class GroupStatistics(RumClient):
     def _count_daily_trxs(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = self.ts2datetime(i["TimeStamp"]).date()
+            ix = self.trx.ts2datetime(i).date()
             if ix not in rlt:
                 rlt[ix] = 1
             else:
@@ -48,7 +48,7 @@ class GroupStatistics(RumClient):
     def _count_daily_pubkeys(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = self.ts2datetime(i["TimeStamp"]).date()
+            ix = self.trx.ts2datetime(i).date()
             iy = i["Publisher"]
 
             if ix not in rlt:
@@ -64,8 +64,8 @@ class GroupStatistics(RumClient):
 
         return {
             "info": info.__dict__,
-            "create_at": str(self.ts2datetime(trxs[0]["TimeStamp"]))[:19],
-            "update_at": str(self.ts2datetime(trxs[-1]["TimeStamp"]))[:19],
+            "create_at": str(self.trx.ts2datetime(trxs[0]))[:19],
+            "update_at": str(self.trx.ts2datetime(trxs[-1]))[:19],
             "trxtype": self._count_trxtype(trxs),
             "pubkeys": self._count_pubkey(trxs),
             "daily_trxs": self._count_daily_trxs(trxs),
@@ -89,8 +89,7 @@ class GroupStatistics(RumClient):
             i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]
         }
         imgbytes = self.plot_lines(title, daily_trxs, daily_pubkeys)
-        if imgpath == None:
-            imgpath = filepath.replace(".json", ".png")
+        imgpath = imgpath or filepath.replace(".json", ".png")
 
         with open(imgpath, "wb") as f:
             f.write(imgbytes)
@@ -127,6 +126,5 @@ class GroupStatistics(RumClient):
 
         # 推送结果到指定组
         kwargs = {"content": note, "image": [imgbytes]}
-        if toshare_group_id == None:
-            toshare_group_id = toview_group_id
+        toshare_group_id = toshare_group_id or toview_group_id
         return self.group.send_note(toshare_group_id, **kwargs)

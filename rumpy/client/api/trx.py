@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import re
 import json
 import time
@@ -61,20 +62,25 @@ class RumTrx(BaseRumAPI):
                 and trxdata["TypeUrl"] == "quorum.pb.Person"
             ):
                 rlt.append(trxdata)
-        if since == None:
-            since = str(datetime.datetime.now())[:19]
+        since = since or datetime.datetime.now()
         for trxdata in rlt:
             if "name" in trxdata["Content"]:
-                if self.ts2datetime(trxdata["TimeStamp"]) <= since:
+                if self.trx.ts2datetime(trxdata) <= since:
                     return trxdata["Content"]["name"]
         return ""
 
+    def ts2datetime(self, trxdata):
+        # 把 rum 中的时间戳（纳米级）转换一下
+        return datetime.datetime.fromtimestamp(
+            int(int(trxdata["TimeStamp"]) / 1000000000)
+        )
+
     def export(self, trxdata: Dict, trxs: List) -> Dict:
         """export data with refer_to data"""
-        ts = str(self.ts2datetime(trxdata["TimeStamp"]))
+        ts = self.trx.ts2datetime(trxdata)
         info = {
             "trx_id": trxdata["TrxId"],
-            "trx_time": ts,
+            "trx_time": str(ts),
             "trx_type": self.trx_type(trxdata),
         }
 

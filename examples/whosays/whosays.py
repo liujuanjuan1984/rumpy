@@ -45,42 +45,46 @@ class WhoSays(RumClient):
                     print(resp, obj)
             return data
 
+    def _quote_text(self, text):
+        return "".join(["> ", "\n> ".join(text.split("\n")), "\n"])
+
     def _trans(self, one):
         obj = {"image": []}
-        note = f'{one["trx_time"]} '
+        lines = []
         _info = {"like": "赞", "dislike": "踩"}
         t = one["trx_type"]
         if t in _info:
             name = one["refer_to"]["name"] or "某人"
-            note = f"{note}点{_info[t]}给 `{name}` 发布的内容。\n"
+            lines.append(f"点{_info[t]}给 `{name}` 发布的内容。")
             if "text" in one["refer_to"]:
-                note = f'{note}> {"\n> ".join(one["refer_to"]["text"].split("\n"))}\n'
+                lines.append(self._quote_text(one["refer_to"]["text"]))
             if "imgs" in one["refer_to"]:
                 obj["image"].extend(one["refer_to"]["imgs"])
 
         elif t == "person":
-            note = f"{note}修改了个人信息。\n"
+            lines.append(f"修改了个人信息。")
         elif t == "annouce":
-            note  = f"{note}处理了链上请求。\n"
+            lines.append(f"处理了链上请求。")
         elif t == "reply":
-            note  = f"{note}回复说：\n"
+            lines.append(f"回复说：")
             if "text" in one:
-                note = f'{note}{one["text"]}\n'
+                lines.append(f"{one['text']}")
             if "imgs" in one:
                 obj["image"].extend(one["refer_to"]["imgs"])
 
             name = one["refer_to"]["name"] or "某人"
-            note  = f"{note}\n回复给 `{name}` 所发布的内容：\n"
+
+            lines.append(f"\n回复给 `{name}` 所发布的内容：")
             if "text" in one["refer_to"]:
-                note = f'{note}> {"\n> ".join(one["refer_to"]["text"].split("\n"))}\n'
+                lines.append(self._quote_text(one["refer_to"]["text"]))
             if "imgs" in one["refer_to"]:
                 obj["image"].extend(one["refer_to"]["imgs"])
 
         else:
-            note = f"{note}说：\n"
+            lines.append("说：")
             if "text" in one:
-                note = f'{note}{one["text"]}\n'
+                lines.append(one["text"])
             if "imgs" in one:
                 obj["image"].extend(one["imgs"])
-        obj["content"] = note
+        obj["content"] = one["trx_time"] + " " + "\n".join(lines)
         return obj

@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.append(os.path.realpath("."))
-from datetime import datetime
+import datetime
 import pandas as pd
 import re
 from typing import List, Dict
@@ -24,8 +24,7 @@ class TodoOne:
     memo: str = ""
 
     def __post_init__(self):
-        if self.update_at == None:
-            self.update_at = self.create_at
+        self.update_at = self.update_at or self.create_at
 
 
 class ToDoList(RumClient):
@@ -45,7 +44,7 @@ class ToDoList(RumClient):
                 continue
 
             trxtype = self.trx.trx_type(trx)
-            ts = str(self.ts2datetime(trx["TimeStamp"]))
+            ts = str(self.trx.ts2datetime(trx))
 
             if trxtype in _info:
                 todoid = trx["Content"]["id"]
@@ -76,22 +75,19 @@ class ToDoList(RumClient):
         return dataframe type data of todos
         today:str 2021-11-21
         """
-        if data == None:
-            data = self.data(group_id, pubkeys)
+        data = data or self.data(group_id, pubkeys)
 
         df = pd.DataFrame(data).T
         # all todos
         alltodo = df[df["status"] == 0]
-        if today == None:
-            today = str(datetime.now())[:10]
         # todos for today
+        today = today or f"{datetime.date.today()}"
         todaytodo = alltodo[alltodo["task"].str.find(today) >= 0]
         return alltodo, todaytodo
 
     def todo(self, group_id, pubkeys, today=None, data=None):
         """return dict type data of todos"""
-        if data == None:
-            data = self.data(group_id, pubkeys)
+        data = data or self.data(group_id, pubkeys)
 
         # all todos
         alltodo = {}
@@ -100,12 +96,10 @@ class ToDoList(RumClient):
             if data[tid]["status"] == 0:
                 alltodo[tid] = data[tid]
         # todos for today
-        if today == None:
-            today = str(datetime.now())[:10]
 
         todaytodo = {}
         for tid in alltodo:
-            if alltodo[tid]["task"].find(today) >= 0:
+            if alltodo[tid]["task"].find(today or f"{datetime.date.today()}") >= 0:
                 todaytodo[tid] = data[tid]
 
         return alltodo, todaytodo
