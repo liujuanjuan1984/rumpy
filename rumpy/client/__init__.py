@@ -38,7 +38,8 @@ class RumClient:
                 "Content-Type": "application/json",
             }
         )
-
+        if cp.jwt_token:
+            self._session.headers.update({"Authorization": f"Bearer {cp.jwt_token}"})
         self.baseurl = f"https://{cp.host}:{cp.port}/api/v1"
 
     def _request(self, method, url, **kwargs):

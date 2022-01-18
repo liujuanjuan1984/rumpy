@@ -16,6 +16,7 @@ class ClientParams:
     crtfile: str
     host: str = "127.0.0.1"
     appid: str = "peer"
+    jwt_token: str = None
 
 
 @dataclasses.dataclass

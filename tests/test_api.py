@@ -13,7 +13,7 @@ import dataclasses
 client = RumClient(**client_params)
 
 
-class TestCase():
+class TestCase:
     def test_api(self):
 
         r = client.node.info
