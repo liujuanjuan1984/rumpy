@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+import datetime
 
 
 class JsonFile:
@@ -17,16 +17,14 @@ class JsonFile:
             with open(self.filepath, "r", encoding="utf-8") as __f:
                 filedata = json.load(__f)
             return filedata
-        except Exception as e:
-            print(e)
-            print(datetime.now(), self.filepath, "failed，not json file")
+        except:
             return nulldata
 
     def write(self, filedata, indent=1, is_print=True, is_cover=True):
         """把数据写入 json 文件，indent 默认指定缩进值为 1"""
         # 文件已存在，且不想覆盖时，就自动生成 temp
         filepath = self.filepath
-        if os.path.exists(self.filepath) and is_cover == False:
+        if os.path.exists(self.filepath) and not is_cover:
             filepath = f"{filepath}{str(datetime.now())[-6:]}.temp.json"
 
         with open(filepath, "w", encoding="utf-8") as __f:
@@ -45,7 +43,7 @@ class JsonFile:
                     cls=MyEncoder,
                 )
         if is_print:
-            print(datetime.now(), filepath, f"write_file_by_json done.")
+            print(datetime.datetime.now(), filepath, f"write done.")
 
     def rewrite(self):
         """重新读写数据文件，通常是为了规范格式，以方便检查改动"""

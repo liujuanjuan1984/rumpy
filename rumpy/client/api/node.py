@@ -59,11 +59,11 @@ class RumNode(BaseRumAPI):
 
     def group_info(self, group_id: str):
         """return a group info"""
-        if self.is_joined(group_id):
-            for ginfo in self.groups():
-                if ginfo["group_id"] == group_id:
-                    return ginfo
-        return {"error": "you are not in this group."}
+        if not self.is_joined(group_id):
+            raise ValueError("you are not in this group.")
+        for ginfo in self.groups():
+            if ginfo["group_id"] == group_id:
+                return ginfo
 
     def is_joined(self, group_id: str) -> bool:
         if group_id in self.groups_id:
@@ -84,15 +84,14 @@ class RumNode(BaseRumAPI):
 
     def join_group(self, seed: Dict) -> Dict:
         """加入种子网络"""
-        if self.is_seed(seed):
-            return self._post(f"{self.baseurl}/group/join", seed)
-        return {"error": "not a seed"}
+        if not self.is_seed(seed):
+            raise ValueError("not a seed or the seed could not be identified.")
+        return self._post(f"{self.baseurl}/group/join", seed)
 
     def search_seeds(self) -> Dict:
         rlt = {}
         for group_id in self.groups_id:
-            irlt = self.group.search_seeds(group_id)
-            rlt.update(irlt)
+            rlt.update(self.group.search_seeds(group_id))
         return rlt
 
     def search_user(self, xname):
@@ -100,6 +99,8 @@ class RumNode(BaseRumAPI):
         搜寻昵称包含 xanme 的用户，历史记录也会搜寻到
         返回{group_id : {pubkey:[昵称]}
         """
+        if not xname:
+            raise ValueError("need piece of nickename to search.")
         rlt = {}
         for group_id in self.groups_id:
             irlt = self.group.search_user(group_id, xname)

@@ -24,7 +24,7 @@ class RumGroup(BaseRumAPI):
         """get the seed of a group which you've joined in."""
         if self.node.is_joined(group_id):
             return self._get(f"{self.baseurl}/group/{group_id}/seed")
-        return {"error": "you are not in this group."}
+        raise ValueError("you are not in this group.")
 
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
@@ -34,7 +34,7 @@ class RumGroup(BaseRumAPI):
         """leave a group"""
         if self.node.is_joined(group_id):
             return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
-        return {"info": "you are not in this group."}
+        # raise ValueError("you are not in this group.")
 
     def content(self, group_id: str) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
@@ -43,7 +43,7 @@ class RumGroup(BaseRumAPI):
     def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""
         if not self.node.is_joined(group_id):
-            return {"error": "you are not in this group."}
+            raise ValueError("you are not in this group.")
         p = {"type": sendtype, "object": obj, "target": group_id}
         data = ContentParams(**p).__dict__
         return self._post(f"{self.baseurl}/group/content", data)
@@ -58,7 +58,7 @@ class RumGroup(BaseRumAPI):
         """send note to a group. can be used to send: text only,image only,text with image,reply...etc"""
         p = ContentObjParams(**kwargs)
         if p.content == None and p.image == None:
-            return {"error": "need some content. images,text,or both."}
+            raise ValueError("need some content. images,text,or both.")
         return self._send(group_id, p.__dict__, "Add")
 
     def reply(self, group_id: str, content: str, trx_id: str):

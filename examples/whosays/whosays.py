@@ -3,7 +3,6 @@
 import datetime
 from typing import List, Dict
 import json
-from time import sleep
 import os
 import sys
 
@@ -38,11 +37,9 @@ class WhoSays(RumClient):
                 obj = self._trans(gtrxs[trx_id])
                 obj["content"] = f"{name} {obj['content']}来源{json.dumps(seed)}"
 
-                resp = self.group.send_note(toshare_group_id, **obj)
-                if "error" not in resp:
+                if "trx_id" in self.group.send_note(toshare_group_id, **obj):
                     data[group_id]["trxs"][trx_id]["shared"].append(toshare_group_id)
-                else:
-                    print(resp, obj)
+                
             return data
 
     def _quote_text(self, text):

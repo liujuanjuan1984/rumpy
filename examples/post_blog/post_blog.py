@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from time import sleep
+import time
 import datetime
 import pytest
 import os
@@ -35,6 +35,6 @@ for imd in mds:
     resp = client.group.send_note(group_id, **objs)
     if "trx_id" not in resp:
         failed.append(imd)
-    sleep(1)
+    time.sleep(1)
 
 print(failed)

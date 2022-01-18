@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from time import sleep
 import pytest
 import sys
 import os

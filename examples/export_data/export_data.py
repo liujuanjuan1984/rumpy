@@ -32,7 +32,7 @@ def export():
         gtrxs = my_trxs[(group_id, group_name)]
         if group_name != "刘娟娟的朋友圈":  # 测试用途，限定了只导出自己想要的组
             continue
-        if gtrxs == []:
+        if not gtrxs:
             continue
         gfile = f"{JSON_DIR}\\{group_name}_{group_id}_{datetime.date.today()}.json"
         gdata = []
