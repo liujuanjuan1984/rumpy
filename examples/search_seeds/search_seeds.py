@@ -129,7 +129,7 @@ class SearchSeeds(RumClient):
             if not text:
                 continue
             # 分享到指定组
-            text = json.dumps(data[gid]["seed"]) + text
+            text = f'{json.dumps(data[gid]["seed"])}{text}'
             resp = self.group.send_text(group_id, text)
 
             # 跳过没有推送成功的

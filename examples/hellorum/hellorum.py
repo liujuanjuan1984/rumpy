@@ -19,29 +19,29 @@ def main():
     group_id = seed["group_id"]
 
     # 往该组内发布内容、点赞、评论等
-    kwargs = {"content": str(datetime.datetime.now()) + " 只有文本"}
+    kwargs = {"content": f"{str(datetime.datetime.now())} 只有文本"}
     resp1 = client.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "content": str(datetime.datetime.now()) + " 有文有图",
+        "content": f"{str(datetime.datetime.now())} 有文有图",
         "image": [r"D:\Jupyter\rumpy\examples\hellorum\girl.png"],  # 需修改为：你本地的一张图片的路径
     }
     resp2 = client.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "content": str(datetime.datetime.now()) + " 评论`只有文本`的那条",
+        "content": f"{str(datetime.datetime.now())} 评论`只有文本`的那条",
         "inreplyto": resp1["trx_id"],
     }
     resp3 = client.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "content": str(datetime.datetime.now()) + " 评论`有文有图`的那条",
+        "content": f"{str(datetime.datetime.now())} 评论`有文有图`的那条",
         "inreplyto": resp2["trx_id"],
     }
     resp4 = client.group.send_note(group_id, **kwargs)
 
     kwargs = {
-        "content": str(datetime.datetime.now()) + " 对评论的回复",
+        "content": f"{str(datetime.datetime.now())} 对评论的回复",
         "inreplyto": resp4["trx_id"],
     }
     resp5 = client.group.send_note(group_id, **kwargs)

@@ -67,7 +67,7 @@ class ToDoList(RumClient):
             elif trxtype in ["reply"]:  # 对待办添加评论，视为 memo
                 todoid = trx["Content"]["inreplyto"]["trxid"]
                 if todoid in data:
-                    data[todoid]["memo"] += f"\n### {ts}\n" + note + "\n"
+                    data[todoid]["memo"] += f"\n### {ts}\n{note}\n"
         data = self._remove_repeat(data)  # 移除被标记为重复的任务
         return data
 

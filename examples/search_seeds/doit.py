@@ -13,9 +13,9 @@ def main():
     # 初始化
     client = SearchSeeds(**client_params)
     # 数据文件
-    dirpath = os.path.realpath(".") + "\\examples\\search_seeds\\data"
+    dirpath = f"{os.path.realpath('.')}\\examples\\search_seeds\\data"
     Dir(dirpath).check_dir()
-    filepath = dirpath + "\\search_seeds_and_joined_data.json"
+    filepath = f"{dirpath}\\search_seeds_and_joined_data.json"
     data = JsonFile(filepath).read()
 
     # 搜寻种子并更新数据文件

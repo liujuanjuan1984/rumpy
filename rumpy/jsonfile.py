@@ -27,7 +27,7 @@ class JsonFile:
         # 文件已存在，且不想覆盖时，就自动生成 temp
         filepath = self.filepath
         if os.path.exists(self.filepath) and is_cover == False:
-            filepath += str(datetime.now())[-6:] + ".temp.json"
+            filepath = f"{filepath}{str(datetime.now())[-6:]}.temp.json"
 
         with open(filepath, "w", encoding="utf-8") as __f:
             try:

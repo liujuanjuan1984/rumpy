@@ -36,7 +36,7 @@ class WhoSays(RumClient):
                 if toshare_group_id in data[group_id]["trxs"][trx_id]["shared"]:
                     continue
                 obj = self._trans(gtrxs[trx_id])
-                obj["content"] = f"{name} {obj['content']}来源" + json.dumps(seed)
+                obj["content"] = f"{name} {obj['content']}来源{json.dumps(seed)}"
 
                 resp = self.group.send_note(toshare_group_id, **obj)
                 if "error" not in resp:
@@ -47,39 +47,39 @@ class WhoSays(RumClient):
 
     def _trans(self, one):
         obj = {"image": []}
-        note = one["trx_time"] + " "
+        note = f'{one["trx_time"]} '
         _info = {"like": "赞", "dislike": "踩"}
         t = one["trx_type"]
         if t in _info:
             name = one["refer_to"]["name"] or "某人"
-            note += f"点{_info[t]}给 `{name}` 发布的内容。\n"
+            note = f"{note}点{_info[t]}给 `{name}` 发布的内容。\n"
             if "text" in one["refer_to"]:
-                note += "> " + "\n> ".join(one["refer_to"]["text"].split("\n")) + "\n"
+                note = f'{note}> {"\n> ".join(one["refer_to"]["text"].split("\n"))}\n'
             if "imgs" in one["refer_to"]:
                 obj["image"].extend(one["refer_to"]["imgs"])
 
         elif t == "person":
-            note += "修改了个人信息。\n"
+            note = f"{note}修改了个人信息。\n"
         elif t == "annouce":
-            note += "处理了链上请求。\n"
+            note  = f"{note}处理了链上请求。\n"
         elif t == "reply":
-            note += "回复说：\n"
+            note  = f"{note}回复说：\n"
             if "text" in one:
-                note += one["text"] + "\n"
+                note = f'{note}{one["text"]}\n'
             if "imgs" in one:
                 obj["image"].extend(one["refer_to"]["imgs"])
 
             name = one["refer_to"]["name"] or "某人"
-            note += f"\n回复给 `{name}` 所发布的内容：\n"
+            note  = f"{note}\n回复给 `{name}` 所发布的内容：\n"
             if "text" in one["refer_to"]:
-                note += "> " + "\n> ".join(one["refer_to"]["text"].split("\n")) + "\n"
+                note = f'{note}> {"\n> ".join(one["refer_to"]["text"].split("\n"))}\n'
             if "imgs" in one["refer_to"]:
                 obj["image"].extend(one["refer_to"]["imgs"])
 
         else:
-            note += "说：\n"
+            note = f"{note}说：\n"
             if "text" in one:
-                note += one["text"] + "\n"
+                note = f'{note}{one["text"]}\n'
             if "imgs" in one:
                 obj["image"].extend(one["imgs"])
         obj["content"] = note
