@@ -10,8 +10,9 @@ from rumpy.client.data import (
     ContentParams,
     GroupInfo,
     DeniedlistUpdateParams,
-    ProducerAnnounceParams,
+    AnnounceParams,
     ProducerUpdateParams,
+    UserUpdateParams,
 )
 
 
@@ -39,6 +40,26 @@ class RumGroup(BaseRumAPI):
     def content(self, group_id: str) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
         return self._get(f"{self.baseurl}/group/{group_id}/content") or []
+
+    def is_trx_in_group(self, group_id: str, trx_id: str):
+        """is trx in this group?"""
+        try:
+            trxdata = self.trx.info(group_id, trx_id)
+            if "TrxId" in trxdata:
+                return True
+            return False
+        except:
+            return False
+
+    def content_trxs(self, group_id: str, trx_id: str, num: int = 200) -> List:
+        """requests the content trxs of a group,return the list of the trxs data."""
+        if not self.is_trx_in_group(group_id, trx_id):
+            raise ValueError("the trx isn't in this group.")
+        url = self.baseurl.replace("api", "app/api")
+        return (
+            self._post(f"{url}/group/{group_id}/content?num={num}&starttrx={trx_id}", {})
+            or []
+        )
 
     def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""
@@ -103,14 +124,27 @@ class RumGroup(BaseRumAPI):
         content_by = [self.trx.export(i, trxs) for i in trxs_by]
         return content_by
 
+    def announce(self, **kwargs):
+        """annouce user or producer,add or remove"""
+        p = AnnounceParams(**kwargs).__dict__
+        return self._post(f"{self.baseurl}/group/announce", p)
+
     def announced_producers(self, group_id: str):
         return self._get(f"{self.baseurl}/group/{group_id}/announced/producers")
+
+    def announced_users(self, group_id: str):
+        return self._get(f"{self.baseurl}/group/{group_id}/announced/users")
 
     def producers(self, group_id: str):
         return self._get(f"{self.baseurl}/group/{group_id}/producers")
 
-    def announced_users(self, group_id: str):
-        return self._get(f"{self.baseurl}/group/{group_id}/announced/users")
+    def update_user(self, **kwargs):
+        p = UserUpdateParams(**kwargs).__dict__
+        return self._post(f"{self.baseurl}/group/user", p)
+
+    def update_producer(self, **kwargs):
+        p = ProducerUpdateParams(**kwargs).__dict__
+        return self._post(f"{self.baseurl}/group/producer", p)
 
     def keylist(self, group_id: str):
         return self._get(f"{self.baseurl}/group/{group_id}/config/keylist")
@@ -124,14 +158,6 @@ class RumGroup(BaseRumAPI):
     def update_deniedlist(self, **kwargs):
         p = DeniedlistUpdateParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/deniedlist", p)
-
-    def announce_producer(self, **kwargs):
-        p = ProducerAnnounceParams(**kwargs).__dict__
-        return self._post(f"{self.baseurl}/group/announce", p)
-
-    def update_producer(self, **kwargs):
-        p = ProducerUpdateParams(**kwargs).__dict__
-        return self._post(f"{self.baseurl}/group/producer", p)
 
     def search_seeds(self, group_id: str) -> Dict:
         """search seeds from group"""

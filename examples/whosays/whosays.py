@@ -39,7 +39,7 @@ class WhoSays(RumClient):
 
                 if "trx_id" in self.group.send_note(toshare_group_id, **obj):
                     data[group_id]["trxs"][trx_id]["shared"].append(toshare_group_id)
-                
+
             return data
 
     def _quote_text(self, text):

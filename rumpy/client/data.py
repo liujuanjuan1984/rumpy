@@ -82,16 +82,30 @@ class DeniedlistUpdateParams:
 
 
 @dataclasses.dataclass
-class ProducerAnnounceParams:
+class AnnounceParams:
+    """
+    group_id:
+    action: add or remove
+    type: user or producer
+    memo:
+    """
+
     group_id: str
-    action: str = "add"
-    type: str = "producer"
-    memo: str = "producer, realiable and cheap, online 24hr"
+    action: str
+    type: str
+    memo: str
 
 
 @dataclasses.dataclass
 class ProducerUpdateParams:
     producer_pubkey: str
+    group_id: str
+    action: str  # "add" or "remove"
+
+
+@dataclasses.dataclass
+class UserUpdateParams:
+    user_pubkey: str
     group_id: str
     action: str  # "add" or "remove"
 
@@ -108,7 +122,7 @@ class CreateGroupParam:
     def __post_init__(self):
         if self.consensus_type not in ["poa"]:  # ["poa","pos","pow"]:
             self.consensus_type = "poa"
-        if self.encryption_type not in ["public"]:  # ["public","private"]:
+        if self.encryption_type not in ["public", "private"]:
             self.encryption_type = "public"
         # if self.app_key not in ["group_timeline", "group_post", "group_note"]:
         #    self.app_key = "group_timeline"
