@@ -141,3 +141,4 @@ examples/whosays/huoju_says.json
 examples/search_seeds/data/search_seeds_and_joined_data.json
 examples/config.py
 black_reformat.py
+/database
