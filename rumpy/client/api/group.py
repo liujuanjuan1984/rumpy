@@ -25,7 +25,7 @@ class RumGroup(BaseRumAPI):
         """get the seed of a group which you've joined in."""
         if self.node.is_joined(group_id):
             return self._get(f"{self.baseurl}/group/{group_id}/seed")
-        raise ValueError("you are not in this group.")
+        raise ValueError(f"you are not in this group {group_id}.")
 
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
@@ -54,12 +54,11 @@ class RumGroup(BaseRumAPI):
     def content_trxs(self, group_id: str, trx_id: str, num: int = 200) -> List:
         """requests the content trxs of a group,return the list of the trxs data."""
         if not self.is_trx_in_group(group_id, trx_id):
-            raise ValueError("the trx isn't in this group.")
+            raise ValueError(f"the trx {trx_id} isn't in this group {group_id}.")
         url = self.baseurl.replace("api", "app/api")
-        return (
-            self._post(f"{url}/group/{group_id}/content?num={num}&starttrx={trx_id}", {})
-            or []
-        )
+        apiurl = f"{url}/group/{group_id}/content?num={num}&starttrx={trx_id}"
+
+        return self._post(apiurl, {}) or []
 
     def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""

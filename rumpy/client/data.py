@@ -10,6 +10,13 @@ class ClientParams:
     :param port, int, Rum 服务 端口号
     :param host,str, Rum 服务 host，通常是 127.0.0.1
     :param crtfile, str, Rum 的 server.crt 文件的绝对路径
+
+    {
+        "port":8002,
+        "host":"127.0.0.1",
+        "appid":"peer"
+        "crtfile":"",
+    }
     """
 
     port: int
@@ -27,6 +34,17 @@ class ContentObjParams:
     image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
     inreplyto:str,trx_id
     type: `Note`
+
+    {
+        "type":"Note"
+        "content":"text content",
+        "name":"title",
+        "image":[],
+        "inreplyto":{
+            "trx_id":""
+        },
+    }
+
     """
 
     content: str = None
@@ -48,6 +66,17 @@ class ContentObjParams:
 
 @dataclasses.dataclass
 class ContentParams:
+    """
+    {
+        "type":"Add"
+        "object":{},
+        "target":{
+            "id": "",
+            "type": "Group",
+            }
+    }
+    """
+
     type: Any
     object: Dict
     target: str  # group_id
@@ -88,6 +117,13 @@ class AnnounceParams:
     action: add or remove
     type: user or producer
     memo:
+
+    {
+        "group_id": "",
+        "action": "add",
+        "type": "user",
+        "memo": ""
+    }
     """
 
     group_id: str
@@ -98,6 +134,14 @@ class AnnounceParams:
 
 @dataclasses.dataclass
 class ProducerUpdateParams:
+    """
+    {
+        "producer_pubkey": "",
+        "group_id": "",
+        "action": "add",
+    }
+    """
+
     producer_pubkey: str
     group_id: str
     action: str  # "add" or "remove"
@@ -105,6 +149,14 @@ class ProducerUpdateParams:
 
 @dataclasses.dataclass
 class UserUpdateParams:
+    """
+    {
+        "user_pubkey": "",
+        "group_id": "",
+        "action": "add",
+    }
+    """
+
     user_pubkey: str
     group_id: str
     action: str  # "add" or "remove"
@@ -112,7 +164,17 @@ class UserUpdateParams:
 
 @dataclasses.dataclass
 class CreateGroupParam:
-    """app_key: 可以为自定义字段，只是如果不是 group_timeline,group_post,group_note 这三种，可能无法在 rumapp 中识别，如果是自己开发客户端，则可以自定义类型"""
+    """
+    app_key: 可以为自定义字段，只是如果不是 group_timeline,group_post,group_note 这三种，可能无法在 rumapp 中识别，如果是自己开发客户端，则可以自定义类型
+
+    {
+        "group_name": "",
+        "consensus_type": "poa",
+        "encryption_type": "private",
+        "app_key":"group_timeline"
+    }
+
+    """
 
     group_name: str
     consensus_type: str = "poa"
