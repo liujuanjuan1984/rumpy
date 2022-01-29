@@ -94,18 +94,11 @@ def table_group_trxs(group_id):
         con.commit()
 
     # 查询内容并写入数据库
-    try:
-        # 从数据库中查找
-        data = cu.execute(
-            f"""SELECT TrxId from {gt_name} order by TimeStamp limit 0,1"""
-        )
-        con.commit()
-        trx_id = [TrxId for (TrxId,) in data][0]
-        print(trx_id, client.trx.info(group_id, trx_id)["TimeStamp"])
-        # print([TrxId for (TrxId,) in data])
-    except:
-        # 从链上查找
-        trx_id = client.group.content(group_id)[0]["TrxId"]
+
+    # 从数据库中查找
+    data = cu.execute(f"""SELECT TrxId from {gt_name} order by TimeStamp limit 0,1""")
+    con.commit()
+    trx_id = [TrxId for (TrxId,) in data][0] or "0"  # 查不到就默认为 0
 
     trxs = client.group.content_trxs(group_id, trx_id)
 
@@ -120,6 +113,7 @@ def table_group_trxs(group_id):
             except:
                 pass
 
+        # 该处理主要是避免陷入死循环，但同时又需要关注该种异常
         xtrx_id = trxs[-1]["TrxId"]
         if xtrx_id != trx_id:
             trx_id = xtrx_id
@@ -127,6 +121,7 @@ def table_group_trxs(group_id):
             print(group_id, trx_id, trxs)
             break
         print(datetime.datetime.now(), trx_id, "get content_trxs ...")
+
         trxs = client.group.content_trxs(group_id, trx_id)
 
 

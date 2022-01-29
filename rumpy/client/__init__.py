@@ -3,6 +3,9 @@
 import datetime
 import inspect
 import requests
+import urllib3
+
+urllib3.disable_warnings()
 from rumpy.client import api
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.client.data import ClientParams
@@ -29,9 +32,12 @@ class RumClient:
 
     def __init__(self, **kwargs):
         cp = ClientParams(**kwargs)
+        requests.adapters.DEFAULT_RETRIES = 5
         self.appid = cp.appid
         self._session = requests.Session()
         self._session.verify = cp.crtfile
+        self._session.keep_alive = False
+
         self._session.headers.update(
             {
                 "USER-AGENT": "python.api",

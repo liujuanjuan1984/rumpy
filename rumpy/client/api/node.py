@@ -60,7 +60,7 @@ class RumNode(BaseRumAPI):
     def group_info(self, group_id: str):
         """return a group info"""
         if not self.is_joined(group_id):
-            raise ValueError("you are not in this group.")
+            raise ValueError(f"you are not in this group {group_id}.")
         for ginfo in self.groups():
             if ginfo["group_id"] == group_id:
                 return ginfo
