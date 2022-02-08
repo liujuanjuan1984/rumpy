@@ -17,9 +17,9 @@ from rumpy.client.data import (
 
 
 class RumGroup(BaseRumAPI):
-    def create(self, group_name: str, **kargs) -> Dict:
+    def create(self, group_name: str, **kwargs) -> Dict:
         """create a group, return the seed of the group."""
-        return self.node.create_group(group_name, **kargs)
+        return self.node.create_group(group_name, **kwargs)
 
     def seed(self, group_id: str) -> Dict:
         """get the seed of a group which you've joined in."""
@@ -39,7 +39,7 @@ class RumGroup(BaseRumAPI):
 
     def startsync(self, group_id: str):
         if self.node.is_joined(group_id):
-            return self._post(f"{self.baseurl}/group/{group_id}/startsync", {})
+            return self._post(f"{self.baseurl}/group/{group_id}/startsync")
 
     def content(self, group_id: str) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
@@ -84,7 +84,7 @@ class RumGroup(BaseRumAPI):
             apiurl = f"{url}/group/{group_id}/content?num={num}&start=0"
             # raise ValueError(f"the trx {trx_id} isn't in this group {group_id}.")
 
-        return self._post(apiurl, {}) or []
+        return self._post(apiurl) or []
 
     def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""

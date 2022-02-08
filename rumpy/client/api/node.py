@@ -1,9 +1,20 @@
 # -*- coding: utf-8 -*-
 
 from typing import List, Dict
+from dataclasses import dataclass
 from rumpy.client.api.base import BaseRumAPI
 from rumpy.client.api.group import RumGroup
-from rumpy.client.data import CreateGroupParam, Block, Seed, NodeInfo
+from rumpy.client.data import CreateGroupParam, Seed
+
+
+@dataclass
+class NodeInfo:
+    node_id: str
+    node_publickey: str
+    node_status: str
+    node_type: str
+    node_version: str
+    peers: Dict
 
 
 class RumNode(BaseRumAPI):
@@ -70,8 +81,8 @@ class RumNode(BaseRumAPI):
             return True
         return False
 
-    def create_group(self, group_name, **kargs):
-        data = CreateGroupParam(group_name, **kargs).__dict__
+    def create_group(self, group_name, **kwargs):
+        data = CreateGroupParam(group_name, **kwargs).__dict__
         return self._post(f"{self.baseurl}/group", data)
 
     def is_seed(self, seed: Dict) -> bool:

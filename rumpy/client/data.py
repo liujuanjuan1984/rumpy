@@ -4,29 +4,6 @@ from rumpy.img import Img
 
 
 @dataclasses.dataclass
-class ClientParams:
-    """
-    :param appid, str, Rum 客户端标识，自定义，随便写
-    :param port, int, Rum 服务 端口号
-    :param host,str, Rum 服务 host，通常是 127.0.0.1
-    :param crtfile, str, Rum 的 server.crt 文件的绝对路径
-
-    {
-        "port":8002,
-        "host":"127.0.0.1",
-        "appid":"peer"
-        "crtfile":"",
-    }
-    """
-
-    port: int
-    crtfile: str
-    host: str = "127.0.0.1"
-    appid: str = "peer"
-    jwt_token: str = None
-
-
-@dataclasses.dataclass
 class ContentObjParams:
     """
     content: str,text
@@ -212,13 +189,3 @@ class Seed:
     signature: str
     owner_pubkey: str
     owner_encryptpubkey: str = None  # 新版本似乎弃用该字段了
-
-
-@dataclasses.dataclass
-class NodeInfo:
-    node_id: str
-    node_publickey: str
-    node_status: str
-    node_type: str
-    node_version: str
-    peers: Dict

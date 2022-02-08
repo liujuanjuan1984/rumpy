@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from dataclasses import dataclass
 import inspect
 import requests
 import urllib3
@@ -8,7 +9,29 @@ import urllib3
 urllib3.disable_warnings()
 from rumpy.client import api
 from rumpy.client.api.base import BaseRumAPI
-from rumpy.client.data import ClientParams
+
+
+@dataclass
+class ClientParams:
+    """
+    :param appid, str, Rum 客户端标识，自定义，随便写
+    :param port, int, Rum 服务 端口号
+    :param host,str, Rum 服务 host，通常是 127.0.0.1
+    :param crtfile, str, Rum 的 server.crt 文件的绝对路径
+
+    {
+        "port":8002,
+        "host":"127.0.0.1",
+        "appid":"peer"
+        "crtfile":"",
+    }
+    """
+
+    port: int
+    crtfile: str
+    host: str = "127.0.0.1"
+    appid: str = "peer"
+    jwt_token: str = None
 
 
 def _is_api_endpoint(obj):
@@ -48,15 +71,15 @@ class RumClient:
             self._session.headers.update({"Authorization": f"Bearer {cp.jwt_token}"})
         self.baseurl = f"https://{cp.host}:{cp.port}/api/v1"
 
-    def _request(self, method, url, **kwargs):
-        resp = self._session.request(method=method, url=url, **kwargs)
+    def _request(self, method, url, relay={}):
+        resp = self._session.request(method=method, url=url, json=relay)
         return resp.json()
 
-    def get(self, url):
-        return self._request("get", url)
+    def get(self, url, relay={}):
+        return self._request("get", url, relay)
 
-    def post(self, url, data):
-        return self._request("post", url, json=data)
+    def post(self, url, relay={}):
+        return self._request("post", url, relay)
 
     def ts2datetime(self, ts):
         # 把 rum 中的时间戳（纳米级）转换一下
