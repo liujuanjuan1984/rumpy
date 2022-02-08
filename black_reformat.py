@@ -10,5 +10,5 @@ from rumpy.jsonfile import JsonFile
 Dir("./").black_auto()
 
 # 对 .json 重写
-for i in Dir("./").search_files_by_types(".json"):
-    JsonFile(i).rewrite()
+# for i in Dir("./").search_files_by_types(".json"):
+#    JsonFile(i).rewrite()

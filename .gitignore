@@ -132,7 +132,7 @@ dmypy.json
 /temp
 /docs
 /Makefile
-requirements*
+requirements_dev.txt
 *version.cfg 
 setup.py 
 *temp*

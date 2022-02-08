@@ -37,6 +37,10 @@ class RumGroup(BaseRumAPI):
             return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
         # raise ValueError("you are not in this group.")
 
+    def startsync(self, group_id: str):
+        if self.node.is_joined(group_id):
+            return self._post(f"{self.baseurl}/group/{group_id}/startsync", {})
+
     def content(self, group_id: str) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
         return self._get(f"{self.baseurl}/group/{group_id}/content") or []
