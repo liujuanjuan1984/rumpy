@@ -14,36 +14,21 @@ class JsonFile:
         if not os.path.exists(self.filepath):
             return nulldata
         try:
-            with open(self.filepath, "r", encoding="utf-8") as __f:
-                filedata = json.load(__f)
+            with open(self.filepath, "r", encoding="utf-8") as f:
+                filedata = json.load(f)
             return filedata
         except:
             return nulldata
 
-    def write(self, filedata, indent=1, is_print=True, is_cover=True):
+    def write(self, filedata, indent=1, is_cover=True):
         """把数据写入 json 文件，indent 默认指定缩进值为 1"""
         # 文件已存在，且不想覆盖时，就自动生成 temp
         filepath = self.filepath
-        if os.path.exists(self.filepath) and not is_cover:
-            filepath = f"{filepath}{str(datetime.now())[-6:]}.temp.json"
+        if os.path.exists(filepath) and not is_cover:
+            filepath += f"{datetime.date.today()}.temp.json"
 
-        with open(filepath, "w", encoding="utf-8") as __f:
-            try:
-                json.dump(
-                    filedata, __f, indent=indent, sort_keys=False, ensure_ascii=False
-                )
-            except Exception as e:
-                print(e)
-                json.dump(
-                    filedata,
-                    __f,
-                    indent=indent,
-                    sort_keys=False,
-                    ensure_ascii=False,
-                    cls=MyEncoder,
-                )
-        if is_print:
-            print(datetime.datetime.now(), filepath, f"write done.")
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(filedata, f, indent=indent, sort_keys=False, ensure_ascii=False)
 
     def rewrite(self):
         """重新读写数据文件，通常是为了规范格式，以方便检查改动"""

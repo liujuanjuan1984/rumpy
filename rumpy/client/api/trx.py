@@ -57,6 +57,7 @@ class RumTrx(BaseRumAPI):
         if trx_id_or_pubkey.endswith("=="):
             pubkey = trx_id_or_pubkey
         else:
+            trx_id = trx_id_or_pubkey
             trxdata = self.trxdata(trx_id, trxs)
             pubkey = trxdata[key]
 

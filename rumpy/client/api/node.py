@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 from typing import List, Dict
 from dataclasses import dataclass
 from rumpy.client.api.base import BaseRumAPI
@@ -15,6 +16,17 @@ class NodeInfo:
     node_type: str
     node_version: str
     peers: Dict
+
+    def values(self):
+        """供 sql 调用"""
+        return (
+            self.node_id,
+            self.node_publickey,
+            self.node_status,
+            self.node_type,
+            self.node_version,
+            json.dumps(self.peers),
+        )
 
 
 class RumNode(BaseRumAPI):
