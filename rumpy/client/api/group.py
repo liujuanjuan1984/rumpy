@@ -25,7 +25,7 @@ class RumGroup(BaseRumAPI):
         """get the seed of a group which you've joined in."""
         if self.node.is_joined(group_id):
             return self._get(f"{self.baseurl}/group/{group_id}/seed")
-        raise ValueError(f"you are not in this group {group_id}.")
+        # raise ValueError(f"you are not in this group {group_id}.")
 
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
@@ -49,7 +49,7 @@ class RumGroup(BaseRumAPI):
         """is trx in this group?"""
         try:
             trxdata = self.trx.info(group_id, trx_id)
-            if "TrxId" in trxdata:
+            if trxdata.get("TrxId"):
                 return True
             return False
         except:
@@ -88,11 +88,11 @@ class RumGroup(BaseRumAPI):
 
     def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""
-        if not self.node.is_joined(group_id):
-            raise ValueError(f"you are not in this group {group_id}.")
-        p = {"type": sendtype, "object": obj, "target": group_id}
-        data = ContentParams(**p).__dict__
-        return self._post(f"{self.baseurl}/group/content", data)
+        if self.node.is_joined(group_id):
+            p = {"type": sendtype, "object": obj, "target": group_id}
+            data = ContentParams(**p).__dict__
+            return self._post(f"{self.baseurl}/group/content", data)
+        # raise ValueError(f"you are not in this group {group_id}.")
 
     def like(self, group_id: str, trx_id: str) -> Dict:
         return self._send(group_id, {"id": trx_id}, "Like")

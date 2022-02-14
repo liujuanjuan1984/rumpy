@@ -17,9 +17,7 @@ class RumTrx(BaseRumAPI):
         if trxdata["TypeUrl"] == "quorum.pb.Person":
             return "person"
         content = trxdata["Content"]
-        if "type" not in content:
-            return "other"
-        trxtype = content["type"]
+        trxtype = content.get("type") or "other"
         if type(trxtype) == int:
             return "announce"
         if trxtype == "Note":
@@ -31,7 +29,7 @@ class RumTrx(BaseRumAPI):
                 else:
                     return "image_text"
             return "text_only"
-        return trxtype.lower()  # "like","dislike"
+        return trxtype.lower()  # "like","dislike","other"
 
     def trxdata(self, trx_id, trxs):
         for trxdata in trxs:
@@ -68,10 +66,10 @@ class RumTrx(BaseRumAPI):
         since = since or datetime.datetime.now()
 
         for trxdata in rlt:
-            if "name" in trxdata["Content"]:
-                if self.trx.ts2datetime(trxdata) <= since:
-                    return trxdata["Content"]["name"]
-        return ""
+            name = trxdata["Content"].get("name") or ""
+            if self.trx.ts2datetime(trxdata) <= since:
+                return name
+        return name
 
     def ts2datetime(self, trxdata):
         # 把 rum 中的时间戳（纳米级）转换一下
@@ -139,8 +137,7 @@ class RumTrx(BaseRumAPI):
         """
 
         if trxdata["TypeUrl"] == "quorum.pb.Person":
-            if "name" in trxdata["Content"]:
-                name = trxdata["Content"]["name"]
-                if name.lower().find(xname.lower()) >= 0:
-                    return {trxdata["Publisher"]: name}
+            name = trxdata["Content"].get("name") or ""
+            if name.lower().find(xname.lower()) >= 0:
+                return {trxdata["Publisher"]: name}
         return {}
