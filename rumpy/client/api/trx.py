@@ -5,7 +5,7 @@ import re
 import json
 import time
 from typing import List, Dict
-from rumpy.client.api.base import BaseRumAPI
+from .base import BaseRumAPI
 
 
 class RumTrx(BaseRumAPI):

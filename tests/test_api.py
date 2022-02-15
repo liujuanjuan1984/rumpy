@@ -3,9 +3,11 @@
 import pytest
 import sys
 import os
+from config import Config
 
-sys.path.append(os.path.realpath("."))
-from rumpy import JsonFile, Dir, RumClient
+sys.path.append(Config.BASE_DIR)
+from rumpy import RumClient
+from officepy.officepy import JsonFile
 from examples.config import client_params
 import dataclasses
 
@@ -118,6 +120,11 @@ class TestCase:
         }
         r = client.node.is_seed(seed)
         r = client.node.join_group(seed)
+
+    def test_reformat(self):
+        from officepy.officepy import Dir
+
+        Dir(Config.BASE_DIR).black()
 
 
 if __name__ == "__main__":

@@ -3,9 +3,8 @@
 import datetime
 import pandas as pd
 from typing import List, Dict, Any
-from rumpy.client.api.base import BaseRumAPI
-from rumpy.img import Img
-from rumpy.client.data import (
+from .base import BaseRumAPI
+from ..data import (
     ContentObjParams,
     ContentParams,
     GroupInfo,

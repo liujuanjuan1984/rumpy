@@ -7,8 +7,9 @@ import requests
 import urllib3
 
 urllib3.disable_warnings()
-from rumpy.client import api
-from rumpy.client.api.base import BaseRumAPI
+from . import api
+from .img import Img
+from .api.base import BaseRumAPI
 
 
 @dataclass

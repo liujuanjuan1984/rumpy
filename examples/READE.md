@@ -10,3 +10,10 @@
 - [export data 批量数据导出](./export_data)：你所加入的 所有 groups 的数据其实已经保存在你的本地。这个工具帮你把数据导出为排版良好的 markdown 文件及图片。
 - [todolist 待办清单](./todolist)：只能把 Rum 当微博/博客用吗？Rum 的想象空间很大，待办清单这个雏形可以给你带来启发。
 
+其它案例：
+
+- [retweet 转发工具](https://github.com/liujuanjuan1984/retweet) bot: retweet weibo/twitter to rum groups
+
+
+部分案例需安装 officepy 以支持 JsonFile、Dir 等自定义方法：
+- `officepy` : [https://github.com/liujuanjuan1984/officepy](https://github.com/liujuanjuan1984/officepy.git)

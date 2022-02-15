@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
 
-from rumpy.client import RumClient
-from rumpy.jsonfile import JsonFile
-from rumpy.dir import Dir
-from rumpy.img import Img
+from .client import RumClient
+from .client.img import Img

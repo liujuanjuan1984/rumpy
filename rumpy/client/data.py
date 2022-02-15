@@ -1,6 +1,6 @@
 import dataclasses
 from typing import Dict, List, Any
-from rumpy.img import Img
+from .img import Img
 
 
 @dataclasses.dataclass

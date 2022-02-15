@@ -2,7 +2,47 @@
 
 [QuoRum](https://github.com/rumsystem/quorum) 第三方 Python SDK。
 
-个人水平有限，欢迎参与代码贡献。
+个人水平有限，欢迎参与代码贡献。持续开发迭代中。
+
+
+### 安装使用
+
+目前 `rumpy` 还没有采用 pip 等发布，所以还不支持 `pip install rumpy`。如果您有需要，可以在本地的 Python 路径下安装。
+
+即在 `/Python/Python310/lib/site-packages>` 下执行：
+
+```sh
+
+git clone https://github.com/liujuanjuan1984/rumpy.git
+
+```
+
+导入方式：
+
+```py
+
+from rumpy.rumpy import RumClient
+
+```
+
+## 安装依赖
+
+#### rumpy 的依赖
+
+```sh
+pip install -r requirements.txt
+```
+
+#### examples 的依赖
+
+```sh
+pip install -r requirements_examples.txt
+```
+
+以及，安装 officepy 以支持 JsonFile、Dir 等自定义方法：
+
+- `officepy` : [https://github.com/liujuanjuan1984/officepy](https://github.com/liujuanjuan1984/officepy.git)
+
 
 ## 一些案例
 
@@ -14,6 +54,11 @@
 - [group statistics 种子网络数据概况](./examples/group_statistics)：统计指定组的数据概况，并生成图文发布，或保存到文件中。
 - [export data 批量数据导出](./examples/export_data)：你所加入的 所有 groups 的数据其实已经保存在你的本地。这个工具帮你把数据导出为排版良好的 markdown 文件及图片。
 - [todolist 待办清单](./examples/todolist)：只能把 Rum 当微博/博客用吗？Rum 的想象空间很大，待办清单这个雏形可以给你带来启发。
+
+
+其它案例：
+
+- [retweet 转发工具](https://github.com/liujuanjuan1984/retweet) bot: retweet weibo/twitter to rum groups
 
 ## 问题反馈/需求建议/开发计划
 

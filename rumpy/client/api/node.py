@@ -3,9 +3,9 @@
 import json
 from typing import List, Dict
 from dataclasses import dataclass
-from rumpy.client.api.base import BaseRumAPI
-from rumpy.client.api.group import RumGroup
-from rumpy.client.data import CreateGroupParam, Seed
+from .base import BaseRumAPI
+from .group import RumGroup
+from ..data import CreateGroupParam, Seed
 
 
 @dataclass
