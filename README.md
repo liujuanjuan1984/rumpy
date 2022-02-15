@@ -5,23 +5,28 @@
 个人水平有限，欢迎参与代码贡献。持续开发迭代中。
 
 
-### 安装使用
+## 安装使用
 
-目前 `rumpy` 还没有采用 pip 等发布，所以还不支持 `pip install rumpy`。如果您有需要，可以在本地的 Python 路径下安装。
+目前 `rumpy` 没有采用 pip 等发布，所以不支持 `pip install rumpy`。
 
-即在 `/Python/Python310/lib/site-packages>` 下执行：
+如果您有需要，可以 clone 到本地，比如，在 `/work-space>` 下执行 ```git clone https://github.com/liujuanjuan1984/rumpy.git```。
 
-```sh
+完成后，`cd rumpy` 后所在目录/路径，请添加到 `PYTHONPATH` 环境变量中。
 
-git clone https://github.com/liujuanjuan1984/rumpy.git
+### 检查是否设置成功
 
+检查 rumpy 的本地路径是否在下述输出结果中。
+
+```py
+import sys
+print(sys.path)
 ```
 
-导入方式：
+### 导入方式：
 
 ```py
 
-from rumpy.rumpy import RumClient
+from rumpy import RumClient
 
 ```
 

@@ -7,7 +7,7 @@ from config import Config
 
 sys.path.append(Config.BASE_DIR)
 from rumpy import RumClient
-from officepy.officepy import JsonFile
+from officepy import JsonFile
 from examples.config import client_params
 import dataclasses
 
@@ -122,7 +122,7 @@ class TestCase:
         r = client.node.join_group(seed)
 
     def test_reformat(self):
-        from officepy.officepy import Dir
+        from officepy import Dir
 
         Dir(Config.BASE_DIR).black()
 
