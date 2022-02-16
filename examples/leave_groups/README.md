@@ -1,15 +1,12 @@
-# 案例: leave_groups.py
+# example: leave groups
 
-批量离开组：
+A tool to leave groups quickly:
 
-- 创建一批测试用的组（种子网络）
-- 离开这些测试组
-- 离开区块数为 0 的组
+- create some groups for test
+- leave those groups with the special name or name include word such as `mytest_`
+- leave those groups with 0 block.
 
-
-### 如何使用？
-
-请先修改 `leave_groups.py` 中的参数，再运行。
+### Try it!
 
 ```bash
 python .\examples\leave_groups\leave_groups.py

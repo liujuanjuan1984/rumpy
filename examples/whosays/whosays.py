@@ -5,8 +5,6 @@ from typing import List, Dict
 import json
 import os
 import sys
-
-sys.path.append(os.path.realpath("."))
 from rumpy import RumClient
 
 

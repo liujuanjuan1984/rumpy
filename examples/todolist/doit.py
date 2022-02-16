@@ -2,15 +2,13 @@
 
 import os
 import sys
-
-sys.path.append(os.path.realpath("."))
 from todolist import ToDoList
-from rumpy import JsonFile
-from examples.config import client_params
+from officepy import JsonFile
+from config import Config
 
 
 def main():
-    client = ToDoList(**client_params)
+    client = ToDoList(**Config.CLIENT_PARAMS["gui"])
     group_id = "5d53968c-3b48-44c5-953f-0abe0b7ad73d"
     pubkeys = [
         "CAISIQMsljkyD50GsX4uEARMKIql0FmxGgZY4A19wlSDyzRweg==",

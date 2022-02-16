@@ -2,11 +2,9 @@
 
 import os
 import sys
-
-sys.path.append(os.path.realpath("."))
 from whosays import WhoSays
-from rumpy import JsonFile
-from examples.config import client_params
+from officepy import JsonFile
+from config import Config
 
 
 def main():
@@ -22,14 +20,14 @@ def main():
     name = "Huoju"
     filepath = r"D:\Jupyter\rumpy\examples\whosays\huoju_says.json"
 
-    client = WhoSays(**client_params)
+    client = WhoSays(**Config.CLIENT_PARAMS["gui"])
 
     data = JsonFile(filepath).read()
 
     data = client.search(names_info, data)
     JsonFile(filepath).write(data)
 
-    group_id = client.group.create("测试whosays")["group_id"]
+    group_id = client.group.create("mytest_whosays")["group_id"]
     data = client.send(name, group_id, data)
     JsonFile(filepath).write(data)
 

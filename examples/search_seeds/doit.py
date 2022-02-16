@@ -2,19 +2,17 @@
 
 import os
 import sys
-
-sys.path.append(os.path.realpath("."))
 from search_seeds import SearchSeeds
-from rumpy import JsonFile, Dir
-from examples.config import client_params
+from officepy import JsonFile, Dir
+from config import Config
 
 
 def main():
     # 初始化
-    client = SearchSeeds(**client_params)
+    client = SearchSeeds(**Config.CLIENT_PARAMS["gui"])
     # 数据文件
     dirpath = f"{os.path.realpath('.')}\\examples\\search_seeds\\data"
-    Dir(dirpath).check_dir()
+    Dir(dirpath).check()
     filepath = f"{dirpath}\\search_seeds_and_joined_data.json"
     data = JsonFile(filepath).read()
 

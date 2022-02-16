@@ -4,11 +4,9 @@ import os
 import datetime
 import uuid
 import sys
-
-sys.path.append(os.path.realpath("."))
-
-from rumpy import RumClient, JsonFile, Dir, Img
-from examples.config import client_params
+from officepy import JsonFile, Dir, Img
+from rumpy import RumClient
+from config import Config
 
 
 def export():
@@ -30,8 +28,6 @@ def export():
     # 把不同trxtype的数据导出，图片decode包装为方法
     for group_id, group_name in my_trxs:
         gtrxs = my_trxs[(group_id, group_name)]
-        if group_name != "刘娟娟的朋友圈":  # 测试用途，限定了只导出自己想要的组
-            continue
         if not gtrxs:
             continue
         gfile = f"{JSON_DIR}\\{group_name}_{group_id}_{datetime.date.today()}.json"
@@ -108,8 +104,6 @@ def trans():
         idata = JsonFile(ifile).read()
         jfile = ifile.replace(JSON_DIR, MD_DIR).replace(".json", ".md")
         gname, gid, gtime = ifile.replace(f"{JSON_DIR}\\", "").split("_")
-        if gname != "刘娟娟的朋友圈":  # 测试用途，限定了只导出自己想要的组
-            continue
         jnote = [f"<!--group_id:{gid} update_at:{gtime}-->\n\n# {gname}\n\n"]
 
         for i in idata:
@@ -121,14 +115,69 @@ def trans():
             f.writelines(jnote)
 
 
+def export_text_daily(daystr):
+    todofiles = Dir(JSON_DIR).search_files_by_types(".json")
+    homedir = r"D:\MY-OBSIDIAN-DATA\my_Writing\随手写"
+
+    jfile = homedir + "\\" + daystr.replace("-", "_") + "_随手写.md"
+
+    if os.path.exists(jfile):
+        with open(jfile, "r", encoding="utf-8") as f:
+            jnote = f.readlines()
+    else:
+        jnote = []
+
+    for ifile in todofiles:
+        for i in JsonFile(ifile).read():
+            if i["trx_time"].find(daystr) >= 0:
+                if "text" in i:
+                    jline = "\n\n---\n\n" + i["text"] + "\n"
+                    if "".join(jline) not in "".join(jnote):
+                        jnote.append(jline)
+
+    if len(jnote) == 0:
+        return
+    with open(jfile, "w", encoding="utf-8") as f:
+        f.writelines(jnote)
+    print(datetime.datetime.now(), jfile)
+
+
 if __name__ == "__main__":
 
-    client = RumClient(**client_params)
+    client = RumClient(**Config.CLIENT_PARAMS["gui"])
+    nodeid = client.node.id
     SAVE_DIR = r"D:\Jupyter\rumpy\examples\export_data\data"
-    JSON_DIR = f"{SAVE_DIR}\\json"
-    MD_DIR = f"{SAVE_DIR}\\markdown"
-    IMG_DIR = f"{SAVE_DIR}\\markdown\\images"
-    Dir(JSON_DIR).check_dir()
-    Dir(IMG_DIR).check_dir()
+    JSON_DIR = f"{SAVE_DIR}\\{nodeid}\\json"
+    MD_DIR = f"{SAVE_DIR}\\{nodeid}\\markdown"
+    IMG_DIR = f"{SAVE_DIR}\\{nodeid}\\markdown\\images"
+    Dir(JSON_DIR).check()
+    Dir(IMG_DIR).check()
+
+    # 登入账号，并导出数据
     export()
-    trans()
+
+    # 数据转换，从json转换为markdown，按种子网络来保存自己的所有动态。
+    # trans()
+
+    # 编程自由/days
+
+    # D:\RUM2-DATA\rum-20211030
+    if nodeid == "16Uiu2HAkytdk8dhP8Z1JWvsM7qYPSLpHxLCfEWkSomqn7Tj6iC2d":
+        lastupdate = "2022-02-08"
+    # 怒放、永远爱你、RUM小七
+    # D:\RUM2-DATA\rum-20211122
+    if nodeid == "16Uiu2HAmLrpCred9yKoaq55hSRYktapzsBGv9ryMaHGEWfuCuaFT":
+        lastupdate = "2022-02-08"
+    else:
+        lastupdate = "2021-10-01"
+
+    #  16Uiu2HAm3KqGroNs9phdtU3GKH47t8XqeEvxAGcszn9z7Y3nVE9f
+    # 送你一束小花花，刘娟娟的分身
+
+    # 按天导出自己在各个组发的文本数据，按天来保存为文件。
+    for i in range(0, -90, -1):
+        daystr = str(datetime.date.today() + datetime.timedelta(days=i))
+        if daystr >= lastupdate:
+            export_text_daily(daystr)
+
+    print(nodeid)

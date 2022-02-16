@@ -2,8 +2,6 @@
 
 import os
 import sys
-
-sys.path.append(os.path.realpath("."))
 import datetime
 import pandas as pd
 import re

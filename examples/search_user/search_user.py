@@ -3,14 +3,12 @@
 
 import os
 import sys
+from rumpy import RumClient
+from officepy import JsonFile
+from config import Config
 
 
-sys.path.append(os.path.realpath("."))
-from rumpy import JsonFile, RumClient
-from examples.config import client_params
-
-
-client = RumClient(**client_params)
+client = RumClient(**Config.CLIENT_PARAMS["gui"])
 
 for xname in ["xiaolai", "huoju"]:
     rlt = client.node.search_user(xname)

@@ -9,9 +9,8 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
-
-sys.path.append(os.path.realpath("."))
-from rumpy import RumClient, JsonFile
+from rumpy import RumClient
+from officepy import JsonFile
 
 
 class GroupStatistics(RumClient):

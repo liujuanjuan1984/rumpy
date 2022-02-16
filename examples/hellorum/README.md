@@ -1,19 +1,14 @@
-# 案例: hellorum.py
+# example: hello rum
 
+A simple example with `rumpy`:
 
-对 `rumpy` 的一个极简尝试。
+- create group
+- post content to the group : only text, with picture, reply, reply to rely, like, dislike, etc...
+- view group info
+- view node info
 
-- 创建测试专用的种子网络
-- 往该种子网络内发布文本、图片，评论、回复评论，点赞、取消点赞
-- 查询该种子网络的基本信息
-- 查询该节点的信息
-
-
-### 如何使用？
-
-请先修改 `hellorum.py` 中的参数，再运行。
+### Try it!
 
 ```bash
 python .\examples\hellorum\hellorum.py
 ```
-

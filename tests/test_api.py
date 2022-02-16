@@ -4,10 +4,9 @@ import pytest
 from rumpy import RumClient
 from officepy import JsonFile
 from config import Config
-from examples.config import client_params
 import dataclasses
 
-client = RumClient(**client_params)
+client = RumClient(**Config.CLIENT_PARAMS["gui"])
 
 
 class TestCase:

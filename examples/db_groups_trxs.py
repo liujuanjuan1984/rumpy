@@ -8,10 +8,8 @@ import sys
 import json
 
 
-homedir = r"D:\Jupyter\rumpy"
-sys.path.append(homedir)
-from rumpy import JsonFile, RumClient, Dir
-from examples.config import client_params
+from rumpy import RumClient
+from config import Config
 
 
 def tables():
@@ -135,7 +133,7 @@ def table_groups_trxs():
 
 if __name__ == "__main__":
 
-    client = RumClient(**client_params)
+    client = RumClient(**Config.CLIENT_PARAMS["gui"])
 
     # 采用 node 的 id 作为 db 的识别标记
     dbpath = homedir + f"\\database\\node_{client.node.id}.db"

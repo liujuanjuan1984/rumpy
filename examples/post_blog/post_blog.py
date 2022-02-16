@@ -5,24 +5,24 @@ import datetime
 import pytest
 import os
 import sys
+from officepy import JsonFile, Dir
+from rumpy import RumClient
+from config import Config
 
-sys.path.append(os.path.realpath("."))
-from rumpy import JsonFile, RumClient, Dir
-from examples.config import client_params
 
+client = RumClient(**Config.CLIENT_PARAMS["gui"])
 
-client = RumClient(**client_params)
+# create a group
+group_id = client.group.create("mytest_postblog", app_key="group_post")["group_id"]
 
-# 创建测试组
-group_id = client.group.create("测试一下", app_key="group_post")["group_id"]
+# get the articles file for test
+test_data_dir = os.path.join(os.path.dirname(__file__),"test_data")
+article_files = Dir(test_data_dir).search_files_by_types((".md".".txt"))
 
-# 用来存放需要自动发布文章的本地文件夹
-mds = Dir(r"D:\MY-OBSIDIAN-DATA\my_Writing\完整文章").search_files_by_types(".md")
-
-# 自动读取并一次性发布
+# post to rum
 failed = []
-for imd in mds:
-    with open(imd, "r", encoding="utf-8") as f:
+for ifile in article_files:
+    with open(ifile, "r", encoding="utf-8") as f:
         ilines = f.readlines()
         for line in ilines:
             if line.startswith("# "):
@@ -34,7 +34,7 @@ for imd in mds:
     objs = {"content": content, "name": title}
     resp = client.group.send_note(group_id, **objs)
     if "trx_id" not in resp:
-        failed.append(imd)
+        failed.append(ifile)
     time.sleep(1)
 
 print(failed)

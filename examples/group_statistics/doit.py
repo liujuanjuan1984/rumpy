@@ -2,11 +2,9 @@
 
 import os
 import sys
-
-sys.path.append(os.path.realpath("."))
 from group_statistics import GroupStatistics
-from examples.config import client_params
-from rumpy import JsonFile
+from config import Config
+from officepy import JsonFile
 
 client = GroupStatistics(**client_params)
 
