@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 class BaseRumAPI:
     def __init__(self, client=None):
         self._client = client

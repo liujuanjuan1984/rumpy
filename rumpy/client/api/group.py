@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import pandas as pd
 from typing import List, Dict, Any

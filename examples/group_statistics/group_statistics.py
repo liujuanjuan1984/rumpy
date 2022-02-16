@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 from pylab import *
 from typing import List, Dict
