@@ -168,31 +168,3 @@ class RumGroup(BaseRumAPI):
     def update_deniedlist(self, **kwargs):
         p = DeniedlistUpdateParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/deniedlist", p)
-
-    def search_seeds(self, group_id: str) -> Dict:
-        """search seeds from group"""
-        rlt = {}
-        for trxdata in self.content(group_id):
-            iseeds = self.trx.search_seeds(trxdata)
-            for iseed in iseeds:
-                if iseed["group_id"] not in rlt:
-                    rlt[iseed["group_id"]] = iseed
-        if group_id not in rlt:
-            rlt[group_id] = self.seed(group_id)
-        return rlt
-
-    def search_user(self, group_id: str, xname) -> Dict:
-        """
-        搜寻昵称包含 xanme 的用户，历史记录也会搜寻到
-        返回 {pubkey:[昵称]}
-        """
-        rlt = {}
-        for trxdata in self.content(group_id):
-            irlt = self.trx.search_user(trxdata, xname)
-            for pubkey in irlt:
-                iname = irlt[pubkey]
-                if pubkey not in rlt:
-                    rlt[pubkey] = [iname]
-                elif iname not in rlt[pubkey]:
-                    rlt[pubkey].append(iname)
-        return rlt

@@ -48,34 +48,3 @@ class RumTrx(BaseRumAPI):
         trxdata = self.trxdata(trx_id, trxs)
         text = self.trx_text(trxdata)
         return text
-
-    def search_seeds(self, trxdata: Dict) -> List:
-        """search seeds from trx data"""
-        text = self.trx_text(trxdata).replace("\n", " ")
-
-        if text == "":
-            return []
-
-        # 只能识别单个种子，但依然采用列表来处理结果
-        seeds = []
-        pt = r"^[^\{]*?(\{[\s\S]*?\})[^\}]*?$"
-        for i in re.findall(pt, text):
-            try:
-                iseed = json.loads(i)
-                if self.node.is_seed(iseed):
-                    seeds.append(iseed)
-            except Exception as e:
-                pass  # print(e)
-        return seeds
-
-    def search_user(self, trxdata: Dict, xname):
-        """
-        搜寻昵称包含 xname 的用户，历史昵称也会搜索~
-        返回 {pubkey:昵称} 作为结果
-        """
-
-        if trxdata["TypeUrl"] == "quorum.pb.Person":
-            name = trxdata["Content"].get("name") or ""
-            if name.lower().find(xname.lower()) >= 0:
-                return {trxdata["Publisher"]: name}
-        return {}

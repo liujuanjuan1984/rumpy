@@ -110,23 +110,3 @@ class RumNode(BaseRumAPI):
         if not self.is_seed(seed):
             raise ValueError("not a seed or the seed could not be identified.")
         return self._post(f"{self.baseurl}/group/join", seed)
-
-    def search_seeds(self) -> Dict:
-        rlt = {}
-        for group_id in self.groups_id:
-            rlt.update(self.group.search_seeds(group_id))
-        return rlt
-
-    def search_user(self, xname):
-        """
-        搜寻昵称包含 xanme 的用户，历史记录也会搜寻到
-        返回{group_id : {pubkey:[昵称]}
-        """
-        if not xname:
-            raise ValueError("need piece of nickename to search.")
-        rlt = {}
-        for group_id in self.groups_id:
-            irlt = self.group.search_user(group_id, xname)
-            if len(irlt) > 0:
-                rlt[group_id] = irlt
-        return rlt

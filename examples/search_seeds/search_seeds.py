@@ -4,16 +4,52 @@ import datetime
 from typing import Dict, List
 import json
 import os
-import sys
 from rumpy import RumClient
 from officepy import Stime
 
 
 class SearchSeeds(RumClient):
+    def intrx(self, trxdata: Dict) -> List:
+        """search seeds from trx data"""
+        text = self.trx.trx_text(trxdata).replace("\n", " ")
+
+        if text == "":
+            return []
+
+        # 只能识别单个种子，但依然采用列表来处理结果
+        seeds = []
+        pt = r"^[^\{]*?(\{[\s\S]*?\})[^\}]*?$"
+        for i in re.findall(pt, text):
+            try:
+                iseed = json.loads(i)
+                if self.node.is_seed(iseed):
+                    seeds.append(iseed)
+            except Exception as e:
+                pass  # print(e)
+        return seeds
+
+    def ingroup(self, group_id: str) -> Dict:
+        """search seeds from group"""
+        rlt = {}
+        for trxdata in self.group.content(group_id):
+            iseeds = self.intrx(trxdata)
+            for iseed in iseeds:
+                if iseed["group_id"] not in rlt:
+                    rlt[iseed["group_id"]] = iseed
+        if group_id not in rlt:
+            rlt[group_id] = self.group.seed(group_id)
+        return rlt
+
+    def innode(self) -> Dict:
+        rlt = {}
+        for group_id in self.node.groups_id:
+            rlt.update(self.ingroup(group_id))
+        return rlt
+
     def search_seeds(self, data={}):
         """从已加入的种子网络中搜索新的种子，并更新数据文件"""
 
-        seeds = self.node.search_seeds()  # 搜寻到的所有种子
+        seeds = self.innode()  # 搜寻到的所有种子
         joined = self.node.groups_id  # 已经加入的种子网络
 
         # 把种子写入数据文件
@@ -111,7 +147,7 @@ class SearchSeeds(RumClient):
         if group_id == None or not self.node.is_joined(group_id):
             group_id = self.group.create("测试种子大全")["group_id"]
 
-        shared = self.group.search_seeds(group_id)
+        shared = self.ingroup(group_id)
         for gid in data:
             # 跳过已经分享过的
             if gid in shared:
