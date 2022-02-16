@@ -1,6 +1,39 @@
 import dataclasses
 from typing import Dict, List, Any
-from .img import Img
+from PIL import Image
+import base64
+import io
+import uuid
+import datetime
+import dataclasses
+from typing import Any
+
+
+@dataclasses.dataclass
+class ImgObj:
+    content: Any
+    mediaType: str = "image/png"
+    name: str = f"{uuid.uuid4()}-{str(datetime.datetime.now())[:19]}"
+
+    def __post_init__(self):
+        tgt = self.content
+        try:
+            if type(tgt) == str:
+                with open(tgt, "rb") as f:
+                    self.content = self.encode(f.read())
+                self.mediaType = tgt.split(".")[-1]
+            elif type(tgt) == bytes:
+                self.content = self.encode(tgt)
+            elif type(tgt) == dict:
+                self.mediaType = tgt["mediaType"]
+                self.content = tgt["content"]
+                self.name = tgt["name"]
+        except Exception as e:
+            print(e)
+            return print(tgt, "must be imgpath or imgbytes")
+
+    def encode(self, imgbytes):
+        return base64.b64encode(imgbytes).decode("utf-8")
 
 
 @dataclasses.dataclass
@@ -34,7 +67,7 @@ class ContentObjParams:
         if self.image != None:
             ximgs = []
             for img in self.image:
-                ximgs.append(Img().encode(img))
+                ximgs.append(ImgObj(img).__dict__)
             self.image = ximgs
 
         if self.inreplyto != None:

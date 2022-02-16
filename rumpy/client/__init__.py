@@ -8,7 +8,6 @@ import urllib3
 
 urllib3.disable_warnings()
 from . import api
-from .img import Img
 from .api.base import BaseRumAPI
 
 

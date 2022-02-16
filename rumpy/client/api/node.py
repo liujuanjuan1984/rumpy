@@ -5,7 +5,7 @@ from typing import List, Dict
 from dataclasses import dataclass
 from .base import BaseRumAPI
 from .group import RumGroup
-from ..data import CreateGroupParam, Seed
+from .data import CreateGroupParam, Seed
 
 
 @dataclass

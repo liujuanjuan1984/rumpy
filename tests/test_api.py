@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import sys
-import os
-from config import Config
-
-sys.path.append(Config.BASE_DIR)
 from rumpy import RumClient
 from officepy import JsonFile
+from config import Config
 from examples.config import client_params
 import dataclasses
 
