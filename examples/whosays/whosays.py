@@ -6,17 +6,24 @@ import json
 import os
 import sys
 from rumpy import RumClient
+from examples.export_data.export_data import trx_export
 
 
 class WhoSays(RumClient):
     """Rum 产品想法：筛选某人所说，并转发到指定组"""
+
+    def _content_by(self, group_id, pubkeys):
+        trxs = self.content(group_id)
+        trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
+        content_by = [trx_export(i, trxs) for i in trxs_by]
+        return content_by
 
     def search(self, names_info, data):
         for group_id in names_info:
             if group_id not in data:
                 data[group_id] = {"seed": self.group.seed(group_id), "trxs": {}}
             # 筛选此人发布的内容
-            content_by = self.group.content_by(group_id, names_info[group_id])
+            content_by = self._content_by(group_id, names_info[group_id])
             for ic in content_by:
                 if ic["trx_id"] not in data[group_id]["trxs"]:
                     data[group_id]["trxs"][ic["trx_id"]] = ic

@@ -6,6 +6,7 @@ import json
 import os
 import sys
 from rumpy import RumClient
+from officepy import Stime
 
 
 class SearchSeeds(RumClient):
@@ -97,7 +98,7 @@ class SearchSeeds(RumClient):
             return False
         # 最后更新时间在 7 天前
         sometime = datetime.datetime.now() + datetime.timedelta(days=-7)
-        lu = super().ts2datetime(info.last_updated)
+        lu = Stime().ts2datetime(info.last_updated)
         if lu < sometime:
             return False
 

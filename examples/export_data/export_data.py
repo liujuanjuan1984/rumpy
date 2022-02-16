@@ -4,9 +4,68 @@ import os
 import datetime
 import uuid
 import sys
-from officepy import JsonFile, Dir, Img
+from officepy import JsonFile, Dir, Img, Stime
 from rumpy import RumClient
 from config import Config
+from typing import List, Dict
+
+
+def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
+    """get the lastest name of the person published the trx_id"""
+    key = "SenderPubkey" if "Publisher" not in trxs[0] else "Publisher"
+    if trx_id_or_pubkey.endswith("=="):
+        pubkey = trx_id_or_pubkey
+    else:
+        trx_id = trx_id_or_pubkey
+        trxdata = client.trx.trxdata(trx_id, trxs)
+        pubkey = trxdata[key]
+
+    rlt = []
+    for trxdata in trxs:
+        if trxdata[key] == pubkey and trxdata["TypeUrl"] == "quorum.pb.Person":
+            rlt.append(trxdata)
+    since = since or datetime.datetime.now()
+
+    for trxdata in rlt:
+        name = trxdata["Content"].get("name") or ""
+        if Stime().ts2datetime(trxdata.get("TimeStamp")) <= since:
+            return name
+    return name
+
+
+def trx_export(trxdata: Dict, trxs: List) -> Dict:
+    """export data with refer_to data"""
+    ts = Stime().ts2datetime(trxdata.get("TimeStamp"))
+    info = {
+        "trx_id": trxdata["TrxId"],
+        "trx_time": str(ts),
+        "trx_type": client.trx.trx_type(trxdata),
+    }
+
+    _content = trxdata["Content"]
+    if "id" in _content:
+        jid = _content["id"]
+        info["refer_to"] = {
+            "trx_id": jid,
+            "text": client.trx.get_trx_content(trxs, jid),
+            "name": _person_name(jid, trxs, ts, client),
+        }
+    elif "inreplyto" in _content:
+        jid = _content["inreplyto"]["trxid"]
+        info["refer_to"] = {
+            "trx_id": jid,
+            "text": client.trx.get_trx_content(trxs, jid),
+            "name": _person_name(jid, trxs, ts, client),
+        }
+
+    if "content" in _content:
+        info["text"] = _content["content"]
+    if "image" in _content:
+        if type(_content["image"]) == dict:
+            info["imgs"] = [_content["image"]]
+        else:
+            info["imgs"] = _content["image"]
+    return info
 
 
 def export():
@@ -34,7 +93,7 @@ def export():
         gdata = []
         trxs = client.group.content(group_id)
         for trxdata in gtrxs:
-            gdata.append(client.trx.export(trxdata, trxs))
+            gdata.append(trx_export(trxdata, trxs))
         JsonFile(gfile).write(gdata)
 
 

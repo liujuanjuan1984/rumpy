@@ -134,12 +134,6 @@ class RumGroup(BaseRumAPI):
         trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
         return trxs_by
 
-    def content_by(self, group_id, pubkeys):
-        trxs = self.content(group_id)
-        trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
-        content_by = [self.trx.export(i, trxs) for i in trxs_by]
-        return content_by
-
     def announce(self, **kwargs):
         """annouce user or producer,add or remove"""
         p = AnnounceParams(**kwargs).__dict__

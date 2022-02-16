@@ -20,14 +20,14 @@ class Config:
 
     CLIENT_PARAMS = {
         "gui": {
-            "port": "127.0.0.1",
-            "host": 50415,
+            "host": "127.0.0.1",
+            "port": 50415,
             "appid": "peer",
             "crtfile": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
         },
         "cli": {
-            "port": "127.0.0.1",
-            "host": 50415,
+            "host": "127.0.0.1",
+            "port": 50415,
             "appid": "peer",
             "crtfile": r"D:\RUM2-DATA\certs\server.crt",
         },

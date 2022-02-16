@@ -80,7 +80,3 @@ class RumClient:
 
     def post(self, url, relay={}):
         return self._request("post", url, relay)
-
-    def ts2datetime(self, ts):
-        # 把 rum 中的时间戳（纳米级）转换一下
-        return datetime.datetime.fromtimestamp(int(int(ts) / 1000000000))

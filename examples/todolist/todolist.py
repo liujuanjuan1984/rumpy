@@ -7,6 +7,7 @@ import pandas as pd
 import re
 from typing import List, Dict
 from rumpy import RumClient
+from officepy import Stime
 import dataclasses
 
 
@@ -42,7 +43,7 @@ class ToDoList(RumClient):
                 continue
 
             trxtype = self.trx.trx_type(trx)
-            ts = str(self.trx.ts2datetime(trx))
+            ts = str(Stime().ts2datetime(trx.get("TimeStamp")))
 
             if trxtype in _info:
                 todoid = trx["Content"]["id"]

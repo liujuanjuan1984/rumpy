@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 from rumpy import RumClient
-from officepy import JsonFile
+from officepy import JsonFile, Stime
 
 
 class GroupStatistics(RumClient):
@@ -37,7 +37,7 @@ class GroupStatistics(RumClient):
     def _count_daily_trxs(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = self.trx.ts2datetime(i).date()
+            ix = Stime().ts2datetime(i.get("TimeStamp")).date()
             if ix not in rlt:
                 rlt[ix] = 1
             else:
@@ -47,7 +47,7 @@ class GroupStatistics(RumClient):
     def _count_daily_pubkeys(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = self.trx.ts2datetime(i).date()
+            ix = Stime().ts2datetime(i.get("TimeStamp")).date()
             iy = i["Publisher"]
 
             if ix not in rlt:
@@ -63,8 +63,8 @@ class GroupStatistics(RumClient):
 
         return {
             "info": info.__dict__,
-            "create_at": str(self.trx.ts2datetime(trxs[0]))[:19],
-            "update_at": str(self.trx.ts2datetime(trxs[-1]))[:19],
+            "create_at": str(Stime().ts2datetime(trxs[0].get("TimeStamp")))[:19],
+            "update_at": str(Stime().ts2datetime(trxs[-1].get("TimeStamp")))[:19],
             "trxtype": self._count_trxtype(trxs),
             "pubkeys": self._count_pubkey(trxs),
             "daily_trxs": self._count_daily_trxs(trxs),
