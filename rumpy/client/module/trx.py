@@ -1,13 +1,12 @@
 import time
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
-from .base import Base
 
 Base = declarative_base()
 
 
 class Trx(Base):
-    __tablename__ = "Trxs"
+    __tablename__ = "trxs"
 
     id = Column(Integer, primary_key=True)
     TrxId = Column("trx_id", String(64), unique=True, index=True)

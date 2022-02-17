@@ -23,18 +23,18 @@ def table_node_groups():
     # 创建表格
     if "node_groups" not in tables():
         sql_create_table = """CREATE TABLE node_groups (
-        group_id varchar(64) UNIQUE,
-        group_name varchar(128) ,
-        owner_pubkey varchar(128)  ,
-        user_pubkey varchar(128)  ,
-        consensus_type  varchar(20)  ,
-        encryption_type varchar(20)  ,
-        cipher_key varchar(128)  , 
-        app_key varchar(64)  , 
-        last_updated timestamp ,
-        highest_height int,
-        highest_block_id  varchar(128) ,
-        group_status varchar(128))"""
+            group_id varchar(64) UNIQUE,
+            group_name varchar(128) ,
+            owner_pubkey varchar(128)  ,
+            user_pubkey varchar(128)  ,
+            consensus_type  varchar(20)  ,
+            encryption_type varchar(20)  ,
+            cipher_key varchar(128)  , 
+            app_key varchar(64)  , 
+            last_updated timestamp ,
+            highest_height int,
+            highest_block_id  varchar(128) ,
+            group_status varchar(128))"""
 
         cu.execute(sql_create_table)
         con.commit()
@@ -53,11 +53,11 @@ def table_node_groups():
         # 更新数据
         except Exception as e:
             sql = f"""UPDATE node_groups 
-            set last_updated=  {g['last_updated']},
-            highest_height =  {g['highest_height']},
-            highest_block_id = '{g['highest_block_id']}',
-            group_status = '{g['group_status']}'
-            where group_id='{g['group_id']}'"""
+                set last_updated=  {g['last_updated']},
+                highest_height =  {g['highest_height']},
+                highest_block_id = '{g['highest_block_id']}',
+                group_status = '{g['group_status']}'
+                where group_id='{g['group_id']}'"""
             cu.execute(sql)
             con.commit()
         finally:
