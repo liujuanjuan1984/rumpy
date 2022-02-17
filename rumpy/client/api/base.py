@@ -20,6 +20,3 @@ class BaseRumAPI:
     def group(self):
         return self._client.group
 
-    @property
-    def trx(self):
-        return self._client.trx
