@@ -19,4 +19,3 @@ class BaseRumAPI:
     @property
     def group(self):
         return self._client.group
-

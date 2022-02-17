@@ -1,48 +1,103 @@
 import datetime
-from typing import Dict, List
 import json
-import os
+import re
+from typing import Dict, List
 from rumpy import RumClient
-from officepy import Stime
+from officepy import Stime, JsonFile
 
 
 class SearchSeeds(RumClient):
-    def intrx(self, trxdata: Dict) -> List:
-        """search seeds from trx data"""
-        text = (trx["Content"].get("content") or "").replace("\n", " ")
+    def init_app(self, datafile, logfile, trxfile):
+        self.datafile = datafile
+        self.logfile = logfile
+        self.trxfile = trxfile
 
-        if text == "":
-            return []
-
-        # 只能识别单个种子，但依然采用列表来处理结果
+    def intext(self, text: str) -> List:
+        """
+        Search seeds in text, return list of seeds.
+        Only one seed in text can be found.
+        """
         seeds = []
-        pt = r"^[^\{]*?(\{[\s\S]*?\})[^\}]*?$"
-        for i in re.findall(pt, text):
+        pt = r"""({['"].*genesis_block.*['"]})"""
+        for i in re.findall(pt, text or "", re.S):
             try:
                 iseed = json.loads(i)
                 if self.node.is_seed(iseed):
                     seeds.append(iseed)
+            except json.JSONDecodeError:
+                continue
             except Exception as e:
-                pass  # print(e)
+                print(e)
+                continue
         return seeds
 
-    def ingroup(self, group_id: str) -> Dict:
-        """search seeds from group"""
-        rlt = {}
-        for trxdata in self.group.content(group_id):
-            iseeds = self.intrx(trxdata)
-            for iseed in iseeds:
-                if iseed["group_id"] not in rlt:
-                    rlt[iseed["group_id"]] = iseed
-        if group_id not in rlt:
-            rlt[group_id] = self.group.seed(group_id)
-        return rlt
+    def intrx(self, trx: Dict) -> List:
+        """Search seeds in trx, return list of seeds."""
+        return self.intext(trx["Content"].get("content") or "")
+
+    def __ingroup(self, group_id: str, trx_id: str, seedsdata: Dict) -> Dict:
+        """Search seeds in group, return list of seeds."""
+
+        checked = JsonFile(self.trxfile).read({})
+        trxs = self.group.content_trxs(group_id, trx_id, num=50)
+        print(datetime.datetime.now(), trx_id, len(trxs), end=" ")
+        if len(trxs) == 0:
+            # False means no need to continue
+            return False, trx_id, seedsdata
+
+        for trx in trxs:
+            tid = trx["TrxId"]
+            if not checked.get(tid):
+                trx_id = tid
+                for seed in self.intrx(trx):
+                    gid = seed["group_id"]
+                    if gid not in seedsdata:
+                        seedsdata[gid] = seed
+            checked[tid] = f"{datetime.datetime.now()}"
+        print(trx_id)
+        JsonFile(self.trxfile).write(checked)
+        return True, trx_id, seedsdata  # True means need to continue
+
+    def ingroup(self, group_id: str, trx_id=None, seedsdata={}, flag=True) -> Dict:
+        """Search seeds in group, and write result to datafile."""
+
+        logs = JsonFile(self.logfile).read({})
+        seedsdata = seedsdata or JsonFile(self.datafile).read({})
+        if group_id not in logs:
+            logs[group_id] = []
+
+        if len(logs[group_id]) > 0:
+            trx_id = logs[group_id][-1]["trx_id"] or trx_id
+        if group_id not in seedsdata:
+            seedsdata[group_id] = self.group.seed(group_id)
+
+        while flag:
+            logs[group_id].append(
+                {
+                    "trx_id": trx_id,
+                    "status": "begin",
+                    "time": f"{datetime.datetime.now()}",
+                }
+            )
+            flag, xtrx_id, seedsdata = self.__ingroup(group_id, trx_id, seedsdata)
+            logs[group_id].append(
+                {
+                    "trx_id": trx_id,
+                    "status": "done",
+                    "time": f"{datetime.datetime.now()}",
+                }
+            )
+            JsonFile(self.datafile).write(seedsdata)
+            JsonFile(self.logfile).write(logs)
+            if xtrx_id == trx_id:
+                break
+            else:
+                trx_id = xtrx_id
 
     def innode(self) -> Dict:
-        rlt = {}
+        """Search seeds in node."""
         for group_id in self.node.groups_id:
-            rlt.update(self.ingroup(group_id))
-        return rlt
+            self.ingroup(group_id)
 
     def search_seeds(self, data={}):
         """从已加入的种子网络中搜索新的种子，并更新数据文件"""

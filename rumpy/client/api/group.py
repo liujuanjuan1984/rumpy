@@ -16,6 +16,11 @@ class RumGroup(BaseRumAPI):
             return self._get(f"{self.baseurl}/group/{group_id}/seed")
         # raise ValueError(f"you are not in this group {group_id}.")
 
+    def info(self, group_id: str):
+        """return group info,type: datacalss"""
+        info = self.node.group_info(group_id)
+        return GroupInfo(**info)
+
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
         return self.node.join_group(seed)
@@ -45,6 +50,14 @@ class RumGroup(BaseRumAPI):
         """get the content trxs of a group,return the list of the trxs data."""
         return self._get(f"{self.baseurl}/group/{group_id}/content") or []
 
+    def trxs_unique(self, trxs):
+        """remove the duplicate trx from the trxs list"""
+        new = {}
+        for trx in trxs:
+            if trx["TrxId"] not in new:
+                new[trx["TrxId"]] = trx
+        return [new[i] for i in new]
+
     def content_trxs(
         self,
         group_id: str,
@@ -61,7 +74,9 @@ class RumGroup(BaseRumAPI):
         else:
             apiurl = f"{url}/group/{group_id}/content?num={num}&start=0"
             # raise ValueError(f"the trx {trx_id} isn't in this group {group_id}.")
-        return self._post(apiurl) or []
+        trxs = self._post(apiurl) or []
+
+        return self.trxs_unique(trxs)
 
     def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""
@@ -102,11 +117,6 @@ class RumGroup(BaseRumAPI):
     def deniedlist(self, group_id: str):
         """get the deniedlist of a group"""
         return self._get(f"{self.baseurl}/group/{group_id}/deniedlist")
-
-    def info(self, group_id: str):
-        """return group info,type: datacalss"""
-        info = self.node.group_info(group_id)
-        return GroupInfo(**info)
 
     def is_mygroup(self, group_id: str) -> bool:
         """return True if I create this group else False"""
