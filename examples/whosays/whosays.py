@@ -13,7 +13,7 @@ class WhoSays(RumClient):
     def _content_by(self, group_id, pubkeys):
         trxs = self.content(group_id)
         trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
-        content_by = [trx_export(i, trxs) for i in trxs_by]
+        content_by = [trx_export(group_id, i, trxs) for i in trxs_by]
         return content_by
 
     def search(self, names_info, data):

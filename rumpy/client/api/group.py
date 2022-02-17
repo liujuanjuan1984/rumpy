@@ -30,49 +30,37 @@ class RumGroup(BaseRumAPI):
         if self.node.is_joined(group_id):
             return self._post(f"{self.baseurl}/group/{group_id}/startsync")
 
+    def trx(self, group_id: str, trx_id: str):
+        try:
+            resp = self.content_trxs(group_id, trx_id, num=1, is_include_starttrx=True)
+            if len(resp) > 1:
+                print("somthing is error", resp)
+            return resp[0]
+        except Exception as e:
+            print(e)
+            return self._get(f"{self.baseurl}/trx/{group_id}/{trx_id}")
+        return {"error": "nothing got."}
+
     def content(self, group_id: str) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
         return self._get(f"{self.baseurl}/group/{group_id}/content") or []
 
-    def is_trx_in_group(self, group_id: str, trx_id: str):
-        """is trx in this group?"""
-        try:
-            trxdata = self.trx.info(group_id, trx_id)
-            if trxdata.get("TrxId"):
-                return True
-            return False
-        except:
-            return False
-
-    def content_trxs_all(self, group_id: str) -> List:
-        trxs = []
-        trx_id = "0"
-        while True:
-            itrxs = self.content_trxs(group_id, trx_id)
-            trxs.extend(itrxs)
-
-            if len(itrxs) > 0:
-                itrx_id = itrxs[-1]["TrxId"]
-            else:
-                break
-
-            if itrx_id != trx_id:
-                trx_id = itrx_id
-            else:
-                print(group_id, trx_id)
-                break
-        return trxs
-
-    def content_trxs(self, group_id: str, trx_id: str, num: int = 200) -> List:
+    def content_trxs(
+        self,
+        group_id: str,
+        trx_id: str = None,
+        num: int = 20,
+        is_reverse=False,
+        is_include_starttrx=False,
+    ) -> List:
         """requests the content trxs of a group,return the list of the trxs data."""
         url = self.baseurl.replace("api", "app/api")
 
-        if trx_id not in (0, None, "0"):
-            apiurl = f"{url}/group/{group_id}/content?num={num}&starttrx={trx_id}"
-        if not self.is_trx_in_group(group_id, trx_id):
+        if trx_id:
+            apiurl = f"{url}/group/{group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+        else:
             apiurl = f"{url}/group/{group_id}/content?num={num}&start=0"
             # raise ValueError(f"the trx {trx_id} isn't in this group {group_id}.")
-
         return self._post(apiurl) or []
 
     def _send(self, group_id: str, obj: Dict, sendtype=None) -> Dict:
@@ -166,3 +154,22 @@ class RumGroup(BaseRumAPI):
     def update_deniedlist(self, **kwargs):
         p = DeniedlistUpdateParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/deniedlist", p)
+
+    def trx_type(self, trxdata: Dict):
+        """get type of trx, trx is one of group content list"""
+        if trxdata["TypeUrl"] == "quorum.pb.Person":
+            return "person"
+        content = trxdata["Content"]
+        trxtype = content.get("type") or "other"
+        if type(trxtype) == int:
+            return "announce"
+        if trxtype == "Note":
+            if "inreplyto" in content:
+                return "reply"
+            if "image" in content:
+                if "content" not in content:
+                    return "image_only"
+                else:
+                    return "image_text"
+            return "text_only"
+        return trxtype.lower()  # "like","dislike","other"

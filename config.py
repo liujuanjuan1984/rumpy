@@ -8,14 +8,10 @@ class Config:
         "刘娟娟的朋友圈": "4e784292-6a65-471e-9f80-e91202e3358c",
     }
 
+    # the group_name of groups that you want to leave
+
     TEST_GROUPS_TO_LEAVE = [
-        "hellorum",
-        "测试whosays",
-        "新增测试组",
-        "nihao",
-        "nihao3",
-        "测试一下",
-        "测试一下下",
+        "mytest_group",
     ]
 
     CLIENT_PARAMS = {

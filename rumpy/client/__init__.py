@@ -40,7 +40,6 @@ class RumClient:
 
     group = api.RumGroup()
     node = api.RumNode()
-    trx = api.RumTrx()
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)

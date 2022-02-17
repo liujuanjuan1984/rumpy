@@ -8,14 +8,14 @@ from config import Config
 from typing import List, Dict
 
 
-def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
+def _person_name(group_id, trx_id_or_pubkey, trxs, since=None, client=None):
     """get the lastest name of the person published the trx_id"""
     key = "SenderPubkey" if "Publisher" not in trxs[0] else "Publisher"
     if trx_id_or_pubkey.endswith("=="):
         pubkey = trx_id_or_pubkey
     else:
         trx_id = trx_id_or_pubkey
-        trxdata = client.trx.trxdata(trx_id, trxs)
+        trxdata = client.group.trx(group_id, trx_id)
         pubkey = trxdata[key]
 
     rlt = []
@@ -31,13 +31,13 @@ def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
     return name
 
 
-def trx_export(trxdata: Dict, trxs: List) -> Dict:
+def trx_export(group_id, trxdata: Dict, trxs: List) -> Dict:
     """export data with refer_to data"""
     ts = Stime().ts2datetime(trxdata.get("TimeStamp"))
     info = {
         "trx_id": trxdata["TrxId"],
         "trx_time": str(ts),
-        "trx_type": client.trx.trx_type(trxdata),
+        "trx_type": client.group.trx_type(trxdata),
     }
 
     _content = trxdata["Content"]
@@ -45,15 +45,15 @@ def trx_export(trxdata: Dict, trxs: List) -> Dict:
         jid = _content["id"]
         info["refer_to"] = {
             "trx_id": jid,
-            "text": client.trx.get_trx_content(trxs, jid),
-            "name": _person_name(jid, trxs, ts, client),
+            "text": trxdata["Content"].get("content") or "",
+            "name": _person_name(group_id, jid, trxs, ts, client),
         }
     elif "inreplyto" in _content:
         jid = _content["inreplyto"]["trxid"]
         info["refer_to"] = {
             "trx_id": jid,
-            "text": client.trx.get_trx_content(trxs, jid),
-            "name": _person_name(jid, trxs, ts, client),
+            "text": trxdata["Content"].get("content") or "",
+            "name": _person_name(group_id, jid, trxs, ts, client),
         }
 
     if "content" in _content:
@@ -91,7 +91,7 @@ def export():
         gdata = []
         trxs = client.group.content(group_id)
         for trxdata in gtrxs:
-            gdata.append(trx_export(trxdata, trxs))
+            gdata.append(trx_export(group_id, trxdata, trxs))
         JsonFile(gfile).write(gdata)
 
 

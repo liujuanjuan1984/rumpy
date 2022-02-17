@@ -9,7 +9,7 @@ from officepy import Stime
 class SearchSeeds(RumClient):
     def intrx(self, trxdata: Dict) -> List:
         """search seeds from trx data"""
-        text = self.trx.trx_text(trxdata).replace("\n", " ")
+        text = (trx["Content"].get("content") or "").replace("\n", " ")
 
         if text == "":
             return []

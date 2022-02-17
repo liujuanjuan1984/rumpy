@@ -40,7 +40,7 @@ class ToDoList(RumClient):
             if trx["Publisher"] not in pubkeys:
                 continue
 
-            trxtype = self.trx.trx_type(trx)
+            trxtype = self.group.trx_type(trx)
             ts = str(Stime().ts2datetime(trx.get("TimeStamp")))
 
             if trxtype in _info:

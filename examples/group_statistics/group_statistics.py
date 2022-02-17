@@ -15,7 +15,7 @@ class GroupStatistics(RumClient):
     def _count_trxtype(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = self.trx.trx_type(i)
+            ix = self.group.trx_type(i)
             if ix not in rlt:
                 rlt[ix] = 1
             else:

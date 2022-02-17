@@ -16,7 +16,7 @@ class TestCase:
         r0 = client.node.status
         assert r0.lower().find("online") >= 0
 
-        r1 = client.node.create_group("新增测试组")
+        r1 = client.node.create_group("mytest_pytest")
         assert "genesis_block" in r1
         client.node.join_group(r1)
 
@@ -69,7 +69,7 @@ class TestCase:
 
         trxs = client.group.content(group_id)
         try:
-            trxtype = client.trx.trx_type(trxs[-1])
+            trxtype = client.group.trx_type(trxs[-1])
             assert type(trxtype) == str
         except IndexError as e:
             print(e)
@@ -78,14 +78,16 @@ class TestCase:
         r = client.group.send_img(group_id, "D:\\test-sample.png")
         assert "trx_id" in r
 
-        r = client.node.create_group("测试一下下")
+        r = client.node.create_group("mytest_test2")
         assert "group_id" in r
 
-        data = {"group_name": "nihao3", "app_key": "group_note"}
+        data = {"group_name": "mytest_nihao3", "app_key": "group_note"}
         r = client.node.create_group(**data)
         assert "group_id" in r
 
-        r = client.group.create(**{"group_name": "nihao3", "app_key": "group_note"})
+        r = client.group.create(
+            **{"group_name": "mytest_nihao3", "app_key": "group_note"}
+        )
         assert "group_id" in r
 
         resp = client.group.leave(group_id)
@@ -113,6 +115,27 @@ class TestCase:
         }
         r = client.node.is_seed(seed)
         r = client.node.join_group(seed)
+
+    def test_leave_test_groups(self):
+
+        for group_id in client.node.groups_id:
+            info = client.group.info(group_id)
+            name = info.group_name
+
+            if name.find("mytest_") >= 0:
+                client.group.leave(group_id)
+
+            elif name in Config.TEST_GROUPS_TO_LEAVE:
+                client.group.leave(group_id)
+
+    def test_trx(self):
+        gid = Config.GROUPS["刘娟娟的朋友圈"]
+        bid = client.group.info(gid).highest_block_id
+        block = client.group.block(gid, bid)
+        tid = block["Trxs"][0]["TrxId"]
+        # get one trx's content
+        x = client.group.trx(gid, tid)
+        assert "TrxId" in x
 
     def test_reformat(self):
         from officepy import Dir
