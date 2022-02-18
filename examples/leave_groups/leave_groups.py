@@ -1,16 +1,16 @@
 import datetime
+from config import RumpyConfig
 from rumpy import RumClient
-from config import Config
 
 
 def main(is_create_new=False):
     """is_create_new: create new group for test"""
 
-    client = RumClient(**Config.CLIENT_PARAMS["gui"])
+    client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
+    my_test_groups = ["mytest_leave_groups"]
 
     print(datetime.datetime.now(), "groups num: ", len(client.node.groups_id))
-
-    my_test_groups = ["mytest_leave_groups"]
+    print(RumpyConfig.TEST_GROUPS_TO_LEAVE + my_test_groups)
 
     # create group for test
     if is_create_new:
@@ -24,17 +24,35 @@ def main(is_create_new=False):
         name = info.group_name
 
         # name in the list:
-        if name in my_test_groups + Config.TEST_GROUPS_TO_LEAVE:
+        if name in my_test_groups + RumpyConfig.TEST_GROUPS_TO_LEAVE:
             client.group.leave(group_id)
-            print(datetime.datetime.now(), "leave seednet: ", name, group_id)
+            print(
+                datetime.datetime.now(),
+                "leave seednet: ",
+                name,
+                group_id,
+                "name in RumpyConfig.TEST_GROUPS_TO_LEAVE.",
+            )
         # name include mytest_
         elif name.find("mytest_") >= 0:
             client.group.leave(group_id)
-            print(datetime.datetime.now(), "leave seednet: ", name, group_id)
+            print(
+                datetime.datetime.now(),
+                "leave seednet: ",
+                name,
+                group_id,
+                "name with `mytest_`.",
+            )
         # the group with 0 blocks
         elif info.highest_height == 0:
             client.group.leave(group_id)
-            print(datetime.datetime.now(), "leave seednet: ", name, group_id)
+            print(
+                datetime.datetime.now(),
+                "leave seednet: ",
+                name,
+                group_id,
+                "highest_height is 0.",
+            )
 
     print(datetime.datetime.now(), "groups num: ", len(client.node.groups_id))
     print(datetime.datetime.now(), "TIPS: IF YOU'RE USING THE GUI APP,RELOAD IT.")

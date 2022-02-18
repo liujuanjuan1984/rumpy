@@ -1,12 +1,12 @@
 import os
 import sys
+from config import RumpyConfig
 from todolist import ToDoList
 from officepy import JsonFile
-from config import Config
 
 
 def main():
-    client = ToDoList(**Config.CLIENT_PARAMS["gui"])
+    client = ToDoList(**RumpyConfig.CLIENT_PARAMS["gui"])
     group_id = "5d53968c-3b48-44c5-953f-0abe0b7ad73d"
     pubkeys = [
         "CAISIQMsljkyD50GsX4uEARMKIql0FmxGgZY4A19wlSDyzRweg==",

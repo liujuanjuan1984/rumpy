@@ -2,7 +2,7 @@ import os
 import sys
 from whosays import WhoSays
 from officepy import JsonFile
-from config import Config
+from config import RumpyConfig
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     name = "Huoju"
     filepath = r"D:\Jupyter\rumpy\examples\whosays\huoju_says.json"
 
-    client = WhoSays(**Config.CLIENT_PARAMS["gui"])
+    client = WhoSays(**RumpyConfig.CLIENT_PARAMS["gui"])
 
     data = JsonFile(filepath).read()
 

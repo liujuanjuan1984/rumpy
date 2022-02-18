@@ -1,10 +1,11 @@
 import pytest
+import dataclasses
+from config import RumpyConfig
 from rumpy import RumClient
 from officepy import JsonFile
-from config import Config
-import dataclasses
 
-client = RumClient(**Config.CLIENT_PARAMS["gui"])
+
+client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
 
 
 class TestCase:
@@ -125,11 +126,11 @@ class TestCase:
             if name.find("mytest_") >= 0:
                 client.group.leave(group_id)
 
-            elif name in Config.TEST_GROUPS_TO_LEAVE:
+            elif name in RumpyConfig.TEST_GROUPS_TO_LEAVE:
                 client.group.leave(group_id)
 
     def test_trx(self):
-        gid = Config.GROUPS["刘娟娟的朋友圈"]
+        gid = RumpyConfig.GROUPS["刘娟娟的朋友圈"]
         bid = client.group.info(gid).highest_block_id
         block = client.group.block(gid, bid)
         tid = block["Trxs"][0]["TrxId"]
@@ -140,7 +141,7 @@ class TestCase:
     def test_reformat(self):
         from officepy import Dir
 
-        Dir(Config.BASE_DIR).black()
+        Dir(RumpyConfig.RUMPY_BASEDIR).black()
 
 
 if __name__ == "__main__":

@@ -5,12 +5,16 @@ from typing import Dict, List
 from rumpy import RumClient
 from officepy import Stime, JsonFile
 
+DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
+DONT_JOIN_PIECES = ["mytest_"]
+
 
 class SearchSeeds(RumClient):
-    def init_app(self, datafile, logfile, trxfile):
+    def init_app(self, datafile, logfile, trxfile, infofile):
         self.datafile = datafile
         self.logfile = logfile
         self.trxfile = trxfile
+        self.infofile = infofile
 
     def intext(self, text: str) -> List:
         """
@@ -99,85 +103,91 @@ class SearchSeeds(RumClient):
         for group_id in self.node.groups_id:
             self.ingroup(group_id)
 
-    def search_seeds(self, data={}):
+    def update_status(self):
         """从已加入的种子网络中搜索新的种子，并更新数据文件"""
 
-        seeds = self.innode()  # 搜寻到的所有种子
-        joined = self.node.groups_id  # 已经加入的种子网络
+        seeds = JsonFile(self.datafile).read({})  # all the seeds
+        info = JsonFile(self.infofile).read({})  # status data
+        joined = self.node.groups_id
 
-        # 把种子写入数据文件
         for group_id in seeds:
-            if group_id not in data:
-                data[group_id] = {
-                    "seed": seeds[group_id],
-                    "is_joined": 0,
-                    "is_worth": 1,
-                    "memo": "",
-                    "create_at": str(datetime.datetime.now()),
-                    "update_at": str(datetime.datetime.now()),
-                }
+            if group_id not in info:
+                info[group_id] = {"scores": 0}
 
-        # 自己已经加入的种子网络，更新一下数据文件
         for group_id in joined:
-            data[group_id].update(
+            ginfo = self.group.info(group_id)
+            gts = self.group.block(group_id, ginfo.highest_block_id).get("TimeStamp")
+            info[group_id].update(
                 {
-                    "is_joined": 1,
-                    "is_worth": 1,
-                    "update_at": str(datetime.datetime.now()),
+                    self.node.id: f"{datetime.datetime.now()}",
+                    "highest_height": ginfo.highest_height,
+                    "last_update": f"{Stime().ts2datetime(gts)}",
                 }
             )
+            info[group_id]["scores"] += 1
 
-        # 数据文件中标记为已加入，但实际上未加入的，更新一下（比如已经离开但数据文件未更新）
-        for group_id in data:
-            if data[group_id]["is_joined"] and group_id not in joined:
-                data[group_id].update(
-                    {
-                        "is_joined": 0,
-                        "is_worth": 0,
-                        "update_at": str(datetime.datetime.now()),
-                    }
-                )
-        return data
+        for group_id in info:
+            if self.node.id in info[group_id] and group_id not in joined:
+                info[group_id].remove(self.node.id)
+                info[group_id]["scores"] -= 1
 
-    def leave_group(self, data: Dict, toleave_groupnames: List, is_block=False) -> Dict:
-        # 离开满足某些条件的组
-        for group_id in self.node.groups_id:
-            flag = False
-            info = self.group.info(group_id)
-            # 退出本人创建的测试组
+        JsonFile(self.infofile).write(info)
+        return info
 
-            if self.group.is_mygroup(group_id):  # 是本人创建的
-                if info.group_name in toleave_groupnames:  # 名字在上述列表中
-                    flag = True
+    def join_groups(self):
+        seeds = JsonFile(self.datafile).read({})  # all the seeds
+        info = JsonFile(self.infofile).read({})  # status data
 
-            # 退出区块数为 0 的 group
-            if is_block and info.highest_height == 0:
-                flag = True
+        for group_id in seeds:
 
-            if flag:
-                resp = self.group.leave(group_id)
-                if "group_id" in resp:
-                    data[group_id].update(
-                        {
-                            "is_joined": 0,
-                            "is_worth": 0,
-                            "update_at": str(datetime.datetime.now()),
-                        }
-                    )
-        return data
+            if group_id in self.node.groups_id:
+                continue
+            if info[group_id].get("scores") or 0 < 0:
+                continue
+            gname = seeds[group_id]["group_name"]
+            if gname in DONT_JOIN:
+                continue
 
-    def join_group(self, data):
-        for group_id in data:
-            if not data[group_id]["is_joined"] and data[group_id]["is_worth"]:
-                resp = self.node.join_group(data[group_id]["seed"])
-                if "group_id" in resp:
-                    data[group_id].update(
-                        {
-                            "is_joined": 1,
-                            "update_at": str(datetime.datetime.now()),
-                        }
-                    )
-        return data
+            is_join = True
+            for piece in DONT_JOIN_PIECES:
+                if gname.find(piece) >= 0:
+                    is_join = False
+                    break
+            if not is_join:
+                continue
+            resp = self.node.join_group(seeds[group_id])
+
+        self.update_status()
+
+    def leave_groups(self):
+        info = self.update_status()
+        seeds = JsonFile(self.datafile).read({})  # all the seeds
+        joined = self.node.groups_id
+
+        for group_id in joined:
+            if info[group_id].get("scores") or 0 >= 0:
+                continue
+
+            gname = seeds[group_id]["group_name"]
+            if gname not in DONT_JOIN:
+                continue
+
+            if info[group_id][self.node.id] <= "2022-01-01" and (
+                info[group_id]["last_update"] <= "2022-01-01"
+                or info[group_id]["highest_height"] == 0
+            ):
+                self.group.leave(group_id)
+                continue
+
+            for piece in DONT_JOIN_PIECES:
+                if gname.find(piece) >= 0:
+                    is_leave = True
+                    break
+
+            if is_leave:
+                self.group.leave(group_id)
+
+        self.update_status()
 
     def worth_toshare(self, group_id):
         info = self.group.info(group_id)

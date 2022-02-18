@@ -1,13 +1,13 @@
 import os
 import sys
+from config import RumpyConfig
 from search_seeds import SearchSeeds
 from officepy import JsonFile, Dir
-from config import Config
 
 
 def main():
     # 初始化
-    client = SearchSeeds(**Config.CLIENT_PARAMS["gui"])
+    client = SearchSeeds(**RumpyConfig.CLIENT_PARAMS["gui"])
     # 数据文件
     dirpath = f"{os.path.realpath('.')}\\examples\\search_seeds\\data"
     Dir(dirpath).check()

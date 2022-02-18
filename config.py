@@ -1,8 +1,8 @@
 import os
 
 
-class Config:
-    BASE_DIR = os.path.dirname(__file__)
+class RumpyConfig:
+    RUMPY_BASEDIR = os.path.dirname(__file__)
     GROUPS = {
         "去中心微博": "3bb7a3be-d145-44af-94cf-e64b992ff8f0",
         "刘娟娟的朋友圈": "4e784292-6a65-471e-9f80-e91202e3358c",
