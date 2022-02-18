@@ -1,15 +1,15 @@
 import datetime
 import os
 from rumpy import RumClient
-from config import RumpyConfig
+from rumpyconfig import RumpyConfig
 
 
 def main():
 
-    client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
+    client = RumClient(**RumpyConfig.GUI)
 
     # create group for test
-    seed = client.group.create("hellorum")
+    seed = client.group.create("mytest_hellorum")
     group_id = seed["group_id"]
 
     # post to group

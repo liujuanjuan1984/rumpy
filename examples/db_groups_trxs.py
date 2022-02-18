@@ -4,7 +4,7 @@ import pytest
 import os
 import sys
 import json
-from config import RumpyConfig
+from rumpyconfig import RumpyConfig
 from rumpy import RumClient
 
 
@@ -129,7 +129,7 @@ def table_groups_trxs():
 
 if __name__ == "__main__":
 
-    client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
+    client = RumClient(**RumpyConfig.GUI)
 
     # 采用 node 的 id 作为 db 的识别标记
     dbpath = homedir + f"\\database\\node_{client.node.id}.db"

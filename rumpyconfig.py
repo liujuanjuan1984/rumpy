@@ -28,3 +28,6 @@ class RumpyConfig:
             "crtfile": r"D:\RUM2-DATA\certs\server.crt",
         },
     }
+
+    GUI = CLIENT_PARAMS["gui"]
+    CLI = CLIENT_PARAMS["cli"]

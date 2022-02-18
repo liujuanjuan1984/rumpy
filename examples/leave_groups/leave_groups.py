@@ -1,12 +1,12 @@
 import datetime
-from config import RumpyConfig
+from rumpyconfig import RumpyConfig
 from rumpy import RumClient
 
 
 def main(is_create_new=False):
     """is_create_new: create new group for test"""
 
-    client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
+    client = RumClient(**RumpyConfig.GUI)
     my_test_groups = ["mytest_leave_groups"]
 
     print(datetime.datetime.now(), "groups num: ", len(client.node.groups_id))

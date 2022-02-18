@@ -1,11 +1,11 @@
 import pytest
 import dataclasses
-from config import RumpyConfig
+from rumpyconfig import RumpyConfig
 from rumpy import RumClient
 from officepy import JsonFile
 
 
-client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
+client = RumClient(**RumpyConfig.GUI)
 
 
 class TestCase:

@@ -4,7 +4,7 @@ import uuid
 import sys
 from officepy import JsonFile, Dir, Img, Stime
 from rumpy import RumClient
-from config import RumpyConfig
+from rumpyconfig import RumpyConfig
 from typing import List, Dict
 
 
@@ -201,7 +201,7 @@ def export_text_daily(daystr):
 
 if __name__ == "__main__":
 
-    client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
+    client = RumClient(**RumpyConfig.GUI)
     nodeid = client.node.id
     SAVE_DIR = r"D:\Jupyter\rumpy\examples\export_data\data"
     JSON_DIR = f"{SAVE_DIR}\\{nodeid}\\json"

@@ -5,10 +5,10 @@ import os
 import sys
 from officepy import JsonFile, Dir
 from rumpy import RumClient
-from config import RumpyConfig
+from rumpyconfig import RumpyConfig
 
 
-client = RumClient(**RumpyConfig.CLIENT_PARAMS["gui"])
+client = RumClient(**RumpyConfig.GUI)
 
 # create a group
 group_id = client.group.create("mytest_postblog", app_key="group_post")["group_id"]
