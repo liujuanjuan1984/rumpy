@@ -26,14 +26,14 @@ def _person_name(group_id, trx_id_or_pubkey, trxs, since=None, client=None):
 
     for trxdata in rlt:
         name = trxdata["Content"].get("name") or ""
-        if Stime().ts2datetime(trxdata.get("TimeStamp")) <= since:
+        if Stime.ts2datetime(trxdata.get("TimeStamp")) <= since:
             return name
     return name
 
 
 def trx_export(group_id, trxdata: Dict, trxs: List) -> Dict:
     """export data with refer_to data"""
-    ts = Stime().ts2datetime(trxdata.get("TimeStamp"))
+    ts = Stime.ts2datetime(trxdata.get("TimeStamp"))
     info = {
         "trx_id": trxdata["TrxId"],
         "trx_time": str(ts),

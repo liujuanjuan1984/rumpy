@@ -35,7 +35,7 @@ class GroupStatistics(RumClient):
     def _count_daily_trxs(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = Stime().ts2datetime(i.get("TimeStamp")).date()
+            ix = Stime.ts2datetime(i.get("TimeStamp")).date()
             if ix not in rlt:
                 rlt[ix] = 1
             else:
@@ -45,7 +45,7 @@ class GroupStatistics(RumClient):
     def _count_daily_pubkeys(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = Stime().ts2datetime(i.get("TimeStamp")).date()
+            ix = Stime.ts2datetime(i.get("TimeStamp")).date()
             iy = i["Publisher"]
 
             if ix not in rlt:
@@ -61,8 +61,8 @@ class GroupStatistics(RumClient):
 
         return {
             "info": info.__dict__,
-            "create_at": str(Stime().ts2datetime(trxs[0].get("TimeStamp")))[:19],
-            "update_at": str(Stime().ts2datetime(trxs[-1].get("TimeStamp")))[:19],
+            "create_at": str(Stime.ts2datetime(trxs[0].get("TimeStamp")))[:19],
+            "update_at": str(Stime.ts2datetime(trxs[-1].get("TimeStamp")))[:19],
             "trxtype": self._count_trxtype(trxs),
             "pubkeys": self._count_pubkey(trxs),
             "daily_trxs": self._count_daily_trxs(trxs),
