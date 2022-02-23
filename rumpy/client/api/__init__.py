@@ -1,2 +1,3 @@
-from .group import RumGroup
-from .node import RumNode
+from .group import Group
+from .node import Node
+from .config import GroupConfig

@@ -1,4 +1,3 @@
-import datetime
 from dataclasses import dataclass
 import inspect
 import requests
@@ -6,11 +5,11 @@ import urllib3
 
 urllib3.disable_warnings()
 from . import api
-from .api.base import BaseRumAPI
+from .api.base import BaseAPI
 
 
 @dataclass
-class ClientParams:
+class RumClientParams:
     """
     :param appid, str, Rum 客户端标识，自定义，随便写
     :param port, int, Rum 服务 端口号
@@ -33,13 +32,14 @@ class ClientParams:
 
 
 def _is_api_endpoint(obj):
-    return isinstance(obj, BaseRumAPI)
+    return isinstance(obj, BaseAPI)
 
 
 class RumClient:
-
-    group = api.RumGroup()
-    node = api.RumNode()
+    _group_id = None
+    group = api.Group()
+    node = api.Node()
+    config = api.GroupConfig()
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
@@ -51,7 +51,7 @@ class RumClient:
         return self
 
     def __init__(self, **kwargs):
-        cp = ClientParams(**kwargs)
+        cp = RumClientParams(**kwargs)
         requests.adapters.DEFAULT_RETRIES = 5
         self.appid = cp.appid
         self._session = requests.Session()
@@ -77,3 +77,15 @@ class RumClient:
 
     def post(self, url, relay={}):
         return self._request("post", url, relay)
+
+    @property
+    def group_id(self):
+        return self._group_id
+
+    @group_id.setter
+    def group_id(self, group_id):
+        self._group_id = group_id
+
+    @group_id.deleter
+    def group_id(self):
+        del self._group_id

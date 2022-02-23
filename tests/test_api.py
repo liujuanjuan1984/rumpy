@@ -9,91 +9,27 @@ client = RumClient(**RumpyConfig.GUI)
 
 
 class TestCase:
-    def test_api(self):
-
+    def test_node(self):
         r = client.node.info
         assert dataclasses.is_dataclass(r)
 
         r0 = client.node.status
         assert r0.lower().find("online") >= 0
 
-        r1 = client.node.create_group("mytest_pytest")
+        r1 = client.group.create("mytest_pytest")
         assert "genesis_block" in r1
-        client.node.join_group(r1)
+        client.group.join(r1)
 
         group_id = r1["group_id"]
         r2 = client.node.is_joined(group_id)
         assert r2 == True
 
-        seed = client.group.seed(group_id)
-        assert "genesis_block" in seed
-
         r3 = client.node.is_joined(group_id.replace(group_id[:5], "b" * 5))
         assert r3 == False
 
         r4 = client.node.groups_id
+
         assert group_id in r4
-
-        for i in range(10):
-            kwargs = {"content": f"你好 {i}"}
-            r5 = client.group.send_note(group_id, **kwargs)
-            assert "trx_id" in r5
-
-        trx_id = r5["trx_id"]
-        kwargs = {"content": "回复一下", "inreplyto": trx_id}
-        r6 = client.group.send_note(group_id, **kwargs)
-        assert "trx_id" in r6
-
-        # 发文
-        resp = client.group.send_note(group_id, content="你好")
-        assert "trx_id" in resp
-
-        resp = client.group.send_note(group_id, content="", image=[])
-        assert "trx_id" not in resp
-
-        resp = client.group.send_note(group_id, image=["D:\\test-sample.png"])
-        assert "trx_id" in resp
-
-        # 回复
-        trx_id = resp["trx_id"]
-        resp = client.group.reply(group_id, "我回复你了", trx_id)
-        assert "trx_id" in resp
-
-        resp = client.group.send_note(group_id, content="", image=[], inreplyto=trx_id)
-        assert "trx_id" not in resp
-
-        resp = client.group.like(group_id, trx_id)
-        assert "trx_id" in resp
-
-        resp = client.group.dislike(group_id, trx_id)
-        assert "trx_id" in resp
-
-        trxs = client.group.content(group_id)
-        try:
-            trxtype = client.group.trx_type(trxs[-1])
-            assert type(trxtype) == str
-        except IndexError as e:
-            print(e)
-            pass
-
-        r = client.group.send_img(group_id, "D:\\test-sample.png")
-        assert "trx_id" in r
-
-        r = client.node.create_group("mytest_test2")
-        assert "group_id" in r
-
-        data = {"group_name": "mytest_nihao3", "app_key": "group_note"}
-        r = client.node.create_group(**data)
-        assert "group_id" in r
-
-        r = client.group.create(
-            **{"group_name": "mytest_nihao3", "app_key": "group_note"}
-        )
-        assert "group_id" in r
-
-        resp = client.group.leave(group_id)
-        r2 = client.node.is_joined(group_id)
-        assert r2 == False
 
         seed = {
             "genesis_block": {
@@ -114,28 +50,100 @@ class TestCase:
             "app_key": "group_timeline",
             "signature": "30450221009d00d86876d4e37b8408620dca823d0409afa03ae49c5c78526669f5d2a3c8fe022073cf3f3bbb19534614ae6d3eca65ac05d374909444825f59be44f1fe0fd1a0ca",
         }
-        r = client.node.is_seed(seed)
-        r = client.node.join_group(seed)
+        r = client.group.is_seed(seed)
+        r = client.group.join(seed)
+
+        client.group_id = r1["group_id"]
+        client.group.leave()
 
     def test_leave_test_groups(self):
 
+        r = client.group.create("mytest_test2")
+        assert "group_id" in r
+
+        data = {"group_name": "mytest_nihao3", "app_key": "group_note"}
+        r = client.group.create(**data)
+        assert "group_id" in r
+
+        r = client.group.create(
+            **{"group_name": "mytest_nihao3", "app_key": "group_note"}
+        )
+        assert "group_id" in r
+
         for group_id in client.node.groups_id:
-            info = client.group.info(group_id)
-            name = info.group_name
+            client.group_id = group_id
+            name = client.group.info().group_name
 
-            if name.find("mytest_") >= 0:
-                client.group.leave(group_id)
+            if name.find("mytest_") >= 0 or name in RumpyConfig.TEST_GROUPS_TO_LEAVE:
+                client.group.leave()
 
-            elif name in RumpyConfig.TEST_GROUPS_TO_LEAVE:
-                client.group.leave(group_id)
+    def test_group(self):
+        seed = client.group.create("mytest_pytest_group")
+        assert "genesis_block" in seed
+
+        client.group.join(seed)
+        client.group_id = seed["group_id"]
+
+        seed = client.group.seed()
+        assert "genesis_block" in seed
+
+        for i in range(10):
+            kwargs = {"content": f"你好 {i}"}
+            r5 = client.group.send_note(**kwargs)
+            assert "trx_id" in r5
+
+        trx_id = r5["trx_id"]
+        kwargs = {"content": "回复一下", "inreplyto": trx_id}
+        r6 = client.group.send_note(**kwargs)
+        assert "trx_id" in r6
+
+        # 发文
+        resp = client.group.send_note(content="你好")
+        assert "trx_id" in resp
+
+        resp = client.group.send_note(content="", image=[])
+        assert "trx_id" not in resp
+
+        resp = client.group.send_note(image=["D:\\test-sample.png"])
+        assert "trx_id" in resp
+
+        # 回复
+        trx_id = resp["trx_id"]
+        resp = client.group.reply("我回复你了", trx_id)
+        assert "trx_id" in resp
+
+        resp = client.group.send_note(content="", image=[], inreplyto=trx_id)
+        assert "trx_id" not in resp
+
+        resp = client.group.like(trx_id)
+        assert "trx_id" in resp
+
+        resp = client.group.dislike(trx_id)
+        assert "trx_id" in resp
+
+        trxs = client.group.content()
+        try:
+            trxtype = client.group.trx_type(trxs[-1])
+            assert type(trxtype) == str
+        except IndexError as e:
+            print(e)
+            pass
+
+        r = client.group.send_img("D:\\test-sample.png")
+        assert "trx_id" in r
+
+        resp = client.group.leave()
+        r2 = client.node.is_joined(client.group_id)
+        assert r2 == False
 
     def test_trx(self):
-        gid = RumpyConfig.GROUPS["刘娟娟的朋友圈"]
-        bid = client.group.info(gid).highest_block_id
-        block = client.group.block(gid, bid)
+        client.group_id = RumpyConfig.GROUPS["刘娟娟的朋友圈"]
+        bid = client.group.info().highest_block_id
+
+        block = client.group.block(bid)
         tid = block["Trxs"][0]["TrxId"]
         # get one trx's content
-        x = client.group.trx(gid, tid)
+        x = client.group.trx(tid)
         assert "TrxId" in x
 
     def test_reformat(self):

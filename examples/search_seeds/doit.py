@@ -36,7 +36,7 @@ def main():
     JsonFile(filepath).write(data)
 
     # 加入未曾加入的种子网络
-    data = client.join_group(data)
+    data = client.group.join(data)
     JsonFile(filepath).write(data)
 
     # 分享到种子网络

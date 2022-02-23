@@ -1,4 +1,4 @@
-class BaseRumAPI:
+class BaseAPI:
     def __init__(self, client=None):
         self._client = client
 
@@ -13,9 +13,17 @@ class BaseRumAPI:
         return self._client.baseurl
 
     @property
+    def group_id(self):
+        return self._client.group_id
+
+    @property
     def node(self):
         return self._client.node
 
     @property
     def group(self):
         return self._client.group
+
+    @property
+    def config(self):
+        return self._client.config

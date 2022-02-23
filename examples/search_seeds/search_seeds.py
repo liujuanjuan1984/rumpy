@@ -26,7 +26,7 @@ class SearchSeeds(RumClient):
         for i in re.findall(pt, text or "", re.S):
             try:
                 iseed = json.loads(i)
-                if self.node.is_seed(iseed):
+                if self.group.is_seed(iseed):
                     seeds.append(iseed)
             except json.JSONDecodeError:
                 continue
@@ -155,7 +155,7 @@ class SearchSeeds(RumClient):
                     break
             if not is_join:
                 continue
-            resp = self.node.join_group(seeds[group_id])
+            resp = self.group.join(seeds[group_id])
 
         self.update_status()
 

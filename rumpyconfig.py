@@ -27,7 +27,14 @@ class RumpyConfig:
             "appid": "peer",
             "crtfile": r"D:\RUM2-DATA\certs\server.crt",
         },
+        "test": {
+            "host": "127.0.0.1",
+            "port": 50125,
+            "appid": "peer",
+            "crtfile": r"D:\RUM2-DATA\certs\server.crt",
+        },
     }
 
     GUI = CLIENT_PARAMS["gui"]
     CLI = CLIENT_PARAMS["cli"]
+    TEST = CLIENT_PARAMS["test"]
