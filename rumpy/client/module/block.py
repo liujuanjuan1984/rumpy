@@ -19,6 +19,8 @@ class Block(Base):
 
     def __init__(self, block):
         super().__init__(**block)
+        # genesis_block don't have Trxs.
+        self.Trxs = block.get("Trxs") or []
 
     def __repr__(self):
         return f"Block({self.to_dict()})"
@@ -27,14 +29,18 @@ class Block(Base):
         return f"{self.to_dict()}"
 
     def to_dict(self):
-        return {
+        block = {
             "BlockId": self.BlockId,
             "GroupId": self.GroupId,
             "PrevBlockId": self.PrevBlockId,
             "PreviousHash": self.PreviousHash,
-            "Trxs": self.Trxs,
+            "Trxs": eval(self.Trxs),
             "ProducerPubKey": self.ProducerPubKey,
             "Hash": self.Hash,
             "Signature": self.Signature,
             "TimeStamp": self.TimeStamp,
         }
+        # genesis_block don't have Trxs.
+        if not block["Trxs"]:
+            del block["Trxs"]
+        return block

@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 import inspect
 import requests
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
 import urllib3
 
 urllib3.disable_warnings()
 from . import api
 from .api.base import BaseAPI
-from .module.base import Base
+from .module import *
+from .module_op import BaseDB
 
 
 @dataclass
@@ -18,13 +17,6 @@ class RumClientParams:
     :param port, int, Rum 服务 端口号
     :param host,str, Rum 服务 host，通常是 127.0.0.1
     :param crtfile, str, Rum 的 server.crt 文件的绝对路径
-
-    {
-        "port":8002,
-        "host":"127.0.0.1",
-        "appid":"peer"
-        "crtfile":"",
-    }
     """
 
     port: int
@@ -32,37 +24,14 @@ class RumClientParams:
     host: str = "127.0.0.1"
     appid: str = "peer"
     jwt_token: str = None
+    usedb: bool = True
     dbname: str = "test_db"
+    dbecho: bool = False
+    dbreset: bool = False
 
 
 def _is_api_endpoint(obj):
     return isinstance(obj, BaseAPI)
-
-
-class BaseDB:
-    def __init__(self, dbname, echo=True):
-        # 创建数据库
-        engine = create_engine(f"sqlite:///{dbname}.db", echo=echo)
-        # 创建表
-        Base.metadata.create_all(engine)
-        # 创建会话
-        Session = sessionmaker(bind=engine)
-        self.session = Session()
-
-    def __commit(self):
-        """Commits the current db.session, does rollback on failure."""
-        from sqlalchemy.exc import IntegrityError
-
-        try:
-            self.session.commit()
-        except IntegrityError:
-            self.session.rollback()
-
-    def save(self, obj):
-        """Adds this model to the db (through db.session)"""
-        self.session.add(obj)
-        self.__commit()
-        return self
 
 
 class RumClient:
@@ -97,7 +66,8 @@ class RumClient:
         if cp.jwt_token:
             self._session.headers.update({"Authorization": f"Bearer {cp.jwt_token}"})
         self.baseurl = f"https://{cp.host}:{cp.port}/api/v1"
-        self.db = BaseDB(cp.dbname)
+        self.usedb = cp.usedb
+        self.db = BaseDB(cp.dbname, echo=cp.dbecho, reset=cp.dbreset)
 
     def _request(self, method, url, relay={}):
         resp = self._session.request(method=method, url=url, json=relay)
@@ -107,7 +77,19 @@ class RumClient:
         return self._request("get", url, relay)
 
     def post(self, url, relay={}):
-        return self._request("post", url, relay)
+        if self.usedb:
+            resp = self._request("post", url, relay)
+            if "trx_id" in resp:
+                action = {
+                    "group_id": self.group_id,
+                    "trx_id": resp["trx_id"],
+                    "func": "post",
+                    "params": {"url": url, "relay": relay},
+                }
+                self.db.save(Action(action))
+            return resp
+        else:
+            return self._request("post", url, relay)
 
     @property
     def group_id(self):

@@ -55,7 +55,6 @@ class TestCase:
         r = client.group.is_seed(seed)
         r = client.group.join(seed)
         client.group_id = seed["group_id"]
-        client.group.leave()
 
     def test_leave_test_groups(self):
 

@@ -13,6 +13,7 @@ class Trx(Base):
     Content = Column("content", String)
     TypeUrl = Column("type_url", String(32))  # 16
     TimeStamp = Column("timestamp", Integer)  # 19
+    add_at = Column("add_at", Integer, default=int(round(time.time() * 1000000000)))
 
     def __init__(self, trx):
         super().__init__(**trx)
