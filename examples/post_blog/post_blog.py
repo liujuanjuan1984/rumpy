@@ -7,8 +7,9 @@ from officepy import JsonFile, Dir
 from rumpy import RumClient
 from rumpyconfig import RumpyConfig
 
-
-client = RumClient(**RumpyConfig.GUI)
+GUI = RumpyConfig.GUI
+GUI["usedb"] =False 
+client = RumClient(**GUI)
 
 # create a group
 group_id = client.group.create("mytest_postblog", app_key="group_post")["group_id"]

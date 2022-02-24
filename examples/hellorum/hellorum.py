@@ -6,53 +6,59 @@ from rumpyconfig import RumpyConfig
 
 def main():
 
-    client = RumClient(**RumpyConfig.GUI)
+    GUI = RumpyConfig.GUI
+    GUI["usedb"] = False
+    client = RumClient(**GUI)
 
     # create group for test
     seed = client.group.create("mytest_hellorum")
-    group_id = seed["group_id"]
+    client.group_id = seed["group_id"]
 
     # post to group
     relay = {"content": f"{str(datetime.datetime.now())} hello rum"}
-    resp1 = client.group.send_note(group_id, **relay)
+    resp1 = client.group.send_note(**relay)
+    print(resp1)
 
     relay = {
         "content": f"{str(datetime.datetime.now())} hello again.can  u see the picture i posted?",
         "image": [os.path.join(os.path.dirname(__file__), "girl.png")],
     }
-    resp2 = client.group.send_note(group_id, **relay)
+    resp2 = client.group.send_note(**relay)
+    print(resp2)
 
     relay = {
         "content": f"{str(datetime.datetime.now())} reply to hello rum ",
         "inreplyto": resp1["trx_id"],
     }
-    resp3 = client.group.send_note(group_id, **relay)
+    resp3 = client.group.send_note(**relay)
+    print(resp3)
 
     relay = {
         "content": f"{str(datetime.datetime.now())} reply to  post with picture",
         "inreplyto": resp2["trx_id"],
     }
-    resp4 = client.group.send_note(group_id, **relay)
+    resp4 = client.group.send_note(**relay)
+    print(resp4)
 
     relay = {
         "content": f"{str(datetime.datetime.now())} thi is reply to reply",
         "inreplyto": resp4["trx_id"],
     }
-    resp5 = client.group.send_note(group_id, **relay)
-
+    resp5 = client.group.send_note(**relay)
+    print(resp5)
     # like
-    client.group.like(group_id, resp1["trx_id"])
-    client.group.like(group_id, resp2["trx_id"])
-    client.group.like(group_id, resp3["trx_id"])
-    client.group.like(group_id, resp4["trx_id"])
-    client.group.like(group_id, resp5["trx_id"])
+    client.group.like(resp1["trx_id"])
+    client.group.like(resp2["trx_id"])
+    client.group.like(resp3["trx_id"])
+    client.group.like(resp4["trx_id"])
+    client.group.like(resp5["trx_id"])
 
     # dislike
-    client.group.dislike(group_id, resp1["trx_id"])
+    client.group.dislike(resp1["trx_id"])
 
     # group info
-    info = client.group.info(group_id)
-    print(info)
+    info = client.group.info()
+    print(info.__dict__)
 
     # node info
     print(client.node.id)

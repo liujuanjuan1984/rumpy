@@ -39,6 +39,7 @@ class RumClient:
     group = api.Group()
     node = api.Node()
     config = api.GroupConfig()
+    db = None
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
@@ -67,7 +68,8 @@ class RumClient:
             self._session.headers.update({"Authorization": f"Bearer {cp.jwt_token}"})
         self.baseurl = f"https://{cp.host}:{cp.port}/api/v1"
         self.usedb = cp.usedb
-        self.db = BaseDB(cp.dbname, echo=cp.dbecho, reset=cp.dbreset)
+        if self.usedb:
+            self.db = BaseDB(cp.dbname, echo=cp.dbecho, reset=cp.dbreset)
 
     def _request(self, method, url, relay={}):
         resp = self._session.request(method=method, url=url, json=relay)

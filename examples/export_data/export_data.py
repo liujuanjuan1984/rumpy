@@ -201,7 +201,9 @@ def export_text_daily(daystr):
 
 if __name__ == "__main__":
 
-    client = RumClient(**RumpyConfig.GUI)
+    GUI = RumpyConfig.GUI
+    GUI["usedb"] = False
+    client = RumClient(**GUI)
     nodeid = client.node.id
     SAVE_DIR = r"D:\Jupyter\rumpy\examples\export_data\data"
     JSON_DIR = f"{SAVE_DIR}\\{nodeid}\\json"

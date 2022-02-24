@@ -64,6 +64,8 @@ pip install -r requirements_examples.txt
 其它案例：
 
 - [retweet 转发工具](https://github.com/liujuanjuan1984/retweet) bot: retweet weibo/twitter to rum groups
+- [seedstore 种子商店](https://github.com/liujuanjuan1984/seedstore)：发现和分享更多种子~
+- [todolist 待办清单](https://github.com/liujuanjuan1984/todolist)：TBD
 
 ## 问题反馈/需求建议/开发计划
 

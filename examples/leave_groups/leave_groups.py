@@ -5,8 +5,9 @@ from rumpy import RumClient
 
 def main(is_create_new=False):
     """is_create_new: create new group for test"""
-
-    client = RumClient(**RumpyConfig.GUI)
+    GUI = RumpyConfig.GUI
+    GUI["usedb"] = False
+    client = RumClient(**GUI)
     my_test_groups = ["mytest_leave_groups"]
 
     print(datetime.datetime.now(), "groups num: ", len(client.node.groups_id))
@@ -20,12 +21,13 @@ def main(is_create_new=False):
 
     # leave groups
     for group_id in client.node.groups_id:
-        info = client.group.info(group_id)
+        client.group_id = group_id
+        info = client.group.info()
         name = info.group_name
 
         # name in the list:
         if name in my_test_groups + RumpyConfig.TEST_GROUPS_TO_LEAVE:
-            client.group.leave(group_id)
+            client.group.leave()
             print(
                 datetime.datetime.now(),
                 "leave seednet: ",
@@ -35,7 +37,7 @@ def main(is_create_new=False):
             )
         # name include mytest_
         elif name.find("mytest_") >= 0:
-            client.group.leave(group_id)
+            client.group.leave()
             print(
                 datetime.datetime.now(),
                 "leave seednet: ",
@@ -45,7 +47,7 @@ def main(is_create_new=False):
             )
         # the group with 0 blocks
         elif info.highest_height == 0:
-            client.group.leave(group_id)
+            client.group.leave()
             print(
                 datetime.datetime.now(),
                 "leave seednet: ",
