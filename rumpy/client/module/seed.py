@@ -1,15 +1,12 @@
 import time
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
+from .base import Base
 
 
 class Seed(Base):
     __tablename__ = "seeds"
 
-    id = Column(Integer, primary_key=True)
-    group_id = Column(String, unique=True, index=True)
+    group_id = Column(String, primary_key=True, unique=True, index=True)
     group_name = Column(String)
     owner_pubkey = Column(String)
     consensus_type = Column(String)
@@ -20,12 +17,15 @@ class Seed(Base):
     genesis_block = Column(String)
     add_at = Column("add_at", Integer, default=int(round(time.time() * 1000000000)))
 
-    def __init__(self, **seed):
+    def __init__(self, seed):
         super().__init__(**seed)
         self.genesis_block = str(seed["genesis_block"])
 
-    def __repl__(self):
-        return str(self.to_dict())
+    def __repr__(self):
+        return f"Seed({self.to_dict()})"
+
+    def __str__(self):
+        return f"{self.to_dict()}"
 
     def to_dict(self):
         return {

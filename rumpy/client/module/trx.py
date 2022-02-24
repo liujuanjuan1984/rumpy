@@ -1,29 +1,34 @@
 import time
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
+from .base import Base
 
 
 class Trx(Base):
     __tablename__ = "trxs"
 
-    id = Column(Integer, primary_key=True)
-    TrxId = Column("trx_id", String(64), unique=True, index=True)
-    Publisher = Column("pubkey", String(64))
+    TrxId = Column(
+        "trx_id", String(40), unique=True, primary_key=True, index=True
+    )  # 36
+    Publisher = Column("pubkey", String(56))  # 52
     Content = Column("content", String)
-    TypeUrl = Column("type_url", String(64))
-    TimeStamp = Column("timestamp", Integer)
-    add_at = Column("add_at", Integer, default=int(round(time.time() * 1000000000)))
+    TypeUrl = Column("type_url", String(32))  # 16
+    TimeStamp = Column("timestamp", Integer)  # 19
 
-    def __repl__(self):
-        return str(self.to_dict())
+    def __init__(self, trx):
+        super().__init__(**trx)
+        self.Content = str(trx["Content"])
+
+    def __repr__(self):
+        return f"Trx({self.to_dict()})"
+
+    def __str__(self):
+        return f"{self.to_dict()}"
 
     def to_dict(self):
         return {
             "TrxId": self.TrxId,
             "Publisher": self.Publisher,
-            "Content": self.Content,
+            "Content": eval(self.Content),
             "TypeUrl": self.TypeUrl,
             "TimeStamp": self.TimeStamp,
         }

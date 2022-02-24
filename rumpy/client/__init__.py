@@ -1,11 +1,14 @@
 from dataclasses import dataclass
 import inspect
 import requests
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 import urllib3
 
 urllib3.disable_warnings()
 from . import api
 from .api.base import BaseAPI
+from .module.base import Base
 
 
 @dataclass
@@ -29,10 +32,37 @@ class RumClientParams:
     host: str = "127.0.0.1"
     appid: str = "peer"
     jwt_token: str = None
+    dbname: str = "test_db"
 
 
 def _is_api_endpoint(obj):
     return isinstance(obj, BaseAPI)
+
+
+class BaseDB:
+    def __init__(self, dbname, echo=True):
+        # 创建数据库
+        engine = create_engine(f"sqlite:///{dbname}.db", echo=echo)
+        # 创建表
+        Base.metadata.create_all(engine)
+        # 创建会话
+        Session = sessionmaker(bind=engine)
+        self.session = Session()
+
+    def __commit(self):
+        """Commits the current db.session, does rollback on failure."""
+        from sqlalchemy.exc import IntegrityError
+
+        try:
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+
+    def save(self, obj):
+        """Adds this model to the db (through db.session)"""
+        self.session.add(obj)
+        self.__commit()
+        return self
 
 
 class RumClient:
@@ -67,6 +97,7 @@ class RumClient:
         if cp.jwt_token:
             self._session.headers.update({"Authorization": f"Bearer {cp.jwt_token}"})
         self.baseurl = f"https://{cp.host}:{cp.port}/api/v1"
+        self.db = BaseDB(cp.dbname)
 
     def _request(self, method, url, relay={}):
         resp = self._session.request(method=method, url=url, json=relay)

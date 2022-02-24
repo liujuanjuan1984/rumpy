@@ -27,3 +27,7 @@ class BaseAPI:
     @property
     def config(self):
         return self._client.config
+
+    @property
+    def db(self):
+        return self._client.db

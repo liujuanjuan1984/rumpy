@@ -28,8 +28,10 @@ class TestCase:
         assert r3 == False
 
         r4 = client.node.groups_id
-
         assert group_id in r4
+
+        client.group_id = r1["group_id"]
+        client.group.leave()
 
         seed = {
             "genesis_block": {
@@ -52,8 +54,7 @@ class TestCase:
         }
         r = client.group.is_seed(seed)
         r = client.group.join(seed)
-
-        client.group_id = r1["group_id"]
+        client.group_id = seed["group_id"]
         client.group.leave()
 
     def test_leave_test_groups(self):
@@ -137,14 +138,52 @@ class TestCase:
         assert r2 == False
 
     def test_trx(self):
-        client.group_id = RumpyConfig.GROUPS["刘娟娟的朋友圈"]
-        bid = client.group.info().highest_block_id
+
+        for i in client.node.groups():
+            if i["highest_height"] > 1:
+                gid = i["group_id"]
+                bid = i["highest_block_id"]
+                break
+
+        client.group_id = gid
 
         block = client.group.block(bid)
-        tid = block["Trxs"][0]["TrxId"]
-        # get one trx's content
+        assert "Trxs" in block
+
+        tid = block.get("Trxs")[0]["TrxId"]
         x = client.group.trx(tid)
         assert "TrxId" in x
+
+        # test_config(self):
+
+        r = client.config.auth_type
+
+        r == {"TrxType": "POST", "AuthType": "FOLLOW_ALW_LIST"}
+        r = client.config.set_trx_auth_type("post", "deny", "testit")
+        r = client.config.set_trx_auth_type("post", "allow", "testit")
+        r = client.config.allow_list
+        r = client.config.deny_list
+
+        r = client.config._update_list(
+            "CAISIQIPfGufTgH4cQRGXUmZWbHshWdet0K5fMN1YR2NyKX33Q==",
+            trx_types=[
+                "POST",
+                "ANNOUNCE",
+                "REQ_BLOCK_FORWARD",
+                "REQ_BLOCK_BACKWARD",
+                "ASK_PEERID",
+            ],
+            mode="dny",
+            memo="同时在 allow 和 deny 名单内",
+        )
+
+    def test_init(self):
+
+        type(client.group)
+        type(client.config)
+        type(client.db)
+        type(client.node)
+        type(client.group_id)
 
     def test_reformat(self):
         from officepy import Dir

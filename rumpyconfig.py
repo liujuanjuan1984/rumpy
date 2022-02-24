@@ -20,18 +20,21 @@ class RumpyConfig:
             "port": 50415,
             "appid": "peer",
             "crtfile": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
+            "dbname": "gui_db",
         },
         "cli": {
             "host": "127.0.0.1",
             "port": 50415,
             "appid": "peer",
             "crtfile": r"D:\RUM2-DATA\certs\server.crt",
+            "dbname": "cli_db",
         },
         "test": {
             "host": "127.0.0.1",
             "port": 50125,
             "appid": "peer",
             "crtfile": r"D:\RUM2-DATA\certs\server.crt",
+            "dbname": "test_db",
         },
     }
 
