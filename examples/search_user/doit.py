@@ -2,8 +2,9 @@ from rumpyconfig import RumpyConfig
 from officepy import JsonFile
 from search_user import SearchUser
 
-
-searchuser = SearchUser(**RumpyConfig.GUI)
+GUI = RumpyConfig.GUI
+GUI["usedb"] = False
+searchuser = SearchUser(**GUI)
 
 for xname in ["xiaolai", "huoju"]:
     rlt = searchuser.innode(xname)

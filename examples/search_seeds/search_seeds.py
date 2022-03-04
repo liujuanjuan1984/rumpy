@@ -39,11 +39,11 @@ class SearchSeeds(RumClient):
         """Search seeds in trx, return list of seeds."""
         return self.intext(trx["Content"].get("content") or "")
 
-    def __ingroup(self, group_id: str, trx_id: str, seedsdata: Dict) -> Dict:
+    def __ingroup(self, trx_id: str, seedsdata: Dict) -> Dict:
         """Search seeds in group, return list of seeds."""
 
         checked = JsonFile(self.trxfile).read({})
-        trxs = self.group.content_trxs(group_id, trx_id, num=50)
+        trxs = self.group.content_trxs(trx_id, num=50)
         print(datetime.datetime.now(), trx_id, len(trxs), end=" ")
         if len(trxs) == 0:
             # False means no need to continue
@@ -62,29 +62,30 @@ class SearchSeeds(RumClient):
         JsonFile(self.trxfile).write(checked)
         return True, trx_id, seedsdata  # True means need to continue
 
-    def ingroup(self, group_id: str, trx_id=None, seedsdata={}, flag=True) -> Dict:
+    def ingroup(self, trx_id=None, seedsdata={}, flag=True) -> Dict:
         """Search seeds in group, and write result to datafile."""
 
         logs = JsonFile(self.logfile).read({})
         seedsdata = seedsdata or JsonFile(self.datafile).read({})
-        if group_id not in logs:
-            logs[group_id] = []
+        if self.group_id not in logs:
+            logs[self.group_id] = []
 
-        if len(logs[group_id]) > 0:
-            trx_id = logs[group_id][-1]["trx_id"] or trx_id
-        if group_id not in seedsdata:
-            seedsdata[group_id] = self.group.seed(group_id)
+        if len(logs[self.group_id]) > 0:
+            trx_id = logs[self.group_id][-1]["trx_id"] or trx_id
+        if self.group_id not in seedsdata:
+            seedsdata[self.group_id] = self.group.seed()
 
         while flag:
-            logs[group_id].append(
+            logs[self.group_id].append(
                 {
                     "trx_id": trx_id,
                     "status": "begin",
                     "time": f"{datetime.datetime.now()}",
                 }
             )
-            flag, xtrx_id, seedsdata = self.__ingroup(group_id, trx_id, seedsdata)
-            logs[group_id].append(
+
+            flag, xtrx_id, seedsdata = self.__ingroup(trx_id, seedsdata)
+            logs[self.group_id].append(
                 {
                     "trx_id": trx_id,
                     "status": "done",
@@ -101,7 +102,8 @@ class SearchSeeds(RumClient):
     def innode(self) -> Dict:
         """Search seeds in node."""
         for group_id in self.node.groups_id:
-            self.ingroup(group_id)
+            self.group_id = group_id
+            self.ingroup()
 
     def update_status(self):
         """从已加入的种子网络中搜索新的种子，并更新数据文件"""
@@ -115,16 +117,17 @@ class SearchSeeds(RumClient):
                 info[group_id] = {"scores": 0}
 
         for group_id in joined:
-            ginfo = self.group.info(group_id)
-            gts = self.group.block(group_id, ginfo.highest_block_id).get("TimeStamp")
-            info[group_id].update(
+            self.group_id = group_id
+            ginfo = self.group.info()
+            gts = self.group.block(ginfo.highest_block_id).get("TimeStamp")
+            info[self.group_id].update(
                 {
                     self.node.id: f"{datetime.datetime.now()}",
                     "highest_height": ginfo.highest_height,
                     "last_update": f"{Stime.ts2datetime(gts)}",
                 }
             )
-            info[group_id]["scores"] += 1
+            info[self.group_id]["scores"] += 1
 
         for group_id in info:
             if self.node.id in info[group_id] and group_id not in joined:
@@ -165,6 +168,7 @@ class SearchSeeds(RumClient):
         joined = self.node.groups_id
 
         for group_id in joined:
+            self.group_id = group_id
             if info[group_id].get("scores") or 0 >= 0:
                 continue
 
@@ -176,7 +180,8 @@ class SearchSeeds(RumClient):
                 info[group_id]["last_update"] <= "2022-01-01"
                 or info[group_id]["highest_height"] == 0
             ):
-                self.group.leave(group_id)
+
+                self.group.leave()
                 continue
 
             for piece in DONT_JOIN_PIECES:
@@ -185,32 +190,35 @@ class SearchSeeds(RumClient):
                     break
 
             if is_leave:
-                self.group.leave(group_id)
+
+                self.group.leave()
 
         self.update_status()
 
     def worth_toshare(self, group_id):
-        info = self.group.info(group_id)
+        self.group_id = group_id
+        info = self.group.info()
 
         # 区块高度 小于等于 3
         if info.highest_height <= 3:
             return False
         # 最后更新时间在 7 天前
         sometime = datetime.datetime.now() + datetime.timedelta(days=-7)
-        lu = Stime.ts2datetime(info.last_updated)
-        if lu < sometime:
+        lasttime_upd = Stime.ts2datetime(info.last_updated)
+        if lasttime_upd < sometime:
             return False
 
-        return f"""\n区块高度:{info.highest_height}\n最后更新: {str(lu)[:19]}\n"""
+        return f"""\n区块高度:{info.highest_height}\n最后更新: {lasttime_upd}\n"""
 
     def share(self, data, group_id=None):
         """检查种子是否在该group被分享过"""
 
         # 如果没有指定 group_id 或未加入，就新建种子网络
         if group_id == None or not self.node.is_joined(group_id):
-            group_id = self.group.create("测试种子大全")["group_id"]
+            group_id = self.group.create("mytest_share_seeds")["group_id"]
 
         shared = self.ingroup(group_id)
+        self.group_id = group_id
         for gid in data:
             # 跳过已经分享过的
             if gid in shared:
@@ -228,7 +236,7 @@ class SearchSeeds(RumClient):
                 continue
             # 分享到指定组
             text = f'{json.dumps(data[gid]["seed"])}{text}'
-            resp = self.group.send_text(group_id, text)
+            resp = self.group.send_note(content=text)
 
             # 跳过没有推送成功的
             if "trx_id" not in resp:

@@ -1,28 +1,30 @@
 import time
-import datetime
-import pytest
 import os
 import sys
-from officepy import JsonFile, Dir
+from officepy import JsonFile, Dir, File
 from rumpy import RumClient
 from rumpyconfig import RumpyConfig
 
-GUI = RumpyConfig.GUI
-GUI["usedb"] =False 
-client = RumClient(**GUI)
 
-# create a group
-group_id = client.group.create("mytest_postblog", app_key="group_post")["group_id"]
+def main():
+    # init
+    GUI = RumpyConfig.GUI
+    GUI["usedb"] = False
+    client = RumClient(**GUI)
 
-# get the articles file for test
-test_data_dir = os.path.join(os.path.dirname(__file__),"test_data")
-article_files = Dir(test_data_dir).search_files_by_types((".md".".txt"))
+    # create a group
+    seed = client.group.create("mytest_postblog", app_key="group_post")
+    client.group_id = seed["group_id"]
 
-# post to rum
-failed = []
-for ifile in article_files:
-    with open(ifile, "r", encoding="utf-8") as f:
-        ilines = f.readlines()
+    # get the articles file for test
+    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
+    article_files = Dir(test_data_dir).search_files_by_types((".md", ".txt"))
+
+    # post to rum
+    failed = []
+    for ifile in article_files:
+        ilines = File(ifile).readlines()
+        # split tile and content.
         for line in ilines:
             if line.startswith("# "):
                 title = line.replace("# ", "").replace("\n", "")
@@ -30,10 +32,18 @@ for ifile in article_files:
                 break
         content = "".join(ilines[n + 1 :])
 
-    objs = {"content": content, "name": title}
-    resp = client.group.send_note(group_id, **objs)
-    if "trx_id" not in resp:
-        failed.append(ifile)
-    time.sleep(1)
+        relay = {"content": content, "name": title}
+        resp = client.group.send_note(**relay)
 
-print(failed)
+        if "trx_id" not in resp:
+            failed.append(ifile)
+        else:
+            print("success:", ifile)
+
+        time.sleep(1)
+
+    print("failed:", failed or "None")
+
+
+if __name__ == "__main__":
+    main()
