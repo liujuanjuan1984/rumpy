@@ -13,7 +13,9 @@ class Group(BaseAPI):
         """get the seed of a group which you've joined in."""
         group_id = group_id or self.group_id
         if self.node.is_joined(group_id):
-            return self._get(f"{self.baseurl}/group/{group_id}/seed")
+            seed = self._get(f"{self.baseurl}/group/{group_id}/seed")
+            if "error" not in seed:
+                return seed
 
     def is_seed(self, seed: Dict) -> bool:
         try:

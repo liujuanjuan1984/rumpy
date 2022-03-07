@@ -3,10 +3,12 @@ from officepy import JsonFile
 from whosays import WhoSays
 from rumpyconfig import RumpyConfig
 
+seedsfile = RumpyConfig.SEEDSFILE
+
 
 def trans():
     bot = WhoSays(**RumpyConfig.GUI)
-    bot.init("huoju")
+    bot.init("huoju", seedsfile)
 
     oldfile = os.path.join(
         os.path.dirname(__file__), "data", "huoju", "huoju_says.json"
@@ -29,7 +31,7 @@ def trans():
 def main():
 
     bot = WhoSays(**RumpyConfig.GUI)
-    bot.init("huoju")
+    bot.init("huoju", seedsfile)
     bot.search()
     # group_id = bot.group.create("mytest_whosays")["group_id"]
     # bot.send("HuoJu", group_id)

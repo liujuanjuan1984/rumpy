@@ -7210,6 +7210,32 @@
     "a8ca41f9-9b97-46a8-9138-bce96bcb4ae9",
     "9813ca8c-9f8f-4b7a-b34e-7cd8d0284943"
    ]
+  },
+  "67290949-d240-4c05-b468-add96ea0ace7": {
+   "TrxId": "67290949-d240-4c05-b468-add96ea0ace7",
+   "Publisher": "CAISIQODbcx2zjXC6AVGFNk3rzfoydQrIfXUu5FDD092fICQLA==",
+   "Content": {
+    "type": "Note",
+    "content": "不算，中国是连着的，仍然是全球互联网的一部分，只是部分断开了。俄罗斯目前似乎打算完全断开。",
+    "inreplyto": {
+     "trxid": "bfbaf488-7461-4414-a129-f0a2e4025635"
+    }
+   },
+   "TypeUrl": "quorum.pb.Object",
+   "TimeStamp": 1646630969002077670
+  },
+  "830168ca-e283-4dfb-924a-6d783fbf8ae0": {
+   "TrxId": "830168ca-e283-4dfb-924a-6d783fbf8ae0",
+   "Publisher": "CAISIQODbcx2zjXC6AVGFNk3rzfoydQrIfXUu5FDD092fICQLA==",
+   "Content": {
+    "type": "Note",
+    "content": "那也不能这么说，设计的模式不太一样",
+    "inreplyto": {
+     "trxid": "cf411bce-e2e6-41ed-b5fa-0087c2b5028f"
+    }
+   },
+   "TypeUrl": "quorum.pb.Object",
+   "TimeStamp": 1646630996562747918
   }
  },
  "bd119dd3-081b-4db6-9d9b-e19e3d6b387e": {

@@ -44,7 +44,7 @@ class SearchSeeds(RumClient):
 
         checked = JsonFile(self.trxfile).read({})
         trxs = self.group.content_trxs(trx_id=trx_id, num=50)
-        print(datetime.datetime.now(), trx_id, len(trxs), end=" ")
+        print(datetime.datetime.now(), trx_id, len(trxs))
         if len(trxs) == 0:
             # False means no need to continue
             return False, trx_id, seedsdata
@@ -73,7 +73,9 @@ class SearchSeeds(RumClient):
         if len(logs[self.group_id]) > 0:
             trx_id = logs[self.group_id][-1]["trx_id"] or trx_id
         if self.group_id not in seedsdata:
-            seedsdata[self.group_id] = self.group.seed()
+            seed = self.group.seed()
+            if seed:
+                seedsdata[self.group_id] = seed
 
         while flag:
             logs[self.group_id].append(
@@ -190,9 +192,7 @@ class SearchSeeds(RumClient):
                     break
 
             if is_leave:
-
                 self.group.leave()
-
         self.update_status()
 
     def worth_toshare(self, group_id):
@@ -202,6 +202,7 @@ class SearchSeeds(RumClient):
         # 区块高度 小于等于 3
         if info.highest_height <= 3:
             return False
+
         # 最后更新时间在 7 天前
         sometime = datetime.datetime.now() + datetime.timedelta(days=-7)
         lasttime_upd = Stime.ts2datetime(info.last_updated)

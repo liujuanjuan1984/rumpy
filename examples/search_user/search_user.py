@@ -9,7 +9,7 @@ from rumpy import RumClient
 class SearchUser(RumClient):
     """bot:search pubkeys in all-history-nicknames for those containing with the piece: name_fragment"""
 
-    def init(self, name_fragment):
+    def init(self, name_fragment, seedsfile=None):
         if type(name_fragment) != str:
             raise TypeError("param:name_fragment type error. It should be string.")
         if len(name_fragment) < 2:
@@ -20,7 +20,7 @@ class SearchUser(RumClient):
         self.rltfile = os.path.join(
             this_dir, "data", f"search_user_{name_fragment}.json"
         )
-        self.seedsfile = os.path.join(this_dir, "data", f"seeds.json")
+        self.seedsfile = seedsfile or os.path.join(this_dir, "data", f"seeds.json")
         self.progressfile = os.path.join(
             this_dir, "data", f"search_user_{name_fragment}_progress.json"
         )
@@ -103,7 +103,7 @@ class SearchUser(RumClient):
                 rlt[group_id] = {}
             if group_id not in seeds:
                 seed = self.group.seed(group_id)
-                if "error" not in seed and not seed["group_name"].startswith("mytest_"):
+                if seed:
                     seeds[group_id] = seed
             if group_id not in progress:
                 progress[group_id] = None

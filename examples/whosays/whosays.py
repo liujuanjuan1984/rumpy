@@ -12,7 +12,7 @@ class WhoSays(RumClient):
     在多个组内筛选某人动态，并转发到指定组。
     """
 
-    def init(self, dirname):
+    def init(self, dirname, seedsfile=None):
         """
         names_info:
         {group_id:[pubkey1,pubkey2]}
@@ -24,7 +24,7 @@ class WhoSays(RumClient):
         namesinfofile = os.path.join(datadir, "names_info.json")
         self.datafile = os.path.join(datadir, "whosays_trxs.json")
         self.progressfile = os.path.join(datadir, "progress.json")
-        self.seedsfile = os.path.join(datadir, "seeds.json")
+        self.seedsfile = seedsfile or os.path.join(datadir, "seeds.json")
         self.nicknamesfile = os.path.join(datadir, "nicknames.json")
         JsonFile(namesinfofile).rewrite({})
         JsonFile(self.datafile).rewrite({})
@@ -78,8 +78,8 @@ class WhoSays(RumClient):
             if group_id not in data:
                 data[group_id] = {}
             if group_id not in seeds:
-                seed = self.group.seed(group_id) or {"error": "nothing got"}
-                if "error" not in seed:
+                seed = self.group.seed(group_id)
+                if seed:
                     seeds[group_id] = seed
             if group_id not in progress:
                 progress[group_id] = None

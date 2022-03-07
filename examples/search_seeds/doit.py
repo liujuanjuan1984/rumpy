@@ -15,7 +15,7 @@ def main():
     print(datetime.datetime.now(), "datafiles...")
     basedir = os.path.join(os.path.dirname(__file__), "data")
     datafiles = {
-        "datafile": os.path.join(basedir, "datafile.json"),
+        "datafile": RumpyConfig.SEEDSFILE,
         "logfile": os.path.join(basedir, "logfile.json"),
         "trxfile": os.path.join(basedir, "trxfile.json"),
         "infofile": os.path.join(basedir, "infofile.json"),
