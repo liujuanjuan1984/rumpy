@@ -36,7 +36,7 @@ class WhoSays(RumClient):
     def _ingroup(self, trx_id, pubkeys, group_data):
         trxids_searched = []
         while True:
-            print(datetime.datetime.now(), trx_id, "...")
+            print(datetime.datetime.now(), "_ingroup", trx_id, "...")
             trxs = self.group.content_trxs(num=400, trx_id=trx_id)
 
             if len(trxs) == 0:
@@ -78,7 +78,7 @@ class WhoSays(RumClient):
             if group_id not in data:
                 data[group_id] = {}
             if group_id not in seeds:
-                seed = self.group.seed(group_id) or {"error":"nothing got"}
+                seed = self.group.seed(group_id) or {"error": "nothing got"}
                 if "error" not in seed:
                     seeds[group_id] = seed
             if group_id not in progress:
@@ -102,7 +102,7 @@ class WhoSays(RumClient):
             gtrxs = data[group_id]
             seed = seeds.get(group_id) or {}
             if not seed:
-                continue 
+                continue
             self.group_id = group_id
             for trx_id in gtrxs:
                 if "shared" not in gtrxs[trx_id]:
@@ -117,7 +117,7 @@ class WhoSays(RumClient):
 
                 if "trx_id" in resp:
                     data[group_id][trx_id]["shared"].append(toshare_group_id)
-            JsonFile(self.datafile).write(data)
+                    JsonFile(self.datafile).write(data)
 
     def _quote_text(self, text):
         return "".join(["> ", "\n> ".join(text.split("\n")), "\n"])
@@ -144,7 +144,7 @@ class WhoSays(RumClient):
                 break
             else:
                 searched_trxids.append(trx_id)
-            print(datetime.datetime.now(), trx_id, "...")
+            print(datetime.datetime.now(), "_nickname", trx_id, "...")
             trxs = self.group.content_trxs(num=400, trx_id=trx_id)
             if len(trxs) == 0:
                 break
