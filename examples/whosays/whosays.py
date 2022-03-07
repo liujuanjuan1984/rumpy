@@ -166,7 +166,7 @@ class WhoSays(RumClient):
             trx = self.group.trx(trx)
         text, img = None, None
         if "Content" not in trx:
-            return text, img
+            return text, img, text or img
         if "content" in trx["Content"]:
             text = trx["Content"]["content"]
         if "image" in trx["Content"]:
@@ -174,8 +174,8 @@ class WhoSays(RumClient):
                 img = [trx["Content"]["image"]]
             else:
                 img = trx["Content"]["image"]
-        flag = text or img
-        return text, img, flag
+
+        return text, img, text or img
 
     def _trans(self, trx):
         obj = {"image": []}
