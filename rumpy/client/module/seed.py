@@ -19,7 +19,7 @@ class Seed(Base):
 
     def __init__(self, seed):
         super().__init__(**seed)
-        self.genesis_block = str(seed["genesis_block"])
+        self.genesis_block = str(seed.get("genesis_block") or {})
 
     def __repr__(self):
         return f"Seed({self.to_dict()})"

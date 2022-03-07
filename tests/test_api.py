@@ -1,9 +1,8 @@
 import pytest
 import dataclasses
+from officepy import JsonFile
 from rumpyconfig import RumpyConfig
 from rumpy import RumClient
-from officepy import JsonFile
-
 
 client = RumClient(**RumpyConfig.GUI)
 
@@ -139,19 +138,21 @@ class TestCase:
     def test_trx(self):
 
         for i in client.node.groups():
-            if i["highest_height"] > 1:
+            if i["highest_height"] > 1000:
                 gid = i["group_id"]
                 bid = i["highest_block_id"]
                 break
 
         client.group_id = gid
 
-        block = client.group.block(bid)
+        block = client.group.block(block_id=bid)
         assert "Trxs" in block
 
-        tid = block.get("Trxs")[0]["TrxId"]
-        x = client.group.trx(tid)
-        assert "TrxId" in x
+        trxs = block.get("Trxs")
+        if len(trxs) > 0:
+            tid = trxs[0]["TrxId"]
+            x = client.group.trx(trx_id=tid)
+            assert "TrxId" in x
 
         # test_config(self):
 

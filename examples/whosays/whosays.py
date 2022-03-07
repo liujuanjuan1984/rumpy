@@ -1,65 +1,196 @@
 import datetime
-from typing import List, Dict
 import json
 import os
-import sys
+from typing import List, Dict
+from officepy import JsonFile, Dir, Stime
 from rumpy import RumClient
-from examples.export_data.export_data import trx_export
 
 
 class WhoSays(RumClient):
-    """Rum 产品想法：筛选某人所说，并转发到指定组"""
+    """
+    bot: got what who says and retweet to the group.
+    在多个组内筛选某人动态，并转发到指定组。
+    """
 
-    def _content_by(self, group_id, pubkeys):
-        trxs = self.content(group_id)
-        trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
-        content_by = [trx_export(group_id, i, trxs) for i in trxs_by]
-        return content_by
+    def init(self, dirname):
+        """
+        names_info:
+        {group_id:[pubkey1,pubkey2]}
+        data:
 
-    def search(self, names_info, data):
-        for group_id in names_info:
+        """
+        datadir = os.path.join(os.path.dirname(__file__), "data", dirname)
+        Dir(datadir).check()
+        namesinfofile = os.path.join(datadir, "names_info.json")
+        self.datafile = os.path.join(datadir, "whosays_trxs.json")
+        self.progressfile = os.path.join(datadir, "progress.json")
+        self.seedsfile = os.path.join(datadir, "seeds.json")
+        self.nicknamesfile = os.path.join(datadir, "nicknames.json")
+        JsonFile(namesinfofile).rewrite({})
+        JsonFile(self.datafile).rewrite({})
+        JsonFile(self.progressfile).rewrite({})
+        JsonFile(self.seedsfile).rewrite({})
+        JsonFile(self.nicknamesfile).rewrite({})
+        self.names_info = JsonFile(namesinfofile).read({})
+
+    def _ingroup(self, trx_id, pubkeys, group_data):
+        trxids_searched = []
+        while True:
+            print(datetime.datetime.now(), trx_id, "...")
+            trxs = self.group.content_trxs(num=400, trx_id=trx_id)
+
+            if len(trxs) == 0:
+                break
+
+            for trx in trxs:
+                if trx["Publisher"] in pubkeys:
+                    if trx["TrxId"] not in group_data:
+                        group_data[trx["TrxId"]] = trx
+
+            if trx_id not in trxids_searched:
+                trxids_searched.append(trx_id)
+
+            for i in range(-1, -1 * len(trxs), -1):
+                new_trxid = trxs[i]["TrxId"]
+                if new_trxid in trxids_searched:
+                    continue
+                else:
+                    trx_id = new_trxid
+                    break
+            if trx_id in trxids_searched:
+                break
+
+        return trx_id, group_data
+
+    def search(self):
+        data = JsonFile(self.datafile).read({})
+        seeds = JsonFile(self.seedsfile).read({})
+        progress = JsonFile(self.progressfile).read({})
+
+        if not self.names_info:
+            raise ValueError(
+                "add data in names_info file with data like {group_id:[pubkey]}"
+            )
+
+        for group_id in self.names_info:
+            self.group_id = group_id
+
             if group_id not in data:
-                data[group_id] = {"seed": self.group.seed(group_id), "trxs": {}}
-            # 筛选此人发布的内容
-            content_by = self._content_by(group_id, names_info[group_id])
-            for ic in content_by:
-                if ic["trx_id"] not in data[group_id]["trxs"]:
-                    data[group_id]["trxs"][ic["trx_id"]] = ic
-        return data
+                data[group_id] = {}
+            if group_id not in seeds:
+                seed = self.group.seed()
+                if "error" not in seed:
+                    seeds[group_id] = seed
+            if group_id not in progress:
+                progress[group_id] = None
+            pubkeys = self.names_info[group_id]
 
-    def send(self, name: str, toshare_group_id: str, data: Dict) -> Dict:
+            trx_id, data[group_id] = self._ingroup(
+                progress[group_id], pubkeys, data[group_id]
+            )
+            progress[group_id] = trx_id
+            JsonFile(self.datafile).write(data)
+
+            JsonFile(self.progressfile).write(progress)
+            JsonFile(self.seedsfile).write(seeds)
+
+    def send(self, name: str, toshare_group_id: str) -> Dict:
         """发布内容并更新发布状态"""
+        data = JsonFile(self.datafile).read({})
+        seeds = JsonFile(self.seedsfile).read({})
         for group_id in data:
-            gtrxs = data[group_id]["trxs"]
-            seed = data[group_id]["seed"]
+            gtrxs = data[group_id]
+            seed = seeds[group_id]
+            self.group_id = group_id
             for trx_id in gtrxs:
                 if "shared" not in gtrxs[trx_id]:
-                    data[group_id]["trxs"][trx_id]["shared"] = []
-                if toshare_group_id in data[group_id]["trxs"][trx_id]["shared"]:
+                    data[group_id][trx_id]["shared"] = []
+                if toshare_group_id in data[group_id][trx_id]["shared"]:
                     continue
-                obj = self._trans(gtrxs[trx_id])
-                obj["content"] = f"{name} {obj['content']}来源{json.dumps(seed)}"
+                obj, flag = self._trans(gtrxs[trx_id])
+                if not flag:
+                    continue
+                obj["content"] = f"{name} {obj['content']}\norigin: {json.dumps(seed)}"
+                resp = self.group.send_note(group_id=toshare_group_id, **obj)
 
-                if "trx_id" in self.group.send_note(toshare_group_id, **obj):
-                    data[group_id]["trxs"][trx_id]["shared"].append(toshare_group_id)
-
-            return data
+                if "trx_id" in resp:
+                    data[group_id][trx_id]["shared"].append(toshare_group_id)
+            JsonFile(self.datafile).write(data)
 
     def _quote_text(self, text):
         return "".join(["> ", "\n> ".join(text.split("\n")), "\n"])
 
-    def _trans(self, one):
+    def _nickname(self, pubkey):
+        names = JsonFile(self.nicknamesfile).read({})
+        if pubkey not in names:
+            names[pubkey] = {
+                "pubkey": pubkey,
+                "group_id": self.group_id,
+                "nicknames": ["某人"],
+                "trx_id": None,
+            }
+
+        if self.group_id != names[pubkey]["group_id"]:
+            raise ValueError(
+                f"group_id error. check it.{self.group_id},{names[pubkey]['group_id']}"
+            )
+
+        searched_trxids = []
+        while True:
+            trx_id = names[pubkey]["trx_id"]
+            if trx_id in searched_trxids:
+                break
+            else:
+                searched_trxids.append(trx_id)
+            print(datetime.datetime.now(), trx_id, "...")
+            trxs = self.group.content_trxs(num=400, trx_id=trx_id)
+            if len(trxs) == 0:
+                break
+            for trx in trxs:
+                if trx["Publisher"] != pubkey:
+                    continue
+                if trx["TypeUrl"] == "quorum.pb.Person":
+                    name = trx["Content"].get("name") or ""
+                    if name not in names[pubkey]["nicknames"]:
+                        names[pubkey]["nicknames"].append(name)
+            names[pubkey]["trx_id"] = trxs[-1]["TrxId"]
+
+        JsonFile(self.nicknamesfile).write(names)
+        return names[pubkey]["nicknames"][-1]
+
+    def _name(self, trx_id):
+        return self._nickname(self.group.trx(trx_id).get("Publisher"))
+
+    def _refer_content(self, trx):
+        if type(trx) == str:
+            trx = self.group.trx(trx)
+        text, img = None, None
+        if "Content" not in trx:
+            return text, img
+        if "content" in trx["Content"]:
+            text = trx["Content"]["content"]
+        if "image" in trx["Content"]:
+            if type(trx["Content"]["image"]) == dict:
+                img = [trx["Content"]["image"]]
+            else:
+                img = trx["Content"]["image"]
+        flag = text or img
+        return text, img, flag
+
+    def _trans(self, trx):
         obj = {"image": []}
         lines = []
+        flag = False
+        t = self.group.trx_type(trx)
         _info = {"like": "赞", "dislike": "踩"}
-        t = one["trx_type"]
         if t in _info:
-            name = one["refer_to"]["name"] or "某人"
-            lines.append(f"点{_info[t]}给 `{name}` 发布的内容。")
-            if "text" in one["refer_to"]:
-                lines.append(self._quote_text(one["refer_to"]["text"]))
-            if "imgs" in one["refer_to"]:
-                obj["image"].extend(one["refer_to"]["imgs"])
+            trxid = trx["Content"]["id"]
+            lines.append(f"点{_info[t]}给 `{self._name(trxid)}` 发布的内容。")
+            text, img, flag = self._refer_content(trxid)
+            if text:
+                lines.append(self._quote_text(text))
+            if img:
+                obj["image"].extend(img)
 
         elif t == "person":
             lines.append(f"修改了个人信息。")
@@ -67,24 +198,26 @@ class WhoSays(RumClient):
             lines.append(f"处理了链上请求。")
         elif t == "reply":
             lines.append(f"回复说：")
-            if "text" in one:
-                lines.append(f"{one['text']}")
-            if "imgs" in one:
-                obj["image"].extend(one["refer_to"]["imgs"])
-
-            name = one["refer_to"]["name"] or "某人"
-
-            lines.append(f"\n回复给 `{name}` 所发布的内容：")
-            if "text" in one["refer_to"]:
-                lines.append(self._quote_text(one["refer_to"]["text"]))
-            if "imgs" in one["refer_to"]:
-                obj["image"].extend(one["refer_to"]["imgs"])
-
+            text, img, flag = self._refer_content(trx["TrxId"])
+            if text:
+                lines.append(self._quote_text(text))
+            if img:
+                obj["image"].extend(img)
+            trxid = trx["Content"]["inreplyto"]["trxid"]
+            lines.append(f"\n回复给 `{self._name(trxid)}` 所发布的内容：")
+            text, img, flag = self._refer_content(trxid)
+            if text:
+                lines.append(self._quote_text(text))
+            if img:
+                obj["image"].extend(img)
         else:
             lines.append("说：")
-            if "text" in one:
-                lines.append(one["text"])
-            if "imgs" in one:
-                obj["image"].extend(one["imgs"])
-        obj["content"] = one["trx_time"] + " " + "\n".join(lines)
-        return obj
+            text, img, flag = self._refer_content(trx["TrxId"])
+            if text:
+                lines.append(self._quote_text(text))
+            if img:
+                obj["image"].extend(img)
+        obj["content"] = (
+            f'{Stime.ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
+        )
+        return obj, flag

@@ -9,11 +9,11 @@ class Group(BaseAPI):
         data = CreateGroupParam(group_name, **kwargs).__dict__
         return self._post(f"{self.baseurl}/group", data)
 
-    def seed(self) -> Dict:
+    def seed(self, group_id=None) -> Dict:
         """get the seed of a group which you've joined in."""
-        if self.node.is_joined(self.group_id):
-            return self._get(f"{self.baseurl}/group/{self.group_id}/seed")
-        # raise ValueError(f"you are not in this group {group_id}.")
+        group_id = group_id or self.group_id
+        if self.node.is_joined(group_id):
+            return self._get(f"{self.baseurl}/group/{group_id}/seed")
 
     def is_seed(self, seed: Dict) -> bool:
         try:
@@ -23,10 +23,12 @@ class Group(BaseAPI):
             print(e)
             return False
 
-    def info(self):
+    def info(self, group_id=None):
         """return group info,type: datacalss"""
-        info = self.node.group_info(self.group_id)
-        return GroupInfo(**info)
+        group_id = group_id or self.group_id
+        if self.node.is_joined(group_id):
+            info = self.node.group_info(group_id)
+            return GroupInfo(**info)
 
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
@@ -34,61 +36,66 @@ class Group(BaseAPI):
             raise ValueError("not a seed or the seed could not be identified.")
         return self._post(f"{self.baseurl}/group/join", seed)
 
-    def leave(self):
+    def leave(self, group_id=None):
         """leave a group"""
-        if self.node.is_joined(self.group_id):
-            return self._post(
-                f"{self.baseurl}/group/leave", {"group_id": self.group_id}
-            )
-        # raise ValueError("you are not in this group.")
+        group_id = group_id or self.group_id
+        if self.node.is_joined(group_id):
+            return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
 
-    def startsync(self):
-        if self.node.is_joined(self.group_id):
-            return self._post(f"{self.baseurl}/group/{self.group_id}/startsync")
+    def startsync(self, group_id=None):
+        group_id = group_id or self.group_id
+        if self.node.is_joined(group_id):
+            return self._post(f"{self.baseurl}/group/{group_id}/startsync")
 
-    def content(self) -> List:
+    def content(self, group_id=None) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
-        return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
+        group_id = group_id or self.group_id
+        if self.node.is_joined(group_id):
+            return self._get(f"{self.baseurl}/group/{group_id}/content") or []
 
     def content_trxs(
         self,
+        group_id=None,
         trx_id: str = None,
         num: int = 20,
         is_reverse=False,
         is_include_starttrx=False,
     ) -> List:
         """requests the content trxs of a group,return the list of the trxs data."""
+        group_id = group_id or self.group_id
+        if not self.node.is_joined(group_id):
+            return []
+
         url = self.baseurl.replace("api", "app/api")
 
         if trx_id:
-            apiurl = f"{url}/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+            apiurl = f"{url}/group/{group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
         else:
-            apiurl = f"{url}/group/{self.group_id}/content?num={num}&start=0"
-            # raise ValueError(f"the trx {trx_id} isn't in this group {group_id}.")
+            apiurl = f"{url}/group/{group_id}/content?num={num}&start=0"
         trxs = self._post(apiurl) or []
-
         return self.trxs_unique(trxs)
 
-    def _send(self, obj: Dict, sendtype=None) -> Dict:
+    def _send(self, group_id=None, obj: Dict = None, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""
-        if self.node.is_joined(self.group_id):
-            p = {"type": sendtype, "object": obj, "target": self.group_id}
+        group_id = group_id or self.group_id
+        if self.node.is_joined(group_id):
+            p = {"type": sendtype, "object": obj, "target": group_id}
             data = ContentParams(**p).__dict__
             return self._post(f"{self.baseurl}/group/content", data)
-        # raise ValueError(f"you are not in this group {group_id}.")
 
     def like(self, trx_id: str) -> Dict:
-        return self._send({"id": trx_id}, "Like")
+        return self._send(obj={"id": trx_id}, sendtype="Like")
 
     def dislike(self, trx_id: str) -> Dict:
-        return self._send({"id": trx_id}, "Dislike")
+        return self._send(obj={"id": trx_id}, sendtype="Dislike")
 
-    def send_note(self, **kwargs):
+    def send_note(self, group_id=None, **kwargs):
         """send note to a group. can be used to send: text only,image only,text with image,reply...etc"""
+        group_id = group_id or self.group_id
         p = ContentObjParams(**kwargs)
         if p.content == None and p.image == None:
             raise ValueError("need some content. images,text,or both.")
-        return self._send(p.__dict__, "Add")
+        return self._send(group_id, obj=p.__dict__, sendtype="Add")
 
     def reply(self, content: str, trx_id: str):
         return self.send_note(content=content, inreplyto=trx_id)
@@ -108,7 +115,7 @@ class Group(BaseAPI):
     def is_mygroup(self) -> bool:
         """return True if I create this group else False"""
         g = self.info()
-        if g.owner_pubkey == g.user_pubkey:
+        if isinstance(g, GroupInfo) and g.owner_pubkey == g.user_pubkey:
             return True
         return False
 
@@ -138,10 +145,13 @@ class Group(BaseAPI):
 
     def trx(self, trx_id: str):
         try:
-            resp = self.content_trxs(trx_id, num=1, is_include_starttrx=True)
+            resp = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
             if len(resp) > 1:
                 print("somthing is error", resp)
-            return resp[0]
+            elif len(resp) == 0:
+                raise ValueError(f"nothing got. {resp} {trx_id} {self.group_id}")
+            else:
+                return resp[0]
         except Exception as e:
             print(e)
             return self._get(f"{self.baseurl}/trx/{self.group_id}/{trx_id}")

@@ -8,9 +8,7 @@ from rumpyconfig import RumpyConfig
 
 def main():
     # init
-    GUI = RumpyConfig.GUI
-    GUI["usedb"] = False
-    client = RumClient(**GUI)
+    client = RumClient(**RumpyConfig.GUI)
 
     # create a group
     seed = client.group.create("mytest_postblog", app_key="group_post")

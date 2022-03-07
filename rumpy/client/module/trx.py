@@ -17,7 +17,7 @@ class Trx(Base):
 
     def __init__(self, trx):
         super().__init__(**trx)
-        self.Content = str(trx["Content"])
+        self.Content = str(trx.get("Content") or {})
 
     def __repr__(self):
         return f"Trx({self.to_dict()})"

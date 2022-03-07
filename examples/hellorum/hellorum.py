@@ -6,9 +6,7 @@ from rumpyconfig import RumpyConfig
 
 def main():
 
-    GUI = RumpyConfig.GUI
-    GUI["usedb"] = False
-    client = RumClient(**GUI)
+    client = RumClient(**RumpyConfig.GUI)
 
     # create group for test
     seed = client.group.create("mytest_hellorum")

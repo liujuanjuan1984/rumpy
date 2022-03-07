@@ -124,4 +124,4 @@ class GroupStatistics(RumClient):
         # 推送结果到指定组
         kwargs = {"content": note, "image": [imgbytes]}
         toshare_group_id = toshare_group_id or toview_group_id
-        return self.group.send_note(toshare_group_id, **kwargs)
+        return self.group.send_note(group_id=toshare_group_id, **kwargs)

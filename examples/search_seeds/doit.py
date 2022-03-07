@@ -9,9 +9,7 @@ from officepy import JsonFile, Dir
 def main():
     # init client
     print(datetime.datetime.now(), "client init...")
-    GUI = RumpyConfig.GUI
-    GUI["usedb"] = False
-    client = SearchSeeds(**GUI)
+    client = SearchSeeds(**RumpyConfig.GUI)
 
     # datafiles
     print(datetime.datetime.now(), "datafiles...")

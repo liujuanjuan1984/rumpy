@@ -43,7 +43,7 @@ class SearchSeeds(RumClient):
         """Search seeds in group, return list of seeds."""
 
         checked = JsonFile(self.trxfile).read({})
-        trxs = self.group.content_trxs(trx_id, num=50)
+        trxs = self.group.content_trxs(trx_id=trx_id, num=50)
         print(datetime.datetime.now(), trx_id, len(trxs), end=" ")
         if len(trxs) == 0:
             # False means no need to continue

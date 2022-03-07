@@ -5,9 +5,7 @@ from rumpy import RumClient
 
 def main(is_create_new=False):
     """is_create_new: create new group for test"""
-    GUI = RumpyConfig.GUI
-    GUI["usedb"] = False
-    client = RumClient(**GUI)
+    client = RumClient(**RumpyConfig.GUI)
     my_test_groups = ["mytest_leave_groups"]
 
     print(datetime.datetime.now(), "groups num: ", len(client.node.groups_id))

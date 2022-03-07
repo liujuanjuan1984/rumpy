@@ -5,6 +5,7 @@ import base64
 import io
 import uuid
 import time
+import datetime
 
 
 TRX_TYPES = [
@@ -122,9 +123,9 @@ class ImgObj:
             elif type(tgt) == bytes:
                 self.content = self.encode(tgt)
             elif type(tgt) == dict:
-                self.mediaType = tgt["mediaType"]
-                self.content = tgt["content"]
-                self.name = tgt["name"]
+                self.mediaType = tgt.get("mediaType") or "image/png"
+                self.content = tgt.get("content") or ""
+                self.name = tgt.get("name") or f"{datetime.date.today()}"
         except Exception as e:
             print(e)
             return print(tgt, "must be imgpath or imgbytes")

@@ -8,15 +8,17 @@ from rumpyconfig import RumpyConfig
 from typing import List, Dict
 
 
-def _person_name(group_id, trx_id_or_pubkey, trxs, since=None, client=None):
+def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
     """get the lastest name of the person published the trx_id"""
     key = "SenderPubkey" if "Publisher" not in trxs[0] else "Publisher"
     if trx_id_or_pubkey.endswith("=="):
         pubkey = trx_id_or_pubkey
     else:
         trx_id = trx_id_or_pubkey
-        trxdata = client.group.trx(group_id, trx_id)
-        pubkey = trxdata[key]
+        trxdata = client.group.trx(trx_id)
+        pubkey = (
+            trxdata.get("Publisher") or trxdata.get("SenderPubkey") or trx_id_or_pubkey
+        )
 
     rlt = []
     for trxdata in trxs:
@@ -24,6 +26,7 @@ def _person_name(group_id, trx_id_or_pubkey, trxs, since=None, client=None):
             rlt.append(trxdata)
     since = since or datetime.datetime.now()
 
+    name = ""
     for trxdata in rlt:
         name = trxdata["Content"].get("name") or ""
         if Stime.ts2datetime(trxdata.get("TimeStamp")) <= since:
@@ -31,7 +34,7 @@ def _person_name(group_id, trx_id_or_pubkey, trxs, since=None, client=None):
     return name
 
 
-def trx_export(group_id, trxdata: Dict, trxs: List) -> Dict:
+def trx_export(trxdata: Dict, trxs: List) -> Dict:
     """export data with refer_to data"""
     ts = Stime.ts2datetime(trxdata.get("TimeStamp"))
     info = {
@@ -46,14 +49,14 @@ def trx_export(group_id, trxdata: Dict, trxs: List) -> Dict:
         info["refer_to"] = {
             "trx_id": jid,
             "text": trxdata["Content"].get("content") or "",
-            "name": _person_name(group_id, jid, trxs, ts, client),
+            "name": _person_name(jid, trxs, ts, client),
         }
     elif "inreplyto" in _content:
         jid = _content["inreplyto"]["trxid"]
         info["refer_to"] = {
             "trx_id": jid,
             "text": trxdata["Content"].get("content") or "",
-            "name": _person_name(group_id, jid, trxs, ts, client),
+            "name": _person_name(jid, trxs, ts, client),
         }
 
     if "content" in _content:
@@ -75,7 +78,8 @@ def export():
         group_id = gdata["group_id"]
         key = (group_id, gdata["group_name"])
         my_trxs[key] = []
-        trxs = client.group.content(group_id)
+        client.group_id = group_id
+        trxs = client.group.content()
         for trxdata in trxs:
             if trxdata["Publisher"] == pubkey:
                 my_trxs[key].append(trxdata)
@@ -89,9 +93,10 @@ def export():
             continue
         gfile = f"{JSON_DIR}\\{group_name}_{group_id}_{datetime.date.today()}.json"
         gdata = []
-        trxs = client.group.content(group_id)
+        client.group_id = group_id
+        trxs = client.group.content()
         for trxdata in gtrxs:
-            gdata.append(trx_export(group_id, trxdata, trxs))
+            gdata.append(trx_export(trxdata, trxs))
         JsonFile(gfile).write(gdata)
 
 
@@ -173,6 +178,7 @@ def trans():
 
 
 def export_text_daily(daystr):
+    """从数据文件中把文本自动合并到本地随手写目录中"""
     todofiles = Dir(JSON_DIR).search_files_by_types(".json")
     homedir = r"D:\MY-OBSIDIAN-DATA\my_Writing\随手写"
 
@@ -201,14 +207,13 @@ def export_text_daily(daystr):
 
 if __name__ == "__main__":
 
-    GUI = RumpyConfig.GUI
-    GUI["usedb"] = False
-    client = RumClient(**GUI)
+    # init
+    client = RumClient(**RumpyConfig.GUI)
     nodeid = client.node.id
-    SAVE_DIR = r"D:\Jupyter\rumpy\examples\export_data\data"
-    JSON_DIR = f"{SAVE_DIR}\\{nodeid}\\json"
-    MD_DIR = f"{SAVE_DIR}\\{nodeid}\\markdown"
-    IMG_DIR = f"{SAVE_DIR}\\{nodeid}\\markdown\\images"
+    SAVE_DIR = os.path.join(os.path.dirname(__file__), "data")
+    JSON_DIR = os.path.join(SAVE_DIR, nodeid, "json")
+    MD_DIR = os.path.join(SAVE_DIR, nodeid, "markdown")
+    IMG_DIR = os.path.join(SAVE_DIR, nodeid, "markdown", "images")
     Dir(JSON_DIR).check()
     Dir(IMG_DIR).check()
 
@@ -219,19 +224,22 @@ if __name__ == "__main__":
     # trans()
 
     # 编程自由/days
-
     # D:\RUM2-DATA\rum-20211030
     if nodeid == "16Uiu2HAkytdk8dhP8Z1JWvsM7qYPSLpHxLCfEWkSomqn7Tj6iC2d":
-        lastupdate = "2022-02-08"
+        lastupdate = "2022-03-04"
+
     # 怒放、永远爱你、RUM小七
     # D:\RUM2-DATA\rum-20211122
-    if nodeid == "16Uiu2HAmLrpCred9yKoaq55hSRYktapzsBGv9ryMaHGEWfuCuaFT":
-        lastupdate = "2022-02-08"
+    elif nodeid == "16Uiu2HAmLrpCred9yKoaq55hSRYktapzsBGv9ryMaHGEWfuCuaFT":
+        lastupdate = "2022-03-04"
+
+    # 送你一束小花花，刘娟娟的分身
+    # D:\RUM2-DATA\rum-20220126
+    elif nodeid == "16Uiu2HAm3KqGroNs9phdtU3GKH47t8XqeEvxAGcszn9z7Y3nVE9f":
+        lastupdate = "2022-03-04"
+
     else:
         lastupdate = "2021-10-01"
-
-    #  16Uiu2HAm3KqGroNs9phdtU3GKH47t8XqeEvxAGcszn9z7Y3nVE9f
-    # 送你一束小花花，刘娟娟的分身
 
     # 按天导出自己在各个组发的文本数据，按天来保存为文件。
     for i in range(0, -90, -1):

@@ -4,7 +4,7 @@ from rumpyconfig import RumpyConfig
 from officepy import JsonFile
 from group_statistics import GroupStatistics
 
-client = GroupStatistics(****RumpyConfig.GUI)
+client = GroupStatistics(**RumpyConfig.GUI)
 
 groups = {
     "测试TODO": "abc01f11-6890-4cd3-8234-0b920c6b7085",
