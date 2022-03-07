@@ -10,8 +10,8 @@ DONT_JOIN_PIECES = ["mytest_"]
 
 
 class SearchSeeds(RumClient):
-    def init_app(self, datafile, logfile, trxfile, infofile):
-        self.datafile = datafile
+    def init_app(self, seedsfile, logfile, trxfile, infofile):
+        self.seedsfile = seedsfile
         self.logfile = logfile
         self.trxfile = trxfile
         self.infofile = infofile
@@ -66,7 +66,7 @@ class SearchSeeds(RumClient):
         """Search seeds in group, and write result to datafile."""
 
         logs = JsonFile(self.logfile).read({})
-        seedsdata = seedsdata or JsonFile(self.datafile).read({})
+        seedsdata = seedsdata or JsonFile(self.seedsfile).read({})
         if self.group_id not in logs:
             logs[self.group_id] = []
 
@@ -94,7 +94,7 @@ class SearchSeeds(RumClient):
                     "time": f"{datetime.datetime.now()}",
                 }
             )
-            JsonFile(self.datafile).write(seedsdata)
+            JsonFile(self.seedsfile).write(seedsdata)
             JsonFile(self.logfile).write(logs)
             if xtrx_id == trx_id:
                 break
@@ -110,44 +110,40 @@ class SearchSeeds(RumClient):
     def update_status(self):
         """从已加入的种子网络中搜索新的种子，并更新数据文件"""
 
-        seeds = JsonFile(self.datafile).read({})  # all the seeds
+        seeds = JsonFile(self.seedsfile).read({})  # all the seeds
         info = JsonFile(self.infofile).read({})  # status data
         joined = self.node.groups_id
 
         for group_id in seeds:
             if group_id not in info:
-                info[group_id] = {"scores": 0}
+                info[group_id] = {
+                    "highest_height": -1,
+                    "last_update": "init",
+                    "nodes":{},
+                    "scores":0,
+                }
 
         for group_id in joined:
             self.group_id = group_id
             ginfo = self.group.info()
             gts = self.group.block(ginfo.highest_block_id).get("TimeStamp")
-            info[self.group_id].update(
-                {
-                    self.node.id: f"{datetime.datetime.now()}",
-                    "highest_height": ginfo.highest_height,
-                    "last_update": f"{Stime.ts2datetime(gts)}",
-                }
-            )
-            info[self.group_id]["scores"] += 1
-
-        for group_id in info:
-            if self.node.id in info[group_id] and group_id not in joined:
-                info[group_id].remove(self.node.id)
-                info[group_id]["scores"] -= 1
+            if ginfo.highest_height > info[group_id]["highest_height"]:
+                info[group_id]["highest_height"] = ginfo.highest_height
+                info[group_id]["last_update"] = f"{Stime.ts2datetime(gts)}"
+                info[group_id]["scores"] += int(ginfo.highest_height/100)
+            info[group_id]["nodes"][ginfo.user_pubkey] = f"{datetime.datetime.now()}"
 
         JsonFile(self.infofile).write(info)
         return info
 
     def join_groups(self):
-        seeds = JsonFile(self.datafile).read({})  # all the seeds
+        seeds = JsonFile(self.seedsfile).read({})  # all the seeds
         info = JsonFile(self.infofile).read({})  # status data
 
         for group_id in seeds:
-
             if group_id in self.node.groups_id:
                 continue
-            if info[group_id].get("scores") or 0 < 0:
+            if (info[group_id].get("scores") or 0) < 0:
                 continue
             gname = seeds[group_id]["group_name"]
             if gname in DONT_JOIN:
@@ -166,7 +162,7 @@ class SearchSeeds(RumClient):
 
     def leave_groups(self):
         info = self.update_status()
-        seeds = JsonFile(self.datafile).read({})  # all the seeds
+        seeds = JsonFile(self.seedsfile).read({})  # all the seeds
         joined = self.node.groups_id
 
         for group_id in joined:
@@ -177,8 +173,8 @@ class SearchSeeds(RumClient):
             gname = seeds[group_id]["group_name"]
             if gname not in DONT_JOIN:
                 continue
-
-            if info[group_id][self.node.id] <= "2022-01-01" and (
+            ginfo = self.group.info(group_id)
+            if info[group_id][ginfo.user_pubkey] <= "2022-01-01" and (
                 info[group_id]["last_update"] <= "2022-01-01"
                 or info[group_id]["highest_height"] == 0
             ):
@@ -192,6 +188,7 @@ class SearchSeeds(RumClient):
                     break
 
             if is_leave:
+                print(self.group_id,"leave the group.")
                 self.group.leave()
         self.update_status()
 

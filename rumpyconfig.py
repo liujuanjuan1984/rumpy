@@ -14,6 +14,8 @@ class RumpyConfig:
         "mytest_group",
     ]
 
+    NAME_PIECES_TO_LEAVE = ("mytest", "测试", "test")
+
     # https://github.com/liujuanjuan1984/seeds/blob/master/data/seeds.json
     SEEDSFILE = os.path.join(
         os.path.dirname(os.path.dirname(__file__)), "seeds", "data", "seeds.json"

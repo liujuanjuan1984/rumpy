@@ -15,10 +15,10 @@ def main():
     print(datetime.datetime.now(), "datafiles...")
     basedir = os.path.join(os.path.dirname(__file__), "data")
     datafiles = {
-        "datafile": RumpyConfig.SEEDSFILE,
+        "seedsfile": RumpyConfig.SEEDSFILE,
         "logfile": os.path.join(basedir, "logfile.json"),
         "trxfile": os.path.join(basedir, "trxfile.json"),
-        "infofile": os.path.join(basedir, "infofile.json"),
+        "infofile": RumpyConfig.SEEDSFILE.replace("seeds.json","groupsinfo.json"),
     }
     client.init_app(**datafiles)
 
@@ -31,8 +31,12 @@ def main():
     client.leave_groups()
 
     # join groups
-    print(datetime.datetime.now(), "join  groups...")
-    client.join_groups()
+    # print(datetime.datetime.now(), "join  groups...")
+    # client.join_groups()
+
+    # update status
+    print(datetime.datetime.now(), "update status...")
+    client.update_status()
 
 
 if __name__ == "__main__":
