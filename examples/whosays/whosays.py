@@ -78,7 +78,7 @@ class WhoSays(RumClient):
             if group_id not in data:
                 data[group_id] = {}
             if group_id not in seeds:
-                seed = self.group.seed()
+                seed = self.group.seed(group_id) or {"error":"nothing got"}
                 if "error" not in seed:
                     seeds[group_id] = seed
             if group_id not in progress:
@@ -100,7 +100,9 @@ class WhoSays(RumClient):
         seeds = JsonFile(self.seedsfile).read({})
         for group_id in data:
             gtrxs = data[group_id]
-            seed = seeds[group_id]
+            seed = seeds.get(group_id) or {}
+            if not seed:
+                continue 
             self.group_id = group_id
             for trx_id in gtrxs:
                 if "shared" not in gtrxs[trx_id]:
@@ -204,7 +206,7 @@ class WhoSays(RumClient):
             if img:
                 obj["image"].extend(img)
             trxid = trx["Content"]["inreplyto"]["trxid"]
-            lines.append(f"\n回复给 `{self._name(trxid)}` 所发布的内容：")
+            lines.append(f"回复给 `{self._name(trxid)}` 所发布的内容：")
             text, img, flag = self._refer_content(trxid)
             if text:
                 lines.append(self._quote_text(text))
