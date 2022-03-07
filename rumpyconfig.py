@@ -45,6 +45,16 @@ class RumpyConfig:
             "dbecho": True,
             "dbreset": True,
         },
+        "cloud": {
+            "host": "127.0.0.1",
+            "port": 62663,
+            "appid": "peer",
+            "crtfile": r"C:\certs\server.crt",
+            "usedb": False,
+            "dbname": "test_db",
+            "dbecho": True,
+            "dbreset": True,
+        },
     }
 
     GUI = CLIENT_PARAMS["gui"]

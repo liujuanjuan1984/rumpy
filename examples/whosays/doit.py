@@ -19,7 +19,7 @@ def trans():
         trxs = olddata[group_id]["trxs"]
         for trx_id in trxs:
             if (
-                toshare_group_id in trxs[trx_id]["shared"]
+                toshare_group_id in (trxs[trx_id].get("shared") or [])
                 and toshare_group_id not in newdata[group_id][trx_id]["shared"]
             ):
                 newdata[group_id][trx_id]["shared"].append(toshare_group_id)
