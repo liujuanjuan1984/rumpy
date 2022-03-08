@@ -10,10 +10,9 @@ DONT_JOIN_PIECES = ["mytest_"]
 
 
 class SearchSeeds(RumClient):
-    def init_app(self, seedsfile, logfile, trxfile, infofile):
+    def init_app(self, seedsfile, logfile, infofile):
         self.seedsfile = seedsfile
         self.logfile = logfile
-        self.trxfile = trxfile
         self.infofile = infofile
 
     def intext(self, text: str) -> List:
@@ -39,67 +38,43 @@ class SearchSeeds(RumClient):
         """Search seeds in trx, return list of seeds."""
         return self.intext(trx["Content"].get("content") or "")
 
-    def __ingroup(self, trx_id: str, seedsdata: Dict) -> Dict:
-        """Search seeds in group, return list of seeds."""
-
-        checked = JsonFile(self.trxfile).read({})
-        trxs = self.group.content_trxs(trx_id=trx_id, num=50)
-        print(datetime.datetime.now(), trx_id, len(trxs))
-        if len(trxs) == 0:
-            # False means no need to continue
-            return False, trx_id, seedsdata
-
-        for trx in trxs:
-            tid = trx["TrxId"]
-            if not checked.get(tid):
-                trx_id = tid
-                for seed in self.intrx(trx):
-                    gid = seed["group_id"]
-                    if gid not in seedsdata:
-                        seedsdata[gid] = seed
-            checked[tid] = f"{datetime.datetime.now()}"
-        print(trx_id)
-        JsonFile(self.trxfile).write(checked)
-        return True, trx_id, seedsdata  # True means need to continue
-
-    def ingroup(self, trx_id=None, seedsdata={}, flag=True) -> Dict:
+    def ingroup(self, trx_id=None, flag=True) -> Dict:
         """Search seeds in group, and write result to datafile."""
 
         logs = JsonFile(self.logfile).read({})
-        seedsdata = seedsdata or JsonFile(self.seedsfile).read({})
-        if self.group_id not in logs:
-            logs[self.group_id] = []
+        seeds = JsonFile(self.seedsfile).read({})
 
-        if len(logs[self.group_id]) > 0:
-            trx_id = logs[self.group_id][-1]["trx_id"] or trx_id
-        if self.group_id not in seedsdata:
+        if self.group_id not in logs:
+            logs[self.group_id] = None
+
+        trx_id = logs[self.group_id]
+        checked_tids = []
+
+        if self.group_id not in seeds:
             seed = self.group.seed()
             if seed:
-                seedsdata[self.group_id] = seed
+                seeds[self.group_id] = seed
 
         while flag:
-            logs[self.group_id].append(
-                {
-                    "trx_id": trx_id,
-                    "status": "begin",
-                    "time": f"{datetime.datetime.now()}",
-                }
-            )
-
-            flag, xtrx_id, seedsdata = self.__ingroup(trx_id, seedsdata)
-            logs[self.group_id].append(
-                {
-                    "trx_id": trx_id,
-                    "status": "done",
-                    "time": f"{datetime.datetime.now()}",
-                }
-            )
-            JsonFile(self.seedsfile).write(seedsdata)
-            JsonFile(self.logfile).write(logs)
-            if xtrx_id == trx_id:
+            if trx_id in checked_tids:
                 break
             else:
-                trx_id = xtrx_id
+                checked_tids.append(trx_id)
+
+            logs[self.group_id] = trx_id
+            trxs = self.group.content_trxs(trx_id=trx_id, num=50)
+            print(datetime.datetime.now(), trx_id, len(trxs))
+
+            if len(trxs) == 0:
+                break
+            for trx in trxs:
+                for seed in self.intrx(trx):
+                    if seed["group_id"] not in seeds:
+                        seeds[seed["group_id"]] = seed
+
+            trx_id = trxs[-1]["TrxId"]
+            JsonFile(self.seedsfile).write(seeds)
+            JsonFile(self.logfile).write(logs)
 
     def innode(self) -> Dict:
         """Search seeds in node."""
@@ -119,8 +94,8 @@ class SearchSeeds(RumClient):
                 info[group_id] = {
                     "highest_height": -1,
                     "last_update": "init",
-                    "nodes":{},
-                    "scores":0,
+                    "nodes": {},
+                    "scores": 0,
                 }
 
         for group_id in joined:
@@ -130,8 +105,10 @@ class SearchSeeds(RumClient):
             if ginfo.highest_height > info[group_id]["highest_height"]:
                 info[group_id]["highest_height"] = ginfo.highest_height
                 info[group_id]["last_update"] = f"{Stime.ts2datetime(gts)}"
-                info[group_id]["scores"] += int(ginfo.highest_height/100)
-            info[group_id]["nodes"][ginfo.user_pubkey] = f"{datetime.datetime.now()}"
+                info[group_id]["scores"] += int(ginfo.highest_height / 100)
+                info[group_id]["nodes"][
+                    ginfo.user_pubkey
+                ] = f"{datetime.datetime.now()}"
 
         JsonFile(self.infofile).write(info)
         return info
@@ -188,7 +165,7 @@ class SearchSeeds(RumClient):
                     break
 
             if is_leave:
-                print(self.group_id,"leave the group.")
+                print(self.group_id, "leave the group.")
                 self.group.leave()
         self.update_status()
 

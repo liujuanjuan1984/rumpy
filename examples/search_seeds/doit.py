@@ -17,8 +17,7 @@ def main():
     datafiles = {
         "seedsfile": RumpyConfig.SEEDSFILE,
         "logfile": os.path.join(basedir, "logfile.json"),
-        "trxfile": os.path.join(basedir, "trxfile.json"),
-        "infofile": RumpyConfig.SEEDSFILE.replace("seeds.json","groupsinfo.json"),
+        "infofile": RumpyConfig.SEEDSFILE.replace("seeds.json", "groupsinfo.json"),
     }
     client.init_app(**datafiles)
 
