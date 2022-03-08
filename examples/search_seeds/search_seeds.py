@@ -10,9 +10,9 @@ DONT_JOIN_PIECES = ["mytest_"]
 
 
 class SearchSeeds(RumClient):
-    def init_app(self, seedsfile, logfile, infofile):
+    def init_app(self, seedsfile, progressfile, infofile):
         self.seedsfile = seedsfile
-        self.logfile = logfile
+        self.progressfile = progressfile
         self.infofile = infofile
 
     def intext(self, text: str) -> List:
@@ -41,7 +41,7 @@ class SearchSeeds(RumClient):
     def ingroup(self, trx_id=None, flag=True) -> Dict:
         """Search seeds in group, and write result to datafile."""
 
-        logs = JsonFile(self.logfile).read({})
+        logs = JsonFile(self.progressfile).read({})
         seeds = JsonFile(self.seedsfile).read({})
 
         if self.group_id not in logs:
@@ -74,7 +74,7 @@ class SearchSeeds(RumClient):
 
             trx_id = trxs[-1]["TrxId"]
             JsonFile(self.seedsfile).write(seeds)
-            JsonFile(self.logfile).write(logs)
+            JsonFile(self.progressfile).write(logs)
 
     def innode(self) -> Dict:
         """Search seeds in node."""

@@ -16,7 +16,7 @@ def main():
     basedir = os.path.join(os.path.dirname(__file__), "data")
     datafiles = {
         "seedsfile": RumpyConfig.SEEDSFILE,
-        "logfile": os.path.join(basedir, "logfile.json"),
+        "progressfile": os.path.join(basedir, "progressfile.json"),
         "infofile": RumpyConfig.SEEDSFILE.replace("seeds.json", "groupsinfo.json"),
     }
     client.init_app(**datafiles)
