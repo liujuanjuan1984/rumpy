@@ -101,7 +101,7 @@ class SearchSeeds(RumClient):
         for group_id in joined:
             self.group_id = group_id
             ginfo = self.group.info()
-            gts = self.group.block(ginfo.highest_block_id).get("TimeStamp")
+            gts = self.group.block(block_id=ginfo.highest_block_id).get("TimeStamp")
             if ginfo.highest_height > info[group_id]["highest_height"]:
                 info[group_id]["highest_height"] = ginfo.highest_height
                 info[group_id]["last_update"] = f"{Stime.ts2datetime(gts)}"

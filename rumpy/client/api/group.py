@@ -121,9 +121,10 @@ class Group(BaseAPI):
         """post an image to group"""
         return self.send_note(image=[image])
 
-    def block(self, block_id: str):
+    def block(self, group_id: str = None, block_id: str = None):
         """get the info of a block in a group"""
-        return self._get(f"{self.baseurl}/block/{self.group_id}/{block_id}")
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/block/{group_id}/{block_id}")
 
     def is_owner(self, group_id: str = None) -> bool:
         """return True if I create this group else False"""
