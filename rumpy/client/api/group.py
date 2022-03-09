@@ -50,6 +50,11 @@ class Group(BaseAPI):
         if self.is_joined(group_id):
             return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
 
+    def clear(self, group_id=None):
+        """clear data of a group"""
+        group_id = group_id or self.group_id
+        return self._post(f"{self.baseurl}/group/clear", {"group_id": group_id})
+
     def startsync(self, group_id=None):
         group_id = group_id or self.group_id
         if self.is_joined(group_id):

@@ -1,27 +1,22 @@
 import os
-import sys
+import datetime
 from rumpyconfig import RumpyConfig
 from officepy import JsonFile
 from group_statistics import GroupStatistics
 
 client = GroupStatistics(**RumpyConfig.GUI)
 
-groups = {
-    "测试TODO": "abc01f11-6890-4cd3-8234-0b920c6b7085",
-    # "刘娟娟的朋友圈": "4e784292-6a65-471e-9f80-e91202e3358c",
-}
+progressfile = os.path.join(os.path.dirname(__file__), "data", "progress.json")
+progress = JsonFile(progressfile).read({})
 
-# 统计指定组的数据，并发到本组
-for gname in groups:
-    client.view_to_post(groups[gname])
+toshare = "48b74295-a08c-40d4-99eb-5121e810c180"  # client.group.create("mytest_groupview")["group_id"]
 
+for gid in client.node.groups_id:
+    if client.group.info(gid).highest_height > 50:
+        today = str(datetime.date.today())
+        if progress.get(gid) != today:
+            progress[gid] = today
+            client.view_to_post(gid)
+            # client.view_to_post(gid, toshare)
 
-# 统计 A 组数据，结果发送到 B 组
-toview = "3bb7a3be-d145-44af-94cf-e64b992ff8f0"  # 待统计的组
-toshare = "4e784292-6a65-471e-9f80-e91202e3358c"  # 接收统计结果的组
-
-client.view_to_post(toview, toshare)
-
-# 统计A 组数据，但不想发送，结果可保存到本地 .json 文件
-toview = "3bb7a3be-d145-44af-94cf-e64b992ff8f0"  # 待统计的组
-client.view_to_save(toview, "temp.json")
+JsonFile(progressfile).write(progress)

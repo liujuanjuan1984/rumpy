@@ -59,18 +59,25 @@ class GroupStatistics(RumClient):
         trxs = self.group.content(group_id)
         info = self.group.info(group_id)
 
-        return {
+        if len(trxs) == 0:
+            return {}, 0
+
+        create_at = Stime.ts2datetime(trxs[0].get("TimeStamp"))
+        update_at = Stime.ts2datetime(trxs[-1].get("TimeStamp"))
+        days = (update_at - create_at).days or 0
+        viewdata = {
             "info": info.__dict__,
-            "create_at": str(Stime.ts2datetime(trxs[0].get("TimeStamp")))[:19],
-            "update_at": str(Stime.ts2datetime(trxs[-1].get("TimeStamp")))[:19],
+            "create_at": f"{create_at}",
+            "update_at": f"{update_at}",
             "trxtype": self._count_trxtype(trxs),
             "pubkeys": self._count_pubkey(trxs),
             "daily_trxs": self._count_daily_trxs(trxs),
             "daily_pubkeys": self._count_daily_pubkeys(trxs),
         }
+        return viewdata, days
 
     def view_to_save(self, group_id, filepath, imgpath=None):
-        data = self.group_view(group_id)
+        data, days = self.group_view(group_id)
 
         # 数据存入 json 文件。把 datetime 数据类型转换为字符串，才能写入 json 文件
         data["daily_trxs"] = {str(k): data["daily_trxs"][k] for k in data["daily_trxs"]}
@@ -85,20 +92,21 @@ class GroupStatistics(RumClient):
         daily_pubkeys = {
             i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]
         }
-        imgbytes = self.plot_lines(title, daily_trxs, daily_pubkeys)
+        imgbytes = self.plot_lines(days, title, daily_trxs, daily_pubkeys)
         imgpath = imgpath or filepath.replace(".json", ".png")
 
         with open(imgpath, "wb") as f:
             f.write(imgbytes)
 
-    def plot_lines(self, title, *data):
+    def plot_lines(self, days, title, *data):
         mpl.rcParams["font.sans-serif"] = ["SimHei"]  # 指定默认字体
         mpl.rcParams["axes.unicode_minus"] = False  # 解决保存图像是负号'-'显示为方块的问题
         plt.tick_params(axis="x", labelsize=10)  # 设置x轴字号大小
 
         for idata in data:
+            n = max((days // 10), 1)
             ax = pd.Series(idata).plot(figsize=(15, 8), title=title)
-            ax.xaxis.set_major_locator(MultipleLocator(7))  # 设置x轴的间隔为7
+            ax.xaxis.set_major_locator(MultipleLocator(n))  # 设置x轴的间隔为7
             fig = ax.get_figure()
 
         buffer = io.BytesIO()
@@ -108,7 +116,7 @@ class GroupStatistics(RumClient):
         return imgbytes
 
     def view_to_post(self, toview_group_id, toshare_group_id=None):
-        data = self.group_view(toview_group_id)
+        data, days = self.group_view(toview_group_id)
 
         # 绘图
         title = f"{data['info']['group_name']} Daily Trxs and Users Counts"
@@ -116,7 +124,7 @@ class GroupStatistics(RumClient):
         daily_pubkeys = {
             i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]
         }
-        imgbytes = self.plot_lines(title, daily_trxs, daily_pubkeys)
+        imgbytes = self.plot_lines(days, title, daily_trxs, daily_pubkeys)
 
         # 文本
         note = f"""【{data['info']['group_name']}】数据概况\n创建 {data['create_at']}\n更新 {data['update_at']}\n区块 {data['info']['highest_height']} Trxs {sum(list(data['trxtype'].values()))} 用户 {len(data['pubkeys'])}"""
