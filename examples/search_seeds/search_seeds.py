@@ -6,7 +6,7 @@ from rumpy import RumClient
 from officepy import Stime, JsonFile
 
 DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
-DONT_JOIN_PIECES = ["mytest_"]
+DONT_JOIN_PIECES = ["mytest_", "测试", "test"]
 
 
 class SearchSeeds(RumClient):
@@ -189,7 +189,7 @@ class SearchSeeds(RumClient):
         """检查种子是否在该group被分享过"""
 
         # 如果没有指定 group_id 或未加入，就新建种子网络
-        if group_id == None or not self.node.is_joined(group_id):
+        if group_id == None or not self.group.is_joined(group_id):
             group_id = self.group.create("mytest_share_seeds")["group_id"]
 
         shared = self.ingroup(group_id)

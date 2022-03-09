@@ -20,10 +20,10 @@ class TestCase:
         client.group.join(r1)
 
         group_id = r1["group_id"]
-        r2 = client.node.is_joined(group_id)
+        r2 = client.group.is_joined(group_id)
         assert r2 == True
 
-        r3 = client.node.is_joined(group_id.replace(group_id[:5], "b" * 5))
+        r3 = client.group.is_joined(group_id.replace(group_id[:5], "b" * 5))
         assert r3 == False
 
         r4 = client.node.groups_id
@@ -132,7 +132,7 @@ class TestCase:
         assert "trx_id" in r
 
         resp = client.group.leave()
-        r2 = client.node.is_joined(client.group_id)
+        r2 = client.group.is_joined(client.group_id)
         assert r2 == False
 
     def test_trx(self):

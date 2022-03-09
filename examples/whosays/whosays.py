@@ -161,11 +161,11 @@ class WhoSays(RumClient):
         return names[pubkey]["nicknames"][-1]
 
     def _name(self, trx_id):
-        return self._nickname(self.group.trx(trx_id).get("Publisher"))
+        return self._nickname(self.group.trx(trx_id=trx_id).get("Publisher"))
 
     def _refer_content(self, trx):
         if type(trx) == str:
-            trx = self.group.trx(trx)
+            trx = self.group.trx(trx_id=trx)
         text, img = None, None
         if "Content" not in trx:
             return text, img, text or img

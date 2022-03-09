@@ -54,18 +54,3 @@ class Node(BaseAPI):
     def groups_id(self) -> List:
         """return list of group_id which node has joined"""
         return [i["group_id"] for i in self.groups()]
-
-    def group_info(self, group_id: str = None):
-        """return a group info"""
-        group_id = group_id or self.group_id
-        if not self.is_joined(group_id):
-            raise ValueError(f"you are not in this group {group_id}.")
-        for ginfo in self.groups():
-            if ginfo["group_id"] == group_id:
-                return ginfo
-
-    def is_joined(self, group_id: str = None) -> bool:
-        group_id = group_id or self.group_id
-        if group_id in self.groups_id:
-            return True
-        return False

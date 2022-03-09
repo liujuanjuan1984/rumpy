@@ -15,7 +15,7 @@ def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
         pubkey = trx_id_or_pubkey
     else:
         trx_id = trx_id_or_pubkey
-        trxdata = client.group.trx(trx_id)
+        trxdata = client.group.trx(trx_id=trx_id)
         pubkey = (
             trxdata.get("Publisher") or trxdata.get("SenderPubkey") or trx_id_or_pubkey
         )
