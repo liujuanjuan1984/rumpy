@@ -1,4 +1,8 @@
 import pytest
+import os
+import datetime
+import json
+from officepy import JsonFile, Dir, File, Stime
 from rumpyconfig import RumpyConfig
 from rumpy import RumClient
 
@@ -6,10 +10,32 @@ client = RumClient(**RumpyConfig.GUI)
 
 
 def test_owner():
+    owners = []
+    users = []
     for gid in client.node.groups_id:
         if client.group.is_owner(gid):
-            print(gid, client.group.info(gid).group_name)
+            owners.append(" ".join(["owner:", gid, client.group.info(gid).group_name]))
+        else:
+            users.append(" ".join(["user:", gid, client.group.info(gid).group_name]))
+    print("=====You are in these groups:=====")
+    print("+" * 66)
+    print(*owners, sep="\n")
+    print("+" * 66)
+    print(*users, sep="\n")
+
+
+def test_abandoned():
+    father_dir = os.path.dirname(os.path.dirname(__file__))
+    seedsfile = RumpyConfig.SEEDSFILE
+    infofile = seedsfile.replace("seeds.json", "groupsinfo.json")
+    seeds = JsonFile(seedsfile).read()
+    info = JsonFile(infofile).read()
+    print("=====You are in these abandoned groups:=====")
+    for gid in client.node.groups_id:
+        if info[gid]["abandoned"]:
+            print(gid, seeds[gid]["group_name"])
 
 
 if __name__ == "__main__":
     test_owner()
+    test_abandoned()

@@ -12,9 +12,11 @@
 
 其它案例：
 
+- [coin price 币价](https://github.com/liujuanjuan1984/coin_price) bot: get price from coinmarketcap and post to quorum groups.
 - [retweet 转发工具](https://github.com/liujuanjuan1984/retweet) bot: retweet weibo/twitter to rum groups
 - [seedstore 种子商店](https://github.com/liujuanjuan1984/seedstore)：发现和分享更多种子~
 - [todolist 待办清单](https://github.com/liujuanjuan1984/todolist)：TBD
 
 部分案例需安装 officepy 以支持 JsonFile、Dir 等自定义方法：
+
 - `officepy` : [https://github.com/liujuanjuan1984/officepy](https://github.com/liujuanjuan1984/officepy.git)

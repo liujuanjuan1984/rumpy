@@ -129,18 +129,12 @@ dmypy.json
 .pyre/
 
 # TBC
-/temp
-/docs
 /Makefile
-requirements_dev.txt
 *version.cfg 
 setup.py 
 *temp*
-examples/search_seeds/data/search_seeds_and_joined_data.json
-examples/whosays/huoju_says.json
-examples/search_seeds/data/search_seeds_and_joined_data.json
-examples/config.py
-black_reformat.py
+examples/*/*.json
+examples/*/data/
 /database
-examples/export_data/data/*
 *.db
+tests/data/

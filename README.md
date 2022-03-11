@@ -4,6 +4,9 @@
 
 个人水平有限，欢迎参与代码贡献。持续开发迭代中。
 
+官方教程： https://github.com/rumsystem/quorum/blob/main/Tutorial.md
+
+官网 API文档：https://github.com/rumsystem/quorum 
 
 ## 安装使用
 
@@ -63,6 +66,7 @@ pip install -r requirements_examples.txt
 
 其它案例：
 
+- [coin price 币价](https://github.com/liujuanjuan1984/coin_price) bot: get price from coinmarketcap and post to quorum groups.
 - [retweet 转发工具](https://github.com/liujuanjuan1984/retweet) bot: retweet weibo/twitter to rum groups
 - [seedstore 种子商店](https://github.com/liujuanjuan1984/seedstore)：发现和分享更多种子~
 - [todolist 待办清单](https://github.com/liujuanjuan1984/todolist)：TBD
