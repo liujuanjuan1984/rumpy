@@ -54,3 +54,17 @@ class Node(BaseAPI):
     def groups_id(self) -> List:
         """return list of group_id which node has joined"""
         return [i["group_id"] for i in self.groups()]
+
+    def backup(self):
+        """Backup my group seed/keystore/config"""
+        return self._get(f"{self.baseurl}/backup")
+
+    def token(self):
+        """Get a auth token for authorizing requests from remote"""
+        url = self.baseurl.replace("/api/v1", "/app/api/v1")
+        return self._post(f"{url}/token/apply")
+
+    def token_refresh(self):
+        """Get a new auth token"""
+        url = self.baseurl.replace("/api/v1", "/app/api/v1")
+        return self._post(f"{url}/token/refresh")

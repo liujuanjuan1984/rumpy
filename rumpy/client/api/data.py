@@ -212,13 +212,6 @@ class GroupInfo:
 
 
 @dataclasses.dataclass
-class DeniedlistUpdateParams:
-    peer_id: str  # node_id ???QmQZcijmay86LFCDFiuD8ToNhZwCYZ9XaNpeDWVWWJY222
-    group_id: str
-    action: str  # "del" or add
-
-
-@dataclasses.dataclass
 class AnnounceParams:
     """
     group_id:

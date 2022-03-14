@@ -35,7 +35,7 @@ def test_blocks(gid, fromfile, tofile):
     if tofile:
         JsonFile(tofile).write(bids)
 
-    print("blocks num:", len(bids))
+    print(gid, "blocks num:", len(bids))
 
 
 def test_trxs_in_blocks(gid, fromfile, tofile):
@@ -73,23 +73,29 @@ def test_trxs_in_blocks(gid, fromfile, tofile):
     if tofile:
         JsonFile(tofile).write(tids)
 
-    print("trxs num:", len(tids))
+    print(gid, "trxs num:", len(tids))
 
 
 if __name__ == "__main__":
     gid = RumpyConfig.GROUPS["去中心微博"]
     gid = RumpyConfig.GROUPS["刘娟娟的朋友圈"]
-    this_dir = os.path.dirname(__file__)
+    gids = [
+        "b280446c-3562-4277-b14e-be7a15bb4718",
+        "fed57711-8aed-4944-bf9b-d15420d17f4b",
+        "0be13ee2-10dc-4e3a-b3ba-3f2c440a6436",
+    ]
+    for gid in gids:
+        this_dir = os.path.dirname(__file__)
 
-    blocksfile = os.path.join(this_dir, "data", f"{gid}_blocks.json")
-    trxsfile = os.path.join(this_dir, "data", f"{gid}_trxs.json")
+        blocksfile = os.path.join(this_dir, "data", f"{gid}_blocks.json")
+        trxsfile = os.path.join(this_dir, "data", f"{gid}_trxs.json")
 
-    test_blocks(gid, blocksfile, blocksfile)
-    test_trxs_in_blocks(gid, trxsfile, trxsfile)
+        test_blocks(gid, blocksfile, blocksfile)
+        test_trxs_in_blocks(gid, trxsfile, trxsfile)
 
-    trxs = JsonFile(trxsfile).read()
-    for tid in trxs:
-        if len(trxs[tid]) > 1:
-            day = Stime.ts2datetime(client.group.trx(gid, tid)["TimeStamp"])
-            if f"{day}" >= "2022-02-20":
-                print(tid, len(trxs[tid]), day)
+        trxs = JsonFile(trxsfile).read()
+        for tid in trxs:
+            if len(trxs[tid]) > 1:
+                day = Stime.ts2datetime(client.group.trx(gid, tid)["TimeStamp"])
+                if f"{day}" >= "2022-02-20":
+                    print(tid, len(trxs[tid]), day)

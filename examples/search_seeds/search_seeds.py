@@ -97,6 +97,8 @@ class SearchSeeds(RumClient):
                     "nodes": {},
                     "scores": 0,
                 }
+            if "abandoned" not in info[group_id]:
+                info[group_id]["abandoned"] = False
 
         for group_id in joined:
             self.group_id = group_id

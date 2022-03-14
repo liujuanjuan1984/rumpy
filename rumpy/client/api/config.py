@@ -25,28 +25,34 @@ class GroupConfig(BaseAPI):
             raise ValueError(f"{trx_type} must be one of {TRX_TYPES}")
         return trx_type.lower()
 
-    def trx_auth_type(self, trx_type: str = "POST"):
+    def trx_auth_type(self, trx_type: str = "POST", group_id: str = None):
+        group_id = group_id or self.group_id
         trx_type = self._check_trx_type(trx_type)
-        return self._get(f"{self.baseurl}/group/{self.group_id}/trx/auth/{trx_type}")
+        return self._get(f"{self.baseurl}/group/{group_id}/trx/auth/{trx_type}")
 
     @property
     def auth_type(self):
         rlt = {}
-        for i in TRX_TYPES:
-            rlt.update(self.trx_auth_type(i))
+        for itype in TRX_TYPES:
+            rlt.update(self.trx_auth_type(itype))
         return rlt
 
     def set_trx_auth_type(
-        self, trx_type: str, mode: str, memo: str = "set trx auth type"
+        self,
+        trx_type: str,
+        mode: str,
+        memo: str = "set trx auth type",
+        group_id: str = None,
     ):
 
         mode = self._check_mode(mode)
+        group_id = group_id or self.group_id
         trx_type = self._check_trx_type(trx_type)
         if not memo:
             raise ValueError("say something in param:memo")
 
         relay = {
-            "group_id": self.group_id,
+            "group_id": group_id,
             "type": "set_trx_auth_mode",
             "config": json.dumps(
                 {"trx_type": trx_type, "trx_auth_mode": f"follow_{mode}_list"}
@@ -56,16 +62,22 @@ class GroupConfig(BaseAPI):
         return self._post(f"{self.baseurl}/group/chainconfig", relay)
 
     def _update_list(
-        self, pubkey: str, mode: str, memo: str = "update list", trx_types: List = None
+        self,
+        pubkey: str,
+        mode: str,
+        memo: str = "update list",
+        trx_types: List = None,
+        group_id: str = None,
     ):
 
         mode = self._check_mode(mode)
+        group_id = group_id or self.group_id
         trx_types = trx_types or ["post"]
         for trx_type in trx_types:
             self._check_trx_type(trx_type)
 
         relay = {
-            "group_id": self.group_id,
+            "group_id": group_id,
             "type": f"upd_{mode}_list",
             "config": json.dumps(
                 {"action": "add", "pubkey": pubkey, "trx_type": trx_types}
@@ -84,11 +96,11 @@ class GroupConfig(BaseAPI):
     ):
         return self._update_list(pubkey, "dny", memo, trx_types)
 
-    def _list(self, mode: str) -> List:
+    def _list(self, mode: str, group_id=None) -> List:
         if mode not in ["allow", "deny"]:
             raise ValueError("mode must be one of these: allow,deny")
-
-        return self._get(f"{self.baseurl}/group/{self.group_id}/trx/{mode}list") or []
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/group/{group_id}/trx/{mode}list") or []
 
     @property
     def allow_list(self):
@@ -98,28 +110,34 @@ class GroupConfig(BaseAPI):
     def deny_list(self):
         return self._list("deny")
 
-    def keylist(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/config/keylist")
+    def keylist(self, group_id: str = None):
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/group/{group_id}/config/keylist")
 
-    def keyname(self, keyname: str):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/config/{keyname}")
+    def keyname(self, keyname: str, group_id: str = None):
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/group/{group_id}/config/{keyname}")
 
-    def schema(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/schema")
+    def schema(self, group_id: str = None):
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/group/{group_id}/schema")
 
     def announce(self, **kwargs):
         """annouce user or producer,add or remove"""
         p = AnnounceParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/announce", p)
 
-    def announced_producers(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/announced/producers")
+    def announced_producers(self, group_id: str = None):
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/group/{group_id}/announced/producers")
 
-    def announced_users(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/announced/users")
+    def announced_users(self, group_id: str = None):
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/group/{group_id}/announced/users")
 
-    def producers(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/producers")
+    def producers(self, group_id: str = None):
+        group_id = group_id or self.group_id
+        return self._get(f"{self.baseurl}/group/{group_id}/producers")
 
     def update_user(self, **kwargs):
         p = UserUpdateParams(**kwargs).__dict__
@@ -128,12 +146,3 @@ class GroupConfig(BaseAPI):
     def update_producer(self, **kwargs):
         p = ProducerUpdateParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/producer", p)
-
-    """ #已废弃的接口
-    def deniedlist(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/deniedlist")
-
-    def update_deniedlist(self, **kwargs):
-        p = DeniedlistUpdateParams(**kwargs).__dict__
-        return self._post(f"{self.baseurl}/group/deniedlist", p)
-    """
