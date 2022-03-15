@@ -34,7 +34,8 @@ class GroupConfig(BaseAPI):
     def auth_type(self):
         rlt = {}
         for itype in TRX_TYPES:
-            rlt.update(self.trx_auth_type(itype))
+            resp = self.trx_auth_type(itype)
+            rlt[resp['TrxType']] = resp['AuthType']
         return rlt
 
     def set_trx_auth_type(

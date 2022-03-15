@@ -19,7 +19,7 @@ def test_blocks(gid, fromfile, tofile):
 
     while True:
         if bid in bids:
-            print("info:", bid, "exists!!!")
+            print("info:", gid, bid, "exists!!!")
             break
         else:
             bids.append(bid)
