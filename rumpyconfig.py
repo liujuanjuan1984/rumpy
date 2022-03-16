@@ -28,8 +28,8 @@ class RumpyConfig:
             "crtfile": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
             "usedb": False,
             "dbname": "gui_db",
-            "dbecho": False,
-            "dbreset": False,
+            "dbecho": True,
+            "dbreset": True,
         },
         "cli": {
             "host": "127.0.0.1",
