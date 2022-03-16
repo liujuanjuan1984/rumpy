@@ -13,10 +13,11 @@ def test_owner():
     owners = []
     users = []
     for gid in client.node.groups_id:
-        if client.group.is_owner(gid):
-            owners.append(" ".join(["owner:", gid, client.group.info(gid).group_name]))
+        client.group_id = gid
+        if client.group.is_owner():
+            owners.append(" ".join(["owner:", gid, client.group.info().group_name]))
         else:
-            users.append(" ".join(["user:", gid, client.group.info(gid).group_name]))
+            users.append(" ".join(["user:", gid, client.group.info().group_name]))
     print("=====You are in these groups:=====")
     print("+" * 66)
     print(*owners, sep="\n")

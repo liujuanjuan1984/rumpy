@@ -7,10 +7,12 @@ from rumpy import RumClient
 client = RumClient(**RumpyConfig.GUI)
 
 
-def test_blocks(gid, fromfile, tofile):
+def test_blocks(gid=None, fromfile=None, tofile=None):
     """get all blocks of a group chain."""
+    gid = gid or RumpyConfig.GROUPS["刘娟娟的朋友圈"]
     bids = []
-    bid = client.group.info(gid).highest_block_id
+    client.group_id = gid
+    bid = client.group.info().highest_block_id
 
     if fromfile:
         bids = JsonFile(fromfile).read([])
@@ -24,7 +26,7 @@ def test_blocks(gid, fromfile, tofile):
         else:
             bids.append(bid)
 
-        block = client.group.block(gid, bid)
+        block = client.group.block(bid)
         if block:
             bid = block.get("PrevBlockId")
         else:
@@ -38,18 +40,19 @@ def test_blocks(gid, fromfile, tofile):
     print(gid, "blocks num:", len(bids))
 
 
-def test_trxs_in_blocks(gid, fromfile, tofile):
+def test_trxs_in_blocks(gid=None, fromfile=None, tofile=None):
     """get all blocks of a group chain."""
-
+    gid = gid or RumpyConfig.GROUPS["刘娟娟的朋友圈"]
+    client.group_id = gid
     if fromfile:
         tids = JsonFile(fromfile).read({})
     else:
         tids = {}
 
-    bid = client.group.info(gid).highest_block_id
+    bid = client.group.info().highest_block_id
     flag = True
     while flag:
-        block = client.group.block(gid, bid)
+        block = client.group.block(bid)
         if block:
             trxs = block.get("Trxs") or []
             for trx in trxs:
@@ -86,7 +89,6 @@ if __name__ == "__main__":
     ]
     for gid in gids:
         this_dir = os.path.dirname(__file__)
-
         blocksfile = os.path.join(this_dir, "data", f"{gid}_blocks.json")
         trxsfile = os.path.join(this_dir, "data", f"{gid}_trxs.json")
 
@@ -96,6 +98,6 @@ if __name__ == "__main__":
         trxs = JsonFile(trxsfile).read()
         for tid in trxs:
             if len(trxs[tid]) > 1:
-                day = Stime.ts2datetime(client.group.trx(gid, tid)["TimeStamp"])
+                day = Stime.ts2datetime(client.group.trx(tid)["TimeStamp"])
                 if f"{day}" >= "2022-02-20":
                     print(tid, len(trxs[tid]), day)

@@ -9,11 +9,10 @@ class Group(BaseAPI):
         data = CreateGroupParam(group_name, **kwargs).__dict__
         return self._post(f"{self.baseurl}/group", data)
 
-    def seed(self, group_id=None) -> Dict:
+    def seed(self) -> Dict:
         """get the seed of a group which you've joined in."""
-        group_id = group_id or self.group_id
-        if self.is_joined(group_id):
-            seed = self._get(f"{self.baseurl}/group/{group_id}/seed")
+        if self.is_joined():
+            seed = self._get(f"{self.baseurl}/group/{self.group_id}/seed")
             if "error" not in seed:
                 return seed
 
@@ -25,11 +24,10 @@ class Group(BaseAPI):
             print(e)
             return False
 
-    def info(self, group_id=None):
+    def info(self):
         """return group info,type: datacalss"""
-        group_id = group_id or self.group_id
         for info in self.node.groups():
-            if info["group_id"] == group_id:
+            if info["group_id"] == self.group_id:
                 return GroupInfo(**info)
 
     def join(self, seed: Dict):
@@ -38,61 +36,57 @@ class Group(BaseAPI):
             raise ValueError("not a seed or the seed could not be identified.")
         return self._post(f"{self.baseurl}/group/join", seed)
 
-    def is_joined(self, group_id: str = None) -> bool:
-        group_id = group_id or self.group_id
-        if group_id in self.node.groups_id:
+    def is_joined(self) -> bool:
+        if self.group_id in self.node.groups_id:
             return True
         return False
 
-    def leave(self, group_id=None):
+    def leave(self):
         """leave a group"""
-        group_id = group_id or self.group_id
-        if self.is_joined(group_id):
-            return self._post(f"{self.baseurl}/group/leave", {"group_id": group_id})
+        if self.is_joined():
+            return self._post(
+                f"{self.baseurl}/group/leave", {"group_id": self.group_id}
+            )
 
-    def clear(self, group_id=None):
+    def clear(self):
         """clear data of a group"""
-        group_id = group_id or self.group_id
-        return self._post(f"{self.baseurl}/group/clear", {"group_id": group_id})
+        return self._post(f"{self.baseurl}/group/clear", {"group_id": self.group_id})
 
-    def startsync(self, group_id=None):
-        group_id = group_id or self.group_id
-        if self.is_joined(group_id):
-            return self._post(f"{self.baseurl}/group/{group_id}/startsync")
+    def startsync(self):
+        if self.is_joined():
+            return self._post(f"{self.baseurl}/group/{self.group_id}/startsync")
 
-    def content(self, group_id=None) -> List:
+    def content(self) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
-        group_id = group_id or self.group_id
-        if self.is_joined(group_id):
-            return self._get(f"{self.baseurl}/group/{group_id}/content") or []
+        if self.is_joined():
+            return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
 
     def content_trxs(
         self,
-        group_id=None,
         trx_id: str = None,
         num: int = 20,
         is_reverse=False,
         is_include_starttrx=False,
     ) -> List:
         """requests the content trxs of a group,return the list of the trxs data."""
-        group_id = group_id or self.group_id
-        if not self.is_joined(group_id):
+
+        if not self.is_joined():
             return []
 
         url = self.baseurl.replace("api", "app/api")
 
         if trx_id:
-            apiurl = f"{url}/group/{group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+            apiurl = f"{url}/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
         else:
-            apiurl = f"{url}/group/{group_id}/content?num={num}&start=0"
+            apiurl = f"{url}/group/{self.group_id}/content?num={num}&start=0"
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
 
-    def _send(self, group_id=None, obj: Dict = None, sendtype=None) -> Dict:
+    def _send(self, obj: Dict = None, sendtype=None) -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""
-        group_id = group_id or self.group_id
-        if self.is_joined(group_id):
-            p = {"type": sendtype, "object": obj, "target": group_id}
+
+        if self.is_joined():
+            p = {"type": sendtype, "object": obj, "target": self.group_id}
             data = ContentParams(**p).__dict__
             return self._post(f"{self.baseurl}/group/content", data)
 
@@ -102,13 +96,12 @@ class Group(BaseAPI):
     def dislike(self, trx_id: str) -> Dict:
         return self._send(obj={"id": trx_id}, sendtype="Dislike")
 
-    def send_note(self, group_id=None, **kwargs):
+    def send_note(self, **kwargs):
         """send note to a group. can be used to send: text only,image only,text with image,reply...etc"""
-        group_id = group_id or self.group_id
         p = ContentObjParams(**kwargs)
         if p.content == None and p.image == None:
             raise ValueError("need some content. images,text,or both.")
-        return self._send(group_id, obj=p.__dict__, sendtype="Add")
+        return self._send(obj=p.__dict__, sendtype="Add")
 
     def reply(self, content: str, trx_id: str):
         return self.send_note(content=content, inreplyto=trx_id)
@@ -121,20 +114,43 @@ class Group(BaseAPI):
         """post an image to group"""
         return self.send_note(image=[image])
 
-    def block(self, group_id: str = None, block_id: str = None):
+    def block(self, block_id: str = None):
         """get the info of a block in a group"""
-        group_id = group_id or self.group_id
-        return self._get(f"{self.baseurl}/block/{group_id}/{block_id}")
+        return self._get(f"{self.baseurl}/block/{self.group_id}/{block_id}")
 
-    def is_owner(self, group_id: str = None) -> bool:
+    def is_owner(self) -> bool:
         """return True if I create this group else False"""
-        ginfo = self.info(group_id or self.group_id)
+        ginfo = self.info()
         if isinstance(ginfo, GroupInfo) and ginfo.owner_pubkey == ginfo.user_pubkey:
             return True
         return False
 
-    def trxs_by(self, pubkeys):
-        trxs = self.content()
+    def all_content_trxs(self, trx_id=None):
+        """get all the trxs of content started from trx_id"""
+        trxs = []
+        checked_trxids = []
+        while True:
+            if trx_id in checked_trxids:
+                break
+            else:
+                checked_trxids.append(trx_id)
+            newtrxs = self.content_trxs(trx_id=trx_id, num=100)
+            if len(newtrxs) == 0:
+                break
+            trxs.extend(newtrxs)
+            trx_id = self.last_trx_id(trx_id, newtrxs)
+        return trxs
+
+    def last_trx_id(self, trx_id, trxs):
+        """get the last-trx_id of trxs which if different from given trx_id"""
+        for i in range(-1, -1 * len(trxs), -1):
+            tid = trxs[i]["TrxId"]
+            if tid != trx_id:
+                return tid
+        return trx_id
+
+    def trxs_by(self, pubkeys, trx_id=None):
+        trxs = self.all_content_trxs(trx_id)
         trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
         return trxs_by
 
@@ -157,21 +173,18 @@ class Group(BaseAPI):
             return "text_only"
         return trxtype.lower()  # "like","dislike","other"
 
-    def trx(self, group_id: str = None, trx_id: str = None):
-        group_id = group_id or self.group_id
+    def trx(self, trx_id: str = None):
         try:
-            resp = self.content_trxs(
-                group_id=group_id, trx_id=trx_id, num=1, is_include_starttrx=True
-            )
+            resp = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
             if len(resp) > 1:
                 print("somthing is error", resp)
             elif len(resp) == 0:
-                raise ValueError(f"nothing got. {resp} {trx_id} {group_id}")
+                raise ValueError(f"nothing got. {resp} {trx_id} {self.group_id}")
             else:
                 return resp[0]
         except Exception as e:
             print(e)
-            return self._get(f"{self.baseurl}/trx/{group_id}/{trx_id}")
+            return self._get(f"{self.baseurl}/trx/{self.group_id}/{trx_id}")
         return {"error": "nothing got."}
 
     def trxs_unique(self, trxs):

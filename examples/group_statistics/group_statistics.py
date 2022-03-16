@@ -55,9 +55,9 @@ class GroupStatistics(RumClient):
         return rlt
 
     def group_view(self, group_id):
-
-        trxs = self.group.content(group_id)
-        info = self.group.info(group_id)
+        self.group_id = group_id
+        trxs = self.group.content()
+        info = self.group.info()
 
         if len(trxs) == 0:
             return {}, 0

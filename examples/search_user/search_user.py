@@ -51,36 +51,20 @@ class SearchUser(RumClient):
 
         """
         group_rlt = group_rlt or {}
-        trxids_searched = []
 
-        while True:
-            print(datetime.datetime.now(), self.name_fragment, trx_id, "...")
-            trxs = self.group.content_trxs(num=400, trx_id=trx_id)
+        print(datetime.datetime.now(), self.name_fragment, trx_id, "...")
+        trxs = self.group.all_content_trxs(trx_id=trx_id)
 
-            if len(trxs) == 0:
-                break
+        for trx in trxs:
+            pubkey, name = self._intrx(trx)
+            if not pubkey:
+                continue
+            if pubkey not in group_rlt:
+                group_rlt[pubkey] = [name]
+            if name not in group_rlt[pubkey]:
+                group_rlt[pubkey].append(name)
 
-            for trx in trxs:
-                pubkey, name = self._intrx(trx)
-                if not pubkey:
-                    continue
-                if pubkey not in group_rlt:
-                    group_rlt[pubkey] = [name]
-                if name not in group_rlt[pubkey]:
-                    group_rlt[pubkey].append(name)
-
-            if trx_id not in trxids_searched:
-                trxids_searched.append(trx_id)
-
-            for i in range(-1, -1 * len(trxs), -1):
-                new_trxid = trxs[i]["TrxId"]
-                if new_trxid in trxids_searched:
-                    continue
-                else:
-                    trx_id = new_trxid
-                    break
-            if trx_id in trxids_searched:
-                break
+        trx_id = self.group.last_trx_id(trx_id, trxs)
 
         return trx_id, group_rlt
 
@@ -102,7 +86,7 @@ class SearchUser(RumClient):
             if group_id not in rlt:
                 rlt[group_id] = {}
             if group_id not in seeds:
-                seed = self.group.seed(group_id)
+                seed = self.group.seed()
                 if seed:
                     seeds[group_id] = seed
             if group_id not in progress:

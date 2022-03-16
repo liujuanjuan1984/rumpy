@@ -100,7 +100,3 @@ class RumClient:
     @group_id.setter
     def group_id(self, group_id):
         self._group_id = group_id
-
-    @group_id.deleter
-    def group_id(self):
-        del self._group_id

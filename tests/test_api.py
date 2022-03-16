@@ -20,17 +20,21 @@ class TestCase:
         client.group.join(r1)
 
         group_id = r1["group_id"]
-        r2 = client.group.is_joined(group_id)
+        client.group_id = group_id
+        r2 = client.group.is_joined()
         assert r2 == True
 
-        r3 = client.group.is_joined(group_id.replace(group_id[:5], "b" * 5))
+        client.group_id = group_id.replace(group_id[:5], "b" * 5)
+        r3 = client.group.is_joined()
         assert r3 == False
 
+        client.group_id = group_id
         r4 = client.node.groups_id
-        assert group_id in r4
+        assert client.group_id in r4
 
-        client.group_id = r1["group_id"]
         client.group.leave()
+        r5 = client.group.is_joined()
+        assert r5 == False
 
         seed = {
             "genesis_block": {
@@ -52,8 +56,11 @@ class TestCase:
             "signature": "30450221009d00d86876d4e37b8408620dca823d0409afa03ae49c5c78526669f5d2a3c8fe022073cf3f3bbb19534614ae6d3eca65ac05d374909444825f59be44f1fe0fd1a0ca",
         }
         r = client.group.is_seed(seed)
+        assert r == True
         r = client.group.join(seed)
         client.group_id = seed["group_id"]
+        r = client.group.is_joined()
+        assert r == True
 
     def test_leave_test_groups(self):
 
@@ -128,34 +135,37 @@ class TestCase:
             print(e)
             pass
 
+        trxs = client.group.all_content_trxs()
+
         r = client.group.send_img("D:\\test-sample.png")
         assert "trx_id" in r
 
         resp = client.group.leave()
-        r2 = client.group.is_joined(client.group_id)
+        r2 = client.group.is_joined()
         assert r2 == False
 
     def test_trx(self):
 
-        for i in client.node.groups():
-            if i["highest_height"] > 1000:
-                gid = i["group_id"]
-                bid = i["highest_block_id"]
-                break
-
+        gid = "4e784292-6a65-471e-9f80-e91202e3358c"
         client.group_id = gid
+        bid = client.group.info().highest_block_id
 
-        block = client.group.block(block_id=bid)
+        block = client.group.block(bid)
         assert "Trxs" in block
 
         trxs = block.get("Trxs")
         if len(trxs) > 0:
             tid = trxs[0]["TrxId"]
-            x = client.group.trx(trx_id=tid)
+            x = client.group.trx(tid)
             assert "TrxId" in x
 
-        # test_config(self):
+        trxs = client.group.all_content_trxs(trxs[0]["TrxId"])
+        assert len(trxs) >= 0
 
+    def test_config(self):
+
+        gid = "4e784292-6a65-471e-9f80-e91202e3358c"
+        client.group_id = gid
         r = client.config.auth_type
 
         r == {"TrxType": "POST", "AuthType": "FOLLOW_ALW_LIST"}
@@ -174,6 +184,19 @@ class TestCase:
                 "ASK_PEERID",
             ],
             mode="dny",
+            memo="同时在 allow 和 deny 名单内",
+        )
+
+        r = client.config._update_list(
+            "CAISIQIPfGufTgH4cQRGXUmZWbHshWdet0K5fMN1YR2NyKX33Q==",
+            trx_types=[
+                "POST",
+                "ANNOUNCE",
+                "REQ_BLOCK_FORWARD",
+                "REQ_BLOCK_BACKWARD",
+                "ASK_PEERID",
+            ],
+            mode="allow",
             memo="同时在 allow 和 deny 名单内",
         )
 

@@ -78,7 +78,7 @@ class WhoSays(RumClient):
             if group_id not in data:
                 data[group_id] = {}
             if group_id not in seeds:
-                seed = self.group.seed(group_id)
+                seed = self.group.seed()
                 if seed:
                     seeds[group_id] = seed
             if group_id not in progress:
@@ -161,11 +161,11 @@ class WhoSays(RumClient):
         return names[pubkey]["nicknames"][-1]
 
     def _name(self, trx_id):
-        return self._nickname(self.group.trx(trx_id=trx_id).get("Publisher"))
+        return self._nickname(self.group.trx(trx_id).get("Publisher"))
 
     def _refer_content(self, trx):
         if type(trx) == str:
-            trx = self.group.trx(trx_id=trx)
+            trx = self.group.trx(trx)
         text, img = None, None
         if "Content" not in trx:
             return text, img, text or img
