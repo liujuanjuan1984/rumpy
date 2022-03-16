@@ -38,6 +38,11 @@ class GroupConfig(BaseAPI):
             rlt[resp["TrxType"]] = resp["AuthType"]
         return rlt
 
+    def set_mode(self,mode):
+        mode = self._check_mode(mode)
+        for itype in TRX_TYPES:
+            self.set_trx_auth_type(itype,mode,f"set mode to {mode}")
+        
     def set_trx_auth_type(
         self,
         trx_type: str,

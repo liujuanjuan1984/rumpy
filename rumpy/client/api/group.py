@@ -30,6 +30,10 @@ class Group(BaseAPI):
             if info["group_id"] == self.group_id:
                 return GroupInfo(**info)
 
+    @property
+    def pubkey(self):
+        return self.info().user_pubkey
+
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
         if not self.is_seed(seed):
