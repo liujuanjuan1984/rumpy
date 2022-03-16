@@ -33,35 +33,6 @@ class WhoSays(RumClient):
         JsonFile(self.nicknamesfile).rewrite({})
         self.names_info = JsonFile(namesinfofile).read({})
 
-    def _ingroup(self, trx_id, pubkeys, group_data):
-        trxids_searched = []
-        while True:
-            print(datetime.datetime.now(), "_ingroup", trx_id, "...")
-            trxs = self.group.content_trxs(num=400, trx_id=trx_id)
-
-            if len(trxs) == 0:
-                break
-
-            for trx in trxs:
-                if trx["Publisher"] in pubkeys:
-                    if trx["TrxId"] not in group_data:
-                        group_data[trx["TrxId"]] = trx
-
-            if trx_id not in trxids_searched:
-                trxids_searched.append(trx_id)
-
-            for i in range(-1, -1 * len(trxs), -1):
-                new_trxid = trxs[i]["TrxId"]
-                if new_trxid in trxids_searched:
-                    continue
-                else:
-                    trx_id = new_trxid
-                    break
-            if trx_id in trxids_searched:
-                break
-
-        return trx_id, group_data
-
     def search(self):
         data = JsonFile(self.datafile).read({})
         seeds = JsonFile(self.seedsfile).read({})
@@ -85,12 +56,14 @@ class WhoSays(RumClient):
                 progress[group_id] = None
             pubkeys = self.names_info[group_id]
 
-            trx_id, data[group_id] = self._ingroup(
-                progress[group_id], pubkeys, data[group_id]
-            )
-            progress[group_id] = trx_id
-            JsonFile(self.datafile).write(data)
+            trxs = self.group.trxs_by(pubkeys, progress[group_id])
 
+            for trx in trxs:
+                if trx["TrxId"] not in data[group_id]:
+                    data[group_id][trx["TrxId"]] = trx
+
+            progress[group_id] = self.group.last_trx_id(progress[group_id], trxs)
+            JsonFile(self.datafile).write(data)
             JsonFile(self.progressfile).write(progress)
             JsonFile(self.seedsfile).write(seeds)
 
@@ -113,7 +86,8 @@ class WhoSays(RumClient):
                 if not flag:
                     continue
                 obj["content"] = f"{name} {obj['content']}\norigin: {json.dumps(seed)}"
-                resp = self.group.send_note(group_id=toshare_group_id, **obj)
+                self.group_id = toshare_group_id
+                resp = self.group.send_note(**obj)
 
                 if "trx_id" in resp:
                     data[group_id][trx_id]["shared"].append(toshare_group_id)

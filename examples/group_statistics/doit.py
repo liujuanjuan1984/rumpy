@@ -9,7 +9,7 @@ client = GroupStatistics(**RumpyConfig.GUI)
 progressfile = os.path.join(os.path.dirname(__file__), "data", "progress.json")
 progress = JsonFile(progressfile).read({})
 
-toshare = "48b74295-a08c-40d4-99eb-5121e810c180"  # client.group.create("mytest_groupview")["group_id"]
+toshare = "938455b8-9683-4d06-abae-b422c89103b6"  # client.group.create("mytest_groupview")["group_id"]
 
 for gid in client.node.groups_id:
     client.group_id = gid
@@ -17,7 +17,8 @@ for gid in client.node.groups_id:
         today = str(datetime.date.today())
         if progress.get(gid) != today:
             progress[gid] = today
-            client.view_to_post(gid)
-            # client.view_to_post(gid, toshare)
+
+            # client.view_to_post(gid)
+            client.view_to_post(gid, toshare)
 
 JsonFile(progressfile).write(progress)
