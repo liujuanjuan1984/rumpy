@@ -166,11 +166,11 @@ class TestCase:
 
         gid = "4e784292-6a65-471e-9f80-e91202e3358c"
         client.group_id = gid
-        r = client.config.auth_type
+        r = client.config.mode
 
         r == {"TrxType": "POST", "AuthType": "FOLLOW_ALW_LIST"}
-        r = client.config.set_trx_auth_type("post", "deny", "testit")
-        r = client.config.set_trx_auth_type("post", "allow", "testit")
+        r = client.config.set_trx_mode("post", "deny", "testit")
+        r = client.config.set_trx_mode("post", "allow", "testit")
         r = client.config.allow_list
         r = client.config.deny_list
 

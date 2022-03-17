@@ -25,25 +25,25 @@ class GroupConfig(BaseAPI):
             raise ValueError(f"{trx_type} must be one of {TRX_TYPES}")
         return trx_type.lower()
 
-    def trx_auth_type(self, trx_type: str = "POST"):
+    def trx_mode(self, trx_type: str = "POST"):
 
         trx_type = self._check_trx_type(trx_type)
         return self._get(f"{self.baseurl}/group/{self.group_id}/trx/auth/{trx_type}")
 
     @property
-    def auth_type(self):
+    def mode(self):
         rlt = {}
         for itype in TRX_TYPES:
-            resp = self.trx_auth_type(itype)
+            resp = self.trx_mode(itype)
             rlt[resp["TrxType"]] = resp["AuthType"]
         return rlt
 
     def set_mode(self, mode):
         mode = self._check_mode(mode)
         for itype in TRX_TYPES:
-            self.set_trx_auth_type(itype, mode, f"set mode to {mode}")
+            self.set_trx_mode(itype, mode, f"{itype} set mode to {mode}")
 
-    def set_trx_auth_type(
+    def set_trx_mode(
         self,
         trx_type: str,
         mode: str,
@@ -114,17 +114,38 @@ class GroupConfig(BaseAPI):
     def deny_list(self):
         return self._list("deny")
 
+    def set_appconfig(self, name, the_type, value, memo):
+        relay = {
+            "action": "add",
+            "group_id": self.group_id,
+            "name": name,
+            "type": the_type,
+            "value": value,
+            "memo": memo,
+        }
+
+        return self._post(f"{self.baseurl}/group/appconfig", relay)
+
     def keylist(self):
 
         return self._get(f"{self.baseurl}/group/{self.group_id}/config/keylist")
 
-    def keyname(self, keyname: str):
+    def key(self, key: str):
 
-        return self._get(f"{self.baseurl}/group/{self.group_id}/config/{keyname}")
+        return self._get(f"{self.baseurl}/group/{self.group_id}/config/{key}")
 
     def schema(self):
+        return self._get(f"{self.baseurl}/group/{self.group_id}/app/schema")
 
-        return self._get(f"{self.baseurl}/group/{self.group_id}/schema")
+    def set_schema(self, memo, rule, schema_type):
+        relay = {
+            "action": "add",
+            "group_id": self.group_id,
+            "memo": memo,
+            "rule": rule,
+            "type": schema_type,
+        }
+        return self._post(f"{self.baseurl}/group/schema", relay)
 
     def announce(self, **kwargs):
         """annouce user or producer,add or remove"""

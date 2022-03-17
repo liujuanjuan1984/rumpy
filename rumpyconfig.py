@@ -23,7 +23,7 @@ class RumpyConfig:
     CLIENT_PARAMS = {
         "gui": {
             "host": "127.0.0.1",
-            "port": 55882,
+            "port": 52386,
             "appid": "peer",
             "crtfile": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
             "usedb": False,
