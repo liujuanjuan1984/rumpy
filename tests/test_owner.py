@@ -26,15 +26,15 @@ def test_owner():
 
 
 def test_abandoned():
-    father_dir = os.path.dirname(os.path.dirname(__file__))
     seedsfile = RumpyConfig.SEEDSFILE
     infofile = seedsfile.replace("seeds.json", "groupsinfo.json")
     seeds = JsonFile(seedsfile).read()
     info = JsonFile(infofile).read()
     print("=====You are in these abandoned groups:=====")
     for gid in client.node.groups_id:
-        if info[gid]["abandoned"]:
-            print(gid, seeds[gid]["group_name"])
+        if gid in info:
+            if info[gid].get("abandoned"):
+                print(gid, seeds[gid]["group_name"])
 
 
 if __name__ == "__main__":

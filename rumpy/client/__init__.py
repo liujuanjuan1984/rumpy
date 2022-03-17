@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import logging
 import inspect
 import requests
 import urllib3
@@ -8,6 +9,8 @@ from . import api
 from .api.base import BaseAPI
 from .module import *
 from .module_op import BaseDB
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -95,6 +98,7 @@ class RumClient:
 
     @property
     def group_id(self):
+        logger.info(f"group_id:{self._group_id}")
         return self._group_id
 
     @group_id.setter
