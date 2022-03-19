@@ -24,21 +24,22 @@ text = """
 
 asku = input(text)
 if asku == "1":
-    r = bot.create("mytest_private")
-    print(r)
+    resp = bot.create("mytest_private")
+    print(resp)
 elif asku == "2":
-    r = bot.announce("test private group to join.")
-    print(r)
+    resp = bot.announce("test private group to join.")
+    print(resp)
 elif asku == "3":
     pubkey = pubkey or bot.group.pubkey
-    r = bot.approve(pubkey)
-    print(r)
+    resp = bot.approve(pubkey)
+    print(resp)
 elif asku == "4":
-    r = bot.users()
-    print(r)
+    resp = bot.users()
+    for user in resp:
+        print(user)
 elif asku == "5":
-    r = bot.group.content_trxs()
-    for trx in r:
+    resp = bot.group.content_trxs()
+    for trx in resp:
         print(
             trx["TrxId"],
             "SEE:",
@@ -46,7 +47,8 @@ elif asku == "5":
             "ME:",
             trx["Publisher"] == bot.group.pubkey,
         )
-    print(len(r), "条trxs")
+        # print(bot.group.trx(trx["TrxId"]))
+    print(len(resp), "条trxs")
 elif asku == "6":
-    r = bot.group.send_note(content=input("say something>>>"))
-    print(r)
+    resp = bot.group.send_note(content=input("say something>>>"))
+    print(resp)
