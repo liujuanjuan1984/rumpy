@@ -42,6 +42,7 @@ class RumClient:
     group = api.Group()
     node = api.Node()
     config = api.GroupConfig()
+    paid = api.PaidGroup()
     db = None
 
     def __new__(cls, *args, **kwargs):
@@ -75,8 +76,14 @@ class RumClient:
             self.db = BaseDB(cp.dbname, echo=cp.dbecho, reset=cp.dbreset)
 
     def _request(self, method, url, relay={}):
-        resp = self._session.request(method=method, url=url, json=relay)
-        return resp.json()
+        try:
+            resp = self._session.request(method=method, url=url, json=relay)
+            return resp.json()
+        except Exception as e:  # SSLCertVerificationError
+            resp = self._session.request(
+                method=method, url=url, json=relay, verify=False
+            )
+            return resp.json()
 
     def get(self, url, relay={}):
         return self._request("get", url, relay)
