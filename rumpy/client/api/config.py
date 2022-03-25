@@ -26,7 +26,6 @@ class GroupConfig(BaseAPI):
         return trx_type.lower()
 
     def trx_mode(self, trx_type: str = "POST"):
-
         trx_type = self._check_trx_type(trx_type)
         return self._get(f"{self.baseurl}/group/{self.group_id}/trx/auth/{trx_type}")
 
@@ -127,11 +126,9 @@ class GroupConfig(BaseAPI):
         return self._post(f"{self.baseurl}/group/appconfig", relay)
 
     def keylist(self):
-
         return self._get(f"{self.baseurl}/group/{self.group_id}/config/keylist")
 
     def key(self, key: str):
-
         return self._get(f"{self.baseurl}/group/{self.group_id}/config/{key}")
 
     def schema(self):
@@ -153,15 +150,17 @@ class GroupConfig(BaseAPI):
         return self._post(f"{self.baseurl}/group/announce", p)
 
     def announced_producers(self):
-
         return self._get(f"{self.baseurl}/group/{self.group_id}/announced/producers")
 
     def announced_users(self):
-
         return self._get(f"{self.baseurl}/group/{self.group_id}/announced/users")
 
-    def producers(self):
+    def announced_user(self, pubkey):
+        return self._get(
+            f"{self.baseurl}/group/{self.group_id}/announced/user/{pubkey}"
+        )
 
+    def producers(self):
         return self._get(f"{self.baseurl}/group/{self.group_id}/producers")
 
     def update_user(self, **kwargs):

@@ -201,7 +201,7 @@ class GroupInfo:
     group_name: str
     owner_pubkey: str
     user_pubkey: str
-    user_eth_addr:str
+    user_eth_addr: str
     consensus_type: str
     encryption_type: str
     cipher_key: str

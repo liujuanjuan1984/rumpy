@@ -34,6 +34,14 @@ class Group(BaseAPI):
     def pubkey(self):
         return self.info().user_pubkey
 
+    @property
+    def owner(self):
+        return self.info().owner_pubkey
+
+    @property
+    def eth_addr(self):
+        return self.info().user_eth_addr
+
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
         if not self.is_seed(seed):
