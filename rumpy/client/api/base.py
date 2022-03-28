@@ -35,3 +35,11 @@ class BaseAPI:
     @property
     def db(self):
         return self._client.db
+
+    def _check_group_id(self):
+        if self.group_id == None:
+            raise ValueError("group_id is not set yet.")
+
+    def _check_owner(self):
+        if self.group.pubkey != self.group.owner:
+            raise ValueError("you are not owner.")

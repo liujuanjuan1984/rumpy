@@ -38,6 +38,7 @@ class GroupConfig(BaseAPI):
         return rlt
 
     def set_mode(self, mode):
+        self._check_owner()
         mode = self._check_mode(mode)
         for itype in TRX_TYPES:
             self.set_trx_mode(itype, mode, f"{itype} set mode to {mode}")
@@ -48,7 +49,7 @@ class GroupConfig(BaseAPI):
         mode: str,
         memo: str = "set trx auth type",
     ):
-
+        self._check_owner()
         mode = self._check_mode(mode)
 
         trx_type = self._check_trx_type(trx_type)
@@ -72,7 +73,7 @@ class GroupConfig(BaseAPI):
         memo: str = "update list",
         trx_types: List = None,
     ):
-
+        self._check_owner()
         mode = self._check_mode(mode)
 
         trx_types = trx_types or ["post"]
@@ -92,11 +93,13 @@ class GroupConfig(BaseAPI):
     def update_allow_list(
         self, pubkey: str, memo: str = "update allow list", trx_types: List = None
     ):
+        self._check_owner()
         return self._update_list(pubkey, "alw", memo, trx_types)
 
     def update_deny_list(
         self, pubkey: str, memo: str = "update deny list", trx_types: List = None
     ):
+        self._check_owner()
         return self._update_list(pubkey, "dny", memo, trx_types)
 
     def _list(self, mode: str) -> List:
@@ -122,6 +125,7 @@ class GroupConfig(BaseAPI):
             "value": value,
             "memo": memo,
         }
+        self._check_owner()
 
         return self._post(f"{self.baseurl}/group/appconfig", relay)
 
@@ -164,9 +168,11 @@ class GroupConfig(BaseAPI):
         return self._get(f"{self.baseurl}/group/{self.group_id}/producers")
 
     def update_user(self, **kwargs):
+        self._check_owner()
         p = UserUpdateParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/user", p)
 
     def update_producer(self, **kwargs):
+        self._check_owner()
         p = ProducerUpdateParams(**kwargs).__dict__
         return self._post(f"{self.baseurl}/group/producer", p)

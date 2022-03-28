@@ -26,6 +26,7 @@ class Group(BaseAPI):
 
     def info(self):
         """return group info,type: datacalss"""
+        self._check_group_id()
         for info in self.node.groups():
             if info["group_id"] == self.group_id:
                 return GroupInfo(**info)
@@ -49,6 +50,7 @@ class Group(BaseAPI):
         return self._post(f"{self.baseurl}/group/join", seed)
 
     def is_joined(self) -> bool:
+        self._check_group_id()
         if self.group_id in self.node.groups_id:
             return True
         return False
@@ -62,6 +64,7 @@ class Group(BaseAPI):
 
     def clear(self):
         """clear data of a group"""
+        self._check_group_id()
         return self._post(f"{self.baseurl}/group/clear", {"group_id": self.group_id})
 
     def startsync(self):
@@ -128,6 +131,7 @@ class Group(BaseAPI):
 
     def block(self, block_id: str = None):
         """get the info of a block in a group"""
+        self._check_group_id()
         return self._get(f"{self.baseurl}/block/{self.group_id}/{block_id}")
 
     def is_owner(self) -> bool:
@@ -168,6 +172,8 @@ class Group(BaseAPI):
 
     def trx_type(self, trxdata: Dict):
         """get type of trx, trx is one of group content list"""
+        if "TypeUrl" not in trxdata:
+            return "encrypted"
         if trxdata["TypeUrl"] == "quorum.pb.Person":
             return "person"
         content = trxdata["Content"]
@@ -206,3 +212,8 @@ class Group(BaseAPI):
             if trx["TrxId"] not in new:
                 new[trx["TrxId"]] = trx
         return [new[i] for i in new]
+
+    def pubqueue(self):
+        self._check_group_id()
+        resp = self._get(f"{self.baseurl}/group/{self.group_id}/pubqueue")
+        return resp.get("Data")
