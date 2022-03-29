@@ -164,7 +164,7 @@ class TestCase:
 
     def test_config(self):
 
-        gid = "4e784292-6a65-471e-9f80-e91202e3358c"
+        gid = client.group.create("mytest_config")["group_id"]
         client.group_id = gid
         r = client.config.mode
 

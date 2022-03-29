@@ -20,21 +20,6 @@ TRX_TYPES = [
 
 
 @dataclasses.dataclass
-class UserUpdateParams:
-    """
-    {
-        "user_pubkey": "",
-        "group_id": "",
-        "action": "add",
-    }
-    """
-
-    user_pubkey: str
-    group_id: str
-    action: str  # "add" or "remove"
-
-
-@dataclasses.dataclass
 class CreateGroupParam:
     """
     app_key: 可以为自定义字段，只是如果不是 group_timeline,group_post,group_note 这三种，可能无法在 rumapp 中识别，如果是自己开发客户端，则可以自定义类型
@@ -210,28 +195,6 @@ class GroupInfo:
     highest_height: int  # 区块数
     highest_block_id: str
     group_status: str
-
-
-@dataclasses.dataclass
-class AnnounceParams:
-    """
-    group_id:
-    action: add or remove
-    type: user or producer
-    memo:
-
-    {
-        "group_id": "",
-        "action": "add",
-        "type": "user",
-        "memo": ""
-    }
-    """
-
-    group_id: str
-    action: str
-    type: str
-    memo: str
 
 
 @dataclasses.dataclass

@@ -148,10 +148,27 @@ class GroupConfig(BaseAPI):
         }
         return self._post(f"{self.baseurl}/group/schema", relay)
 
-    def announce(self, **kwargs):
+    def announce(self, action="add", type="user", memo="rumpy.api"):
         """annouce user or producer,add or remove"""
-        p = AnnounceParams(**kwargs).__dict__
-        return self._post(f"{self.baseurl}/group/announce", p)
+        self._check_group_id()
+        relay = {
+            "group_id": self.group_id,
+            "action": action,  # add or remove
+            "type": type,  # user or producer
+            "memo": memo,
+        }
+        return self._post(f"{self.baseurl}/group/announce", relay)
+
+    def announce_as_user(self):
+        """announce self as user"""
+        status = self.announced_user(self.group.pubkey)
+        if status.get("Result") == "APPROVED":
+            return status
+        return self.announce("add", "user", "rumpy.api,announce self as user")
+
+    def announce_as_producer(self):
+        """announce self as producer"""
+        return self.announce("add", "producer", "rumpy.api,announce self as producer")
 
     def announced_producers(self):
         return self._get(f"{self.baseurl}/group/{self.group_id}/announced/producers")
@@ -167,10 +184,18 @@ class GroupConfig(BaseAPI):
     def producers(self):
         return self._get(f"{self.baseurl}/group/{self.group_id}/producers")
 
-    def update_user(self, **kwargs):
+    def update_user(self, user_pubkey, action="add"):
+        self._check_group_id()
         self._check_owner()
-        p = UserUpdateParams(**kwargs).__dict__
-        return self._post(f"{self.baseurl}/group/user", p)
+        relay = {
+            "user_pubkey": user_pubkey,
+            "group_id": self.group_id,
+            "action": action,  # "add" or "remove"
+        }
+        return self._post(f"{self.baseurl}/group/user", relay)
+
+    def approve_as_user(self, pubkey=None):
+        return self.update_user(user_pubkey=pubkey or self.group.pubkey)
 
     def update_producer(self, **kwargs):
         self._check_owner()
