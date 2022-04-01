@@ -20,10 +20,19 @@ setuptools.setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: GPL-3.0 License",
+        "Programming Language :: Python :: 3.8",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.8",
+    install_requires=[
+        "pytest",
+        "requests==2.24.0",
+        "pandas",
+        "pillow",
+        "matplotlib",
+        "sqlalchemy",
+    ],
 )
