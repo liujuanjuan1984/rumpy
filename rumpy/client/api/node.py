@@ -41,6 +41,14 @@ class Node(BaseAPI):
         """return dict of different peers which this node has connected"""
         return self.info.peers
 
+    def connect(self, peers: list):
+        """
+        peers = [
+            "/ip4/94.23.17.189/tcp/10666/p2p/16Uiu2HAmGTcDnhj3KVQUwVx8SGLyKBXQwfAxNayJdEwfsnUYKK4u"
+            ]
+        """
+        return self._post(f"{self.baseurl}/network/peers", peers)
+
     @property
     def network(self) -> Dict:
         """return network info of this node"""
