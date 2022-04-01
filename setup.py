@@ -1,16 +1,29 @@
-from setuptools import setup, find_packages
+import setuptools
 
-setup(
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
     name="rumpy",
     version="0.0.5",
-    keywords=["rumpy", "rumsystem", "quorum"],
-    description="python sdk for [quorum](https://github.com/rumsystem/quorum)",
-    license="GPL-3.0 License",
-    install_requires=[],
-    packages=["rumpy"],  # 要打包的项目文件夹
-    include_package_data=True,  # 自动打包文件夹内所有数据
     author="liujuanjuan1984",
     author_email="qiaoanlu@163.com",
+    description="python sdk for quorum: https://github.com/rumsystem/quorum",
+    keywords=["rumpy", "rumsystem", "quorum"],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/liujuanjuan1984/rumpy",
-    # packages = find_packages(include=("*"),),
+    project_urls={
+        "Github Repo": "https://github.com/liujuanjuan1984/rumpy",
+        "Bug Tracker": "https://github.com/liujuanjuan1984/rumpy/issues",
+        "About Quorum": "https://github.com/rumsystem/quorum",
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GPL-3.0 License",
+        "Operating System :: OS Independent",
+    ],
+    package_dir={"": "src"},
+    packages=setuptools.find_packages(where="src"),
+    python_requires=">=3.8",
 )
