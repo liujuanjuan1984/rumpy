@@ -1,6 +1,6 @@
 import time
 from sqlalchemy import Column, Integer, String
-from .base import Base
+from rumpy.client.module.base import Base
 
 
 class Seed(Base):

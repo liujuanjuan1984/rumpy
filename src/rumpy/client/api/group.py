@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
-from .base import BaseAPI
-from .data import *
+from rumpy.client.api.base import BaseAPI
+from rumpy.client.api.data import *
 
 
 class Group(BaseAPI):

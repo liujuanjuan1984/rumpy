@@ -137,9 +137,6 @@ class TestCase:
 
         trxs = client.group.all_content_trxs()
 
-        r = client.group.send_img("D:\\test-sample.png")
-        assert "trx_id" in r
-
         resp = client.group.leave()
         r2 = client.group.is_joined()
         assert r2 == False
@@ -151,15 +148,15 @@ class TestCase:
         bid = client.group.info().highest_block_id
 
         block = client.group.block(bid)
-        assert "Trxs" in block
+        assert "BlockId" in block
 
-        trxs = block.get("Trxs")
+        trxs = block.get("Trxs") or []
         if len(trxs) > 0:
             tid = trxs[0]["TrxId"]
             x = client.group.trx(tid)
             assert "TrxId" in x
 
-        trxs = client.group.all_content_trxs(trxs[0]["TrxId"])
+        trxs = client.group.content_trxs()
         assert len(trxs) >= 0
 
     def test_config(self):
@@ -184,7 +181,7 @@ class TestCase:
                 "ASK_PEERID",
             ],
             mode="dny",
-            memo="同时在 allow 和 deny 名单内",
+            memo="both in allow_list and deny_list",
         )
 
         r = client.config._update_list(
@@ -197,7 +194,7 @@ class TestCase:
                 "ASK_PEERID",
             ],
             mode="allow",
-            memo="同时在 allow 和 deny 名单内",
+            memo="both in allow_list and deny_list",
         )
 
     def test_init(self):
@@ -207,11 +204,6 @@ class TestCase:
         type(client.db)
         type(client.node)
         type(client.group_id)
-
-    def test_reformat(self):
-        from officepy import Dir
-
-        Dir(RumpyConfig.RUMPY_BASEDIR).black()
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from .base import BaseAPI
+from rumpy.client.api.base import BaseAPI
 
 
 class PaidGroup(BaseAPI):

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="rumpy",
-    version="0.0.6",
+    version="0.0.7",
     author="liujuanjuan1984",
     author_email="qiaoanlu@163.com",
     description="python sdk for quorum: https://github.com/rumsystem/quorum",
@@ -29,7 +29,7 @@ setuptools.setup(
     python_requires=">=3.8",
     install_requires=[
         "pytest",
-        "requests==2.24.0",
+        "requests",
         "pandas",
         "pillow",
         "matplotlib",

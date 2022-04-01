@@ -1,7 +1,7 @@
 from typing import List, Dict
-from .base import BaseAPI
-from .group import Group
-from .data import *
+from rumpy.client.api.base import BaseAPI
+from rumpy.client.api.group import Group
+from rumpy.client.api.data import *
 
 
 class Node(BaseAPI):

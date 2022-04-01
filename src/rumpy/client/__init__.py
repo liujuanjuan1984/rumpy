@@ -5,10 +5,10 @@ import requests
 import urllib3
 
 urllib3.disable_warnings()
-from . import api
-from .api.base import BaseAPI
-from .module import *
-from .module_op import BaseDB
+from rumpy.client import api
+from rumpy.client.api.base import BaseAPI
+from rumpy.client.module import *
+from rumpy.client.module_op import BaseDB
 
 logger = logging.getLogger(__name__)
 
