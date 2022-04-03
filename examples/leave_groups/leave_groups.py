@@ -1,15 +1,18 @@
 import datetime
-from rumpyconfig import RumpyConfig
 from rumpy import RumClient
+
+TEST_GROUPS_TO_LEAVE = [
+    "mytest_group",
+]
 
 
 def main(is_create_new=False):
     """is_create_new: create new group for test"""
-    client = RumClient(**RumpyConfig.GUI)
+    client = RumClient()
     my_test_groups = ["mytest_leave_groups"]
 
     print(datetime.datetime.now(), "groups num: ", len(client.node.groups_id))
-    print(RumpyConfig.TEST_GROUPS_TO_LEAVE + my_test_groups)
+    print(TEST_GROUPS_TO_LEAVE + my_test_groups)
 
     # create group for test
     if is_create_new:
@@ -24,14 +27,14 @@ def main(is_create_new=False):
         name = info.group_name
 
         # name in the list:
-        if name in my_test_groups + RumpyConfig.TEST_GROUPS_TO_LEAVE:
+        if name in my_test_groups + TEST_GROUPS_TO_LEAVE:
             client.group.leave()
             print(
                 datetime.datetime.now(),
                 "leave seednet: ",
                 name,
                 group_id,
-                "name in RumpyConfig.TEST_GROUPS_TO_LEAVE.",
+                "name in TEST_GROUPS_TO_LEAVE.",
             )
         # name include mytest_
         elif name.find("mytest_") >= 0:

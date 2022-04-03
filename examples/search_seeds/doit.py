@@ -1,7 +1,6 @@
 import datetime
 import os
 import sys
-from rumpyconfig import RumpyConfig
 from search_seeds import SearchSeeds
 from officepy import JsonFile, Dir
 
@@ -9,15 +8,15 @@ from officepy import JsonFile, Dir
 def main():
     # init client
     print(datetime.datetime.now(), "client init...")
-    client = SearchSeeds(**RumpyConfig.GUI)
+    client = SearchSeeds()
 
     # datafiles
     print(datetime.datetime.now(), "datafiles...")
     basedir = os.path.join(os.path.dirname(__file__), "data")
     datafiles = {
-        "seedsfile": RumpyConfig.SEEDSFILE,
+        "seedsfile": r"D:\Jupyter\seeds\data\seeds.json",
         "progressfile": os.path.join(basedir, "progressfile.json"),
-        "infofile": RumpyConfig.SEEDSFILE.replace("seeds.json", "groupsinfo.json"),
+        "infofile": r"D:\Jupyter\seeds\data\groupsinfo.json",
     }
     client.init_app(**datafiles)
 

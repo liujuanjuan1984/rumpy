@@ -9,6 +9,7 @@ from rumpy.client import api
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.module import *
 from rumpy.client.module_op import BaseDB
+from rumpy.client.config import CLIENT_PARAMS
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class RumClientParams:
     host: str = "127.0.0.1"
     appid: str = "peer"
     jwt_token: str = None
-    usedb: bool = True
+    usedb: bool = False
     dbname: str = "test_db"
     dbecho: bool = False
     dbreset: bool = False
@@ -54,8 +55,8 @@ class RumClient:
             setattr(self, name, api)
         return self
 
-    def __init__(self, **kwargs):
-        cp = RumClientParams(**kwargs)
+    def __init__(self, kwargs=None):
+        cp = RumClientParams(**(kwargs or CLIENT_PARAMS))
         requests.adapters.DEFAULT_RETRIES = 5
         self.appid = cp.appid
         self._session = requests.Session()

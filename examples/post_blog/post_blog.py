@@ -3,12 +3,11 @@ import os
 import sys
 from officepy import JsonFile, Dir, File
 from rumpy import RumClient
-from rumpyconfig import RumpyConfig
 
 
 def main():
     # init
-    client = RumClient(**RumpyConfig.GUI)
+    client = RumClient()
 
     # create a group
     seed = client.group.create("mytest_postblog", app_key="group_post")

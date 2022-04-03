@@ -1,10 +1,10 @@
 import pytest
 import dataclasses
 from officepy import JsonFile
-from rumpyconfig import RumpyConfig
 from rumpy import RumClient
 
-client = RumClient(**RumpyConfig.GUI)
+group_names_to_leave = []
+client = RumClient()
 
 
 class TestCase:
@@ -80,7 +80,7 @@ class TestCase:
             client.group_id = group_id
             name = client.group.info().group_name
 
-            if name.find("mytest_") >= 0 or name in RumpyConfig.TEST_GROUPS_TO_LEAVE:
+            if name.find("mytest_") >= 0 or name in group_names_to_leave:
                 client.group.leave()
 
     def test_group(self):

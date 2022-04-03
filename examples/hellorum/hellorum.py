@@ -1,12 +1,11 @@
 import datetime
 import os
 from rumpy import RumClient
-from rumpyconfig import RumpyConfig
 
 
 def main():
 
-    client = RumClient(**RumpyConfig.GUI)
+    client = RumClient()
 
     # create group for test
     seed = client.group.create("mytest_hellorum")

@@ -1,10 +1,9 @@
 import os
 import datetime
-from rumpyconfig import RumpyConfig
 from officepy import JsonFile
 from group_statistics import GroupStatistics
 
-client = GroupStatistics(**RumpyConfig.GUI)
+client = GroupStatistics()
 
 progressfile = os.path.join(os.path.dirname(__file__), "data", "progress.json")
 progress = JsonFile(progressfile).read({})
