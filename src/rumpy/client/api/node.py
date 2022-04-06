@@ -49,6 +49,13 @@ class Node(BaseAPI):
         """
         return self._post(f"{self.baseurl}/network/peers", peers)
 
+    def peers(self):
+        return self._get(f"{self.baseurl}/network/peers/ping")
+
+    def psping(self, peer_id: str):
+        "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
+        return self._post(f"{self.baseurl}/psping", {"peer_id": peer_id})
+
     @property
     def network(self) -> Dict:
         """return network info of this node"""

@@ -186,5 +186,13 @@ class GroupConfig(BaseAPI):
 
     def update_producer(self, **kwargs):
         self._check_owner()
-        p = ProducerUpdateParams(**kwargs).__dict__
-        return self._post(f"{self.baseurl}/group/producer", p)
+        relay = ProducerUpdateParams(**kwargs).__dict__
+        return self._post(f"{self.baseurl}/group/producer", relay)
+
+    def update_profile(self, **kwargs):
+        relay = {
+            "type": "Update",
+            "person": ProfileParams(**kwargs).__dict__,
+            "target": {"id": self.group_id, "type": "Group"},
+        }
+        return self._post(f"{self.baseurl}/group/profile", relay)

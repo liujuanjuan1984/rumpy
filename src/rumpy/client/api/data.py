@@ -210,3 +210,27 @@ class ProducerUpdateParams:
     producer_pubkey: str
     group_id: str
     action: str  # "add" or "remove"
+
+
+@dataclasses.dataclass
+class ProfileParams:
+    name: str = None
+    image: str = None
+    wallet: str = None
+
+    def __post_init__(self):
+        d = {}
+        if self.name:
+            d["name"] = self.name
+
+        if self.image:
+            d["image"] = {"mediaType": "image/png", "content": self.image}
+
+        if self.wallet:
+            d["wallet"] = [
+                {"id": self.wallet, "type": "mixin", "name": "mixin messenger"}
+            ]
+
+        if len(d) == 0:
+            raise ValueError("Person must have name or image fields")
+        self.__dict__ = d
