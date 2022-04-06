@@ -1,6 +1,6 @@
 import pytest
 import dataclasses
-from officepy import JsonFile
+from officy import JsonFile
 from rumpy import RumClient
 
 group_names_to_leave = []

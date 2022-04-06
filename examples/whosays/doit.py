@@ -1,5 +1,5 @@
 import os
-from officepy import JsonFile
+from officy import JsonFile
 from whosays import WhoSays
 
 

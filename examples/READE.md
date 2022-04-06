@@ -17,6 +17,7 @@
 - [sudoku 数独游戏](https://github.com/liujuanjuan1984/rum_sudoku)：玩数独游戏，把游戏结果推送到 rum group 上链存储。
 - [todolist 待办清单](https://github.com/liujuanjuan1984/todolist)：只能把 Rum 当微博/博客用吗？Rum 的想象空间很大，待办清单这个雏形可以给你带来启发。
 
-部分案例需安装 officepy 以支持 JsonFile、Dir 等自定义方法：
+部分案例需安装 officy 以支持 JsonFile、Dir 等自定义方法：
 
-- `officepy` : [https://github.com/liujuanjuan1984/officepy](https://github.com/liujuanjuan1984/officepy.git)
+- ```pip install officy```
+- 源码 [https://github.com/liujuanjuan1984/officy](https://github.com/liujuanjuan1984/officy.git)

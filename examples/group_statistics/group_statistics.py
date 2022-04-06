@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 from rumpy import RumClient
-from officepy import JsonFile, Stime
+from officy import JsonFile, Stime
 
 
 class GroupStatistics(RumClient):

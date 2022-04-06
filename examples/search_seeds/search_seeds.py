@@ -3,7 +3,7 @@ import json
 import re
 from typing import Dict, List
 from rumpy import RumClient
-from officepy import Stime, JsonFile
+from officy import Stime, JsonFile
 
 DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
 DONT_JOIN_PIECES = ["mytest_", "测试", "test"]

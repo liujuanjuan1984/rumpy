@@ -2,7 +2,7 @@ import datetime
 import json
 import os
 from typing import List, Dict
-from officepy import JsonFile, Dir, Stime
+from officy import JsonFile, Dir, Stime
 from rumpy import RumClient
 
 

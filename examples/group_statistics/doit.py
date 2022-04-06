@@ -1,6 +1,6 @@
 import os
 import datetime
-from officepy import JsonFile
+from officy import JsonFile
 from group_statistics import GroupStatistics
 
 client = GroupStatistics()

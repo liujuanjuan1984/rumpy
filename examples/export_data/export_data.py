@@ -2,7 +2,7 @@ import os
 import datetime
 import uuid
 import sys
-from officepy import JsonFile, Dir, Img, Stime
+from officy import JsonFile, Dir, Img, Stime
 from rumpy import RumClient
 from typing import List, Dict
 

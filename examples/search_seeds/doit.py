@@ -2,7 +2,7 @@ import datetime
 import os
 import sys
 from search_seeds import SearchSeeds
-from officepy import JsonFile, Dir
+from officy import JsonFile, Dir
 
 
 def main():

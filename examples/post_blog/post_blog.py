@@ -1,7 +1,7 @@
 import time
 import os
 import sys
-from officepy import JsonFile, Dir, File
+from officy import JsonFile, Dir, File
 from rumpy import RumClient
 
 
