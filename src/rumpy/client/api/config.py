@@ -135,19 +135,6 @@ class GroupConfig(BaseAPI):
     def key(self, key: str):
         return self._get(f"{self.baseurl}/group/{self.group_id}/config/{key}")
 
-    def schema(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/app/schema")
-
-    def set_schema(self, memo, rule, schema_type):
-        relay = {
-            "action": "add",
-            "group_id": self.group_id,
-            "memo": memo,
-            "rule": rule,
-            "type": schema_type,
-        }
-        return self._post(f"{self.baseurl}/group/schema", relay)
-
     def announce(self, action="add", type="user", memo="rumpy.api"):
         """annouce user or producer,add or remove"""
         self._check_group_id()
