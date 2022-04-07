@@ -25,14 +25,6 @@ class BaseAPI:
         return self._client.group
 
     @property
-    def config(self):
-        return self._client.config
-
-    @property
-    def paid(self):
-        return self._client.paid
-
-    @property
     def db(self):
         return self._client.db
 

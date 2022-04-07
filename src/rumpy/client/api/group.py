@@ -26,10 +26,12 @@ class Group(BaseAPI):
 
     def info(self):
         """return group info,type: datacalss"""
-        self._check_group_id()
-        for info in self.node.groups():
-            if info["group_id"] == self.group_id:
-                return GroupInfo(**info)
+        if self.is_joined():
+            for info in self.node.groups():
+                if info["group_id"] == self.group_id:
+                    return GroupInfo(**info)
+        else:
+            raise ValueError(f"you are not in this group.{self.group_id}")
 
     @property
     def pubkey(self):
