@@ -61,6 +61,10 @@ class Node(BaseAPI):
         """return network info of this node"""
         return self._get(f"{self.baseurl}/network")
 
+    @property
+    def eth_addr(self):
+        return self.network.get("eth_addr")
+
     def groups(self) -> List:
         """return list of group info which node has joined"""
         return self._get(f"{self.baseurl}/groups")["groups"]

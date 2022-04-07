@@ -195,6 +195,7 @@ class GroupInfo:
     highest_block_id: str
     group_status: str
     user_eth_addr: str = ""
+    snapshot_info: dict = {}
 
 
 @dataclasses.dataclass

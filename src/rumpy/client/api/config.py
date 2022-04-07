@@ -130,10 +130,10 @@ class GroupConfig(BaseAPI):
         return self._post(f"{self.baseurl}/group/appconfig", relay)
 
     def keylist(self):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/config/keylist")
+        return self._get(f"{self.baseurl}/group/{self.group_id}/appconfig/keylist")
 
     def key(self, key: str):
-        return self._get(f"{self.baseurl}/group/{self.group_id}/config/{key}")
+        return self._get(f"{self.baseurl}/group/{self.group_id}/appconfig/{key}")
 
     def announce(self, action="add", type="user", memo="rumpy.api"):
         """annouce user or producer,add or remove"""
