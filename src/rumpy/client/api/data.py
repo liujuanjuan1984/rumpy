@@ -181,6 +181,16 @@ class ContentParams:
 
 
 @dataclasses.dataclass
+class SnapShotInfo:
+    TimeStamp: int
+    HighestHeight: int
+    HighestBlockId: str
+    Nonce: int
+    SnapshotPackageId: str
+    SenderPubkey: str
+
+
+@dataclasses.dataclass
 class GroupInfo:
     group_id: str
     group_name: str
@@ -195,7 +205,7 @@ class GroupInfo:
     highest_block_id: str
     group_status: str
     user_eth_addr: str = ""
-    snapshot_info: dict = {}
+    snapshot_info: SnapShotInfo.__dict__
 
 
 @dataclasses.dataclass
