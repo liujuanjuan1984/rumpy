@@ -196,6 +196,7 @@ class GroupInfo:
     group_name: str
     owner_pubkey: str
     user_pubkey: str
+    user_eth_addr: str
     consensus_type: str
     encryption_type: str
     cipher_key: str
@@ -204,7 +205,6 @@ class GroupInfo:
     highest_height: int  # 区块数
     highest_block_id: str
     group_status: str
-    user_eth_addr: str = ""
     snapshot_info: SnapShotInfo.__dict__
 
 
