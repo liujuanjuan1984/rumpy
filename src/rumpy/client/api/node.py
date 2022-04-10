@@ -42,7 +42,8 @@ class Node(BaseAPI):
         return self.info.peers
 
     def connect(self, peers: list):
-        """
+        """直连指定节点
+
         peers = [
             "/ip4/94.23.17.189/tcp/10666/p2p/16Uiu2HAmGTcDnhj3KVQUwVx8SGLyKBXQwfAxNayJdEwfsnUYKK4u"
             ]
@@ -50,10 +51,14 @@ class Node(BaseAPI):
         return self._post(f"{self.baseurl}/network/peers", peers)
 
     def peers(self):
+        """获取能 ping 通的节点"""
         return self._get(f"{self.baseurl}/network/peers/ping")
 
     def psping(self, peer_id: str):
-        "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
+        """ping 一个节点
+        
+        peer_id: 节点 ID, 例如 "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
+        """
         return self._post(f"{self.baseurl}/psping", {"peer_id": peer_id})
 
     @property

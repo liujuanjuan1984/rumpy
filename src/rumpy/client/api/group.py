@@ -1,12 +1,28 @@
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.data import *
+from munch import Munch
 
 
 class Group(BaseAPI):
-    def create(self, group_name: str, **kwargs) -> Dict:
-        """create a group, return the seed of the group."""
-        data = CreateGroupParam(group_name, **kwargs).__dict__
+    def create(self,
+               group_name,
+               consensus_type="poa",
+               encryption_type="public",
+               app_key="group_timeline"):
+        """创建一个组
+        
+        group_name: 组名
+        consensus_type: 共识类型, "poa", "pos", "pow", 当前仅支持 "poa"
+        encryption_type: 加密类型, "public" 公开, "private" 私有
+        app_key: 应用标识, 自定义, 目前 rum-app 支持 "group_timeline", "group_post", "group_note"
+        
+        创建成功, 返回值是一个组的种子, 通过它其他人可加入组
+        """
+        data = Munch(group_name=group_name,
+                     consensus_type=consensus_type,
+                     encryption_type=encryption_type,
+                     app_key=app_key)
         return self._post(f"{self.baseurl}/group", data)
 
     def seed(self) -> Dict:
@@ -60,51 +76,67 @@ class Group(BaseAPI):
     def leave(self):
         """leave a group"""
         if self.is_joined():
-            return self._post(
-                f"{self.baseurl}/group/leave", {"group_id": self.group_id}
-            )
+            return self._post(f"{self.baseurl}/group/leave",
+                              {"group_id": self.group_id})
 
     def clear(self):
         """clear data of a group"""
         self._check_group_id()
-        return self._post(f"{self.baseurl}/group/clear", {"group_id": self.group_id})
+        return self._post(f"{self.baseurl}/group/clear",
+                          {"group_id": self.group_id})
 
     def startsync(self):
         if self.is_joined():
-            return self._post(f"{self.baseurl}/group/{self.group_id}/startsync")
+            return self._post(
+                f"{self.baseurl}/group/{self.group_id}/startsync")
 
     def content(self) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
         if self.is_joined():
-            return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
+            return self._get(
+                f"{self.baseurl}/group/{self.group_id}/content") or []
 
-    def content_trxs(
-        self,
-        trx_id: str = None,
-        num: int = 20,
-        is_reverse=False,
-        is_include_starttrx=False,
-    ) -> List:
-        """requests the content trxs of a group,return the list of the trxs data."""
-
+    def content_trxs(self,
+                     reverse=False,
+                     trx_id=None,
+                     num=None,
+                     includestarttrx=False) -> List:
+        """按条件获取某个组的内容并去重返回
+        
+        reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
+        trx_id: 某条内容的 Trx ID, 如果提供, 从该条之后(不包含)获取
+        num: 要获取内容条数, 默认获取最前面的 20 条内容
+        includestarttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
+        """
         if not self.is_joined():
             return []
 
         url = self.baseurl.replace("api", "app/api")
 
-        if trx_id:
-            apiurl = f"{url}/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
-        else:
-            apiurl = f"{url}/group/{self.group_id}/content?num={num}&start=0"
+        reverse = "&reverse=true" if reverse else ""
+        trx_id = f"&starttrx={trx_id}" if trx_id else ""
+        num = f"&num={num}" if num else ""
+        includestarttrx = "&includestarttrx=true" if includestarttrx else ""
+
+        apiurl = f"{url}/group/{self.group_id}/content?{reverse}{trx_id}{num}{includestarttrx}"
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
 
-    def _send(self, obj: Dict = None, sendtype=None) -> Dict:
-        """return the {trx_id:trx_id} of this action if send successed"""
-
+    def _send(self, obj: Dict, sendtype="Add") -> Dict:
+        """发送对象到一个组
+        
+        obj: 要发送的对象
+        sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
+        返回值 {"trx_id": "string"}
+        """
         if self.is_joined():
-            p = {"type": sendtype, "object": obj, "target": self.group_id}
-            data = ContentParams(**p).__dict__
+            data = Munch(type=sendtype,
+                         object=obj,
+                         target={
+                             "id": self.group_id,
+                             "type": "Group"
+                         })
+
             return self._post(f"{self.baseurl}/group/content", data)
 
     def like(self, trx_id: str) -> Dict:
@@ -113,23 +145,50 @@ class Group(BaseAPI):
     def dislike(self, trx_id: str) -> Dict:
         return self._send(obj={"id": trx_id}, sendtype="Dislike")
 
-    def send_note(self, **kwargs):
-        """send note to a group. can be used to send: text only,image only,text with image,reply...etc"""
-        p = ContentObjParams(**kwargs)
-        if p.content == None and p.image == None:
-            raise ValueError("need some content. images,text,or both.")
-        return self._send(obj=p.__dict__, sendtype="Add")
+    def send_note(self, content=None, name=None, images=None, trx_id=None):
+        """发送/回复内容到一个组(仅图片, 仅文本, 或两者都有)
+        
+        content: 要发送的文本内容
+        name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
+        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
+            content 和 images 必须至少一个不是 None
+        trx_id: 要回复的内容的 Trx ID, 如果提供, 内容将回复给这条指定内容
 
-    def reply(self, content: str, trx_id: str):
-        return self.send_note(content=content, inreplyto=trx_id)
+        返回值 {"trx_id": "string"}
+        """
+        if images is not None:
+            images = Img(images).image_objs()
+        if content is None and images is None:
+            raise ValueError("need some content. images,text,or both.")
+        obj = Munch(type="Note", content=content, name=name, image=images)
+        if trx_id is not None:
+            obj.inreplyto = {"trxid": trx_id}
+        return self._send(obj)
+
+    def reply(self, trx_id: str, content=None, images=None):
+        """回复某条内容(仅图片, 仅文本, 或两者都有)
+        
+        trx_id: 要回复的内容的 Trx ID
+        content: 用于回复的文本内容
+        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
+            content 和 images 必须至少一个不是 None
+        """
+        return self.send_note(content, images=images, trx_id=trx_id)
 
     def send_text(self, content: str, name: str = None):
-        """post text cotnent to group"""
+        """post text cotnent to group
+        
+        content: 要发送的文本内容
+        name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
+        """
         return self.send_note(content=content, name=name)
 
-    def send_img(self, image):
-        """post an image to group"""
-        return self.send_note(image=[image])
+    def send_img(self, images):
+        """post images to group, up to 4
+        
+        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
+        """
+        return self.send_note(images=images)
 
     def block(self, block_id: str = None):
         """get the info of a block in a group"""
@@ -139,7 +198,8 @@ class Group(BaseAPI):
     def is_owner(self) -> bool:
         """return True if I create this group else False"""
         ginfo = self.info()
-        if isinstance(ginfo, GroupInfo) and ginfo.owner_pubkey == ginfo.user_pubkey:
+        if isinstance(ginfo,
+                      GroupInfo) and ginfo.owner_pubkey == ginfo.user_pubkey:
             return True
         return False
 
@@ -168,6 +228,11 @@ class Group(BaseAPI):
         return trx_id
 
     def trxs_by(self, pubkeys, trx_id=None):
+        """获取从指定的 Trx 之后, 指定用户产生的所有 Trxs
+        
+        pubkeys: 指定用户的用户公钥组成的列表
+        trx_id: 指定 Trx 的 ID
+        """
         trxs = self.all_content_trxs(trx_id)
         trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
         return trxs_by
@@ -195,11 +260,14 @@ class Group(BaseAPI):
 
     def trx(self, trx_id: str = None):
         try:
-            resp = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
+            resp = self.content_trxs(trx_id=trx_id,
+                                     num=1,
+                                     includestarttrx=True)
             if len(resp) > 1:
                 print("somthing is error", resp)
             elif len(resp) == 0:
-                raise ValueError(f"nothing got. {resp} {trx_id} {self.group_id}")
+                raise ValueError(
+                    f"nothing got. {resp} {trx_id} {self.group_id}")
             else:
                 return resp[0]
         except Exception as e:

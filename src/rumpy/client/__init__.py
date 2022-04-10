@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import logging
 import inspect
 import requests
@@ -9,29 +8,8 @@ from rumpy.client import api
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.module import *
 from rumpy.client.module_op import BaseDB
-from rumpy.client.config import CLIENT_PARAMS
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class RumClientParams:
-    """
-    :param appid, str, Rum 客户端标识，自定义，随便写
-    :param port, int, Rum 服务 端口号
-    :param host,str, Rum 服务 host，通常是 127.0.0.1
-    :param crtfile, str, Rum 的 server.crt 文件的绝对路径
-    """
-
-    port: int
-    crtfile: str
-    host: str = "127.0.0.1"
-    appid: str = "peer"
-    jwt_token: str = None
-    usedb: bool = False
-    dbname: str = "test_db"
-    dbecho: bool = False
-    dbreset: bool = False
 
 
 def _is_api_endpoint(obj):
@@ -55,35 +33,54 @@ class RumClient:
             setattr(self, name, api)
         return self
 
-    def __init__(self, kwargs=None):
-        cp = RumClientParams(**(kwargs or CLIENT_PARAMS))
+    def __init__(self,
+                 port: int,
+                 crtfile: str,
+                 host: str = "127.0.0.1",
+                 appid: str = "peer",
+                 jwt_token: str = None,
+                 usedb: bool = False,
+                 dbname: str = "test_db",
+                 dbecho: bool = False,
+                 dbreset: bool = False):
+        """
+        port: 端口号
+        crtfile: Rum 证书文件 server.crt 的绝对路径
+        host: IP地址, 本地 "127.0.0.1" (默认), 服务器为公网 IP
+        appid: 节点名，默认 "peer"
+        jwt_token: 远程登录身份验证 token
+        usedb: bool = False
+        dbname: str = "test_db"
+        dbecho: bool = False
+        dbreset: bool = False
+        """
         requests.adapters.DEFAULT_RETRIES = 5
-        self.appid = cp.appid
+        self.appid = appid
         self._session = requests.Session()
-        self._session.verify = cp.crtfile
+        self._session.verify = crtfile
         self._session.keep_alive = False
 
-        self._session.headers.update(
-            {
-                "USER-AGENT": "python.api",
-                "Content-Type": "application/json",
-            }
-        )
-        if cp.jwt_token:
-            self._session.headers.update({"Authorization": f"Bearer {cp.jwt_token}"})
-        self.baseurl = f"https://{cp.host}:{cp.port}/api/v1"
-        self.usedb = cp.usedb
+        self._session.headers.update({
+            "USER-AGENT": "python.api",
+            "Content-Type": "application/json",
+        })
+        if jwt_token:
+            self._session.headers.update(
+                {"Authorization": f"Bearer {jwt_token}"})
+        self.baseurl = f"https://{host}:{port}/api/v1"
+        self.usedb = usedb
         if self.usedb:
-            self.db = BaseDB(cp.dbname, echo=cp.dbecho, reset=cp.dbreset)
+            self.db = BaseDB(dbname, echo=dbecho, reset=dbreset)
 
     def _request(self, method, url, relay={}):
         try:
             resp = self._session.request(method=method, url=url, json=relay)
             return resp.json()
         except Exception as e:  # SSLCertVerificationError
-            resp = self._session.request(
-                method=method, url=url, json=relay, verify=False
-            )
+            resp = self._session.request(method=method,
+                                         url=url,
+                                         json=relay,
+                                         verify=False)
             return resp.json()
 
     def get(self, url, relay={}):
@@ -97,7 +94,10 @@ class RumClient:
                     "group_id": self.group_id,
                     "trx_id": resp["trx_id"],
                     "func": "post",
-                    "params": {"url": url, "relay": relay},
+                    "params": {
+                        "url": url,
+                        "relay": relay
+                    },
                 }
                 self.db.save(Action(action))
             return resp
