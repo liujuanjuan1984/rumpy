@@ -20,31 +20,30 @@ TRX_TYPES = [
 
 
 @dataclasses.dataclass
-class CreateGroupParam:
-    """
-    app_key: 可以为自定义字段，只是如果不是 group_timeline,group_post,group_note 这三种，可能无法在 rumapp 中识别，如果是自己开发客户端，则可以自定义类型
-
-    {
-        "group_name": "",
-        "consensus_type": "poa",
-        "encryption_type": "private",
-        "app_key":"group_timeline"
-    }
-
-    """
-
-    group_name: str
-    consensus_type: str = "poa"
-    encryption_type: str = "public"
-    app_key: str = "group_timeline"
+class ImgObj:
+    content: Any
+    mediaType: str = "image/png"
+    name: str = f"{uuid.uuid4()}-{round(int(time.time()*1000000))}"
 
     def __post_init__(self):
-        if self.consensus_type not in ["poa"]:  # ["poa","pos","pow"]:
-            self.consensus_type = "poa"
-        if self.encryption_type not in ["public", "private"]:
-            self.encryption_type = "public"
-        # if self.app_key not in ["group_timeline", "group_post", "group_note"]:
-        #    self.app_key = "group_timeline"
+        tgt = self.content
+        try:
+            if type(tgt) == str:
+                with open(tgt, "rb") as f:
+                    self.content = self.encode(f.read())
+                self.mediaType = tgt.split(".")[-1]
+            elif type(tgt) == bytes:
+                self.content = self.encode(tgt)
+            elif type(tgt) == dict:
+                self.mediaType = tgt.get("mediaType") or self.mediaType
+                self.content = tgt.get("content") or ""
+                self.name = tgt.get("name") or self.name
+        except Exception as e:
+            print(e)
+            return print(tgt, "must be imgpath or imgbytes")
+
+    def encode(self, imgbytes):
+        return base64.b64encode(imgbytes).decode("utf-8")
 
 
 @dataclasses.dataclass
@@ -93,94 +92,6 @@ class Seed:
 
 
 @dataclasses.dataclass
-class ImgObj:
-    content: Any
-    mediaType: str = "image/png"
-    name: str = f"{uuid.uuid4()}-{round(int(time.time()*1000000))}"
-
-    def __post_init__(self):
-        tgt = self.content
-        try:
-            if type(tgt) == str:
-                with open(tgt, "rb") as f:
-                    self.content = self.encode(f.read())
-                self.mediaType = tgt.split(".")[-1]
-            elif type(tgt) == bytes:
-                self.content = self.encode(tgt)
-            elif type(tgt) == dict:
-                self.mediaType = tgt.get("mediaType") or "image/png"
-                self.content = tgt.get("content") or ""
-                self.name = tgt.get("name") or f"{datetime.date.today()}"
-        except Exception as e:
-            print(e)
-            return print(tgt, "must be imgpath or imgbytes")
-
-    def encode(self, imgbytes):
-        return base64.b64encode(imgbytes).decode("utf-8")
-
-
-@dataclasses.dataclass
-class ContentObjParams:
-    """
-    content: str,text
-    name:str, title for group_post if need
-    image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
-    inreplyto:str,trx_id
-    type: `Note`
-
-    {
-        "type":"Note"
-        "content":"text content",
-        "name":"title",
-        "image":[],
-        "inreplyto":{
-            "trx_id":""
-        },
-    }
-
-    """
-
-    content: str = None
-    name: str = None
-    image: List = None
-    inreplyto: Any = None
-    type: str = "Note"
-
-    def __post_init__(self):
-        if self.image != None:
-            ximgs = []
-            for img in self.image:
-                ximgs.append(ImgObj(img).__dict__)
-            self.image = ximgs
-
-        if self.inreplyto != None:
-            self.inreplyto = {"trxid": self.inreplyto}
-
-
-@dataclasses.dataclass
-class ContentParams:
-    """
-    {
-        "type":"Add"
-        "object":{},
-        "target":{
-            "id": "",
-            "type": "Group",
-            }
-    }
-    """
-
-    type: Any
-    object: Dict
-    target: str  # group_id
-
-    def __post_init__(self):
-        if self.type not in [4, "Add", "Like", "Dislike"]:
-            self.type = "Add"
-        self.target = {"id": self.target, "type": "Group"}
-
-
-@dataclasses.dataclass
 class SnapShotInfo:
     TimeStamp: int
     HighestHeight: int
@@ -202,25 +113,10 @@ class GroupInfo:
     cipher_key: str
     app_key: str
     last_updated: int
-    highest_height: int  # 区块数
+    highest_height: int
     highest_block_id: str
     group_status: str
     snapshot_info: SnapShotInfo.__dict__
-
-
-@dataclasses.dataclass
-class ProducerUpdateParams:
-    """
-    {
-        "producer_pubkey": "",
-        "group_id": "",
-        "action": "add",
-    }
-    """
-
-    producer_pubkey: str
-    group_id: str
-    action: str  # "add" or "remove"
 
 
 @dataclasses.dataclass

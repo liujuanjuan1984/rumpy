@@ -4,7 +4,12 @@ from officy import JsonFile
 from rumpy import RumClient
 
 group_names_to_leave = []
-client = RumClient()
+keys = {
+    "port": 58356,
+    "crtfile": r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt",
+}
+
+client = RumClient(**keys)
 
 
 class TestCase:
@@ -107,8 +112,8 @@ class TestCase:
         resp = client.group.send_note(content="你好")
         assert "trx_id" in resp
 
-        resp = client.group.send_note(content="", image=[])
-        assert "trx_id" not in resp
+        resp = client.group.send_note(content="nihao", image=["D:\\test-sample.png"])
+        assert "trx_id" in resp
 
         resp = client.group.send_note(image=["D:\\test-sample.png"])
         assert "trx_id" in resp
@@ -118,8 +123,8 @@ class TestCase:
         resp = client.group.reply("我回复你了", trx_id)
         assert "trx_id" in resp
 
-        resp = client.group.send_note(content="", image=[], inreplyto=trx_id)
-        assert "trx_id" not in resp
+        resp = client.group.send_note(content="nihao", image=[], inreplyto=trx_id)
+        assert "trx_id" in resp
 
         resp = client.group.like(trx_id)
         assert "trx_id" in resp
@@ -207,4 +212,5 @@ class TestCase:
 
 
 if __name__ == "__main__":
-    pass
+    print(client.node.id)
+    print(client.paid.dapp())

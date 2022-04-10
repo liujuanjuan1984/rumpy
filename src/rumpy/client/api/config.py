@@ -184,9 +184,16 @@ class GroupConfig(BaseAPI):
     def approve_as_user(self, pubkey=None):
         return self.update_user(user_pubkey=pubkey or self.group.pubkey)
 
-    def update_producer(self, **kwargs):
+    def update_producer(self, pubkey=None, group_id=None, action="add"):
         self._check_owner()
-        relay = ProducerUpdateParams(**kwargs).__dict__
+        action = action.lower()
+        if action not in ("add", "remove"):
+            raise ValueError("action should be `add` or `remove`")
+        relay = {
+            "producer_pubkey": pubkey,
+            "group_id": group_id or self.group_id,
+            "action": action,
+        }
         return self._post(f"{self.baseurl}/group/producer", relay)
 
     def update_profile(self, **kwargs):

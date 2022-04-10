@@ -4,10 +4,28 @@ from rumpy.client.api.data import *
 
 
 class Group(BaseAPI):
-    def create(self, group_name: str, **kwargs) -> Dict:
-        """create a group, return the seed of the group."""
-        data = CreateGroupParam(group_name, **kwargs).__dict__
-        return self._post(f"{self.baseurl}/group", data)
+    def create(
+        self,
+        group_name: str,
+        app_key: str = "group_timeline",
+        consensus_type="poa",
+        encryption_type="public",
+    ) -> Dict:
+        """create a group, return the seed of the group.
+        app_key: 可以为自定义字段，只是如果不是 group_timeline,group_post,group_note 这三种，可能无法在 rumapp 中识别，如果是自己开发客户端，则可以自定义类型
+        """
+
+        if encryption_type.lower() not in ["public", "private"]:
+            raise ValueError("encryption_type should be `public` or `private`")
+
+        relay = {
+            "group_name": group_name,
+            "consensus_type": consensus_type,
+            "encryption_type": encryption_type,
+            "app_key": app_key,
+        }
+
+        return self._post(f"{self.baseurl}/group", relay)
 
     def seed(self) -> Dict:
         """get the seed of a group which you've joined in."""
@@ -44,6 +62,11 @@ class Group(BaseAPI):
     @property
     def eth_addr(self):
         return self.info().user_eth_addr
+
+    @property
+    def type(self):
+        self._check_group_id()
+        return self.seed().get("app_key")
 
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
@@ -99,13 +122,20 @@ class Group(BaseAPI):
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
 
-    def _send(self, obj: Dict = None, sendtype=None) -> Dict:
+    def _send(self, obj: Dict = None, sendtype="Add") -> Dict:
         """return the {trx_id:trx_id} of this action if send successed"""
 
-        if self.is_joined():
-            p = {"type": sendtype, "object": obj, "target": self.group_id}
-            data = ContentParams(**p).__dict__
-            return self._post(f"{self.baseurl}/group/content", data)
+        self._check_group_id()
+        if sendtype not in [4, "Add", "Like", "Dislike"]:
+            sendtype = "Add"
+
+        relay = {
+            "type": sendtype,
+            "object": obj,
+            "target": {"id": self.group_id, "type": "Group"},
+        }
+
+        return self._post(f"{self.baseurl}/group/content", relay)
 
     def like(self, trx_id: str) -> Dict:
         return self._send(obj={"id": trx_id}, sendtype="Like")
@@ -113,12 +143,29 @@ class Group(BaseAPI):
     def dislike(self, trx_id: str) -> Dict:
         return self._send(obj={"id": trx_id}, sendtype="Dislike")
 
-    def send_note(self, **kwargs):
-        """send note to a group. can be used to send: text only,image only,text with image,reply...etc"""
-        p = ContentObjParams(**kwargs)
-        if p.content == None and p.image == None:
+    def send_note(
+        self, content=None, name: str = None, image: List = None, inreplyto: str = None
+    ):
+        """send note to a group. can be used to send: text only,image only,text with image,reply...etc
+        content: str,text
+        name:str, title for group_post if needed
+        image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
+        """
+        obj = {"type": "Note"}
+
+        if content:
+            obj["content"] = content
+        if name:
+            obj["name"] = name
+        if image:
+            obj["image"] = [ImgObj(img).__dict__ for img in image]
+        if inreplyto:
+            obj["inreplyto"] = {"trxid": inreplyto}
+
+        if obj.get("content") == None and obj.get("image") == None:
             raise ValueError("need some content. images,text,or both.")
-        return self._send(obj=p.__dict__, sendtype="Add")
+
+        return self._send(obj=obj)
 
     def reply(self, content: str, trx_id: str):
         return self.send_note(content=content, inreplyto=trx_id)

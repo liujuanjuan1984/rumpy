@@ -33,7 +33,7 @@ def main():
     bot = WhoSays()
     bot.init("huoju", seedsfile)
     bot.search()
-    group_id = "938455b8-9683-4d06-abae-b422c89103b6"  # bot.group.create("mytest_whosays")["group_id"]
+    group_id = bot.group.create("mytest_whosays")["group_id"]
     bot.send("HuoJu", group_id)
 
 
