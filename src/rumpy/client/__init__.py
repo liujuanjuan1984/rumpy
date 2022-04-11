@@ -9,7 +9,7 @@ from rumpy.client import api
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.module import *
 from rumpy.client.module_op import BaseDB
-from rumpy.client.config import PORT,CRTFILE
+from rumpy.client.config import PORT, CRTFILE
 
 logger = logging.getLogger(__name__)
 
