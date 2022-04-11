@@ -152,7 +152,7 @@ class GroupConfig(BaseAPI):
         """获取某个组的黑名单"""
         return self._list("deny")
 
-    def set_appconfig(self, name="group_desc", the_type="string", value="增加组的简介", action="add", memo="add"):
+    def set_appconfig(self, name="group_desc", the_type="string", value="增加组的简介", action="add", image=None, memo="add"):
         """组创建者更新组的某个配置项
         
         name: 配置项的名称, 自定义, 以 rum-app 为例, 目前支持 'group_announcement'(组的公告),
@@ -160,8 +160,12 @@ class GroupConfig(BaseAPI):
         the_type: 配置项的类型, 可选值为 "int", "bool", "string"
         value: 配置项的值, 必须与 type 相对应
         action: "add" 或 "del", 增加/修改 或 删除
+        image: 一张图片路径, 如果提供, 将转换为 value 的值, 
+            例如 rum-app 用作组的图标(需要 name 是 'group_icon')
         memo: Memo
         """
+        if image is not None:
+            value = Img(image).group_icon()
         relay = {
             "action": action,
             "group_id": self.group_id,

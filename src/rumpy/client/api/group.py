@@ -200,6 +200,53 @@ class Group(BaseAPI):
         """post an image to group"""
         return self.send_note(image=[image])
 
+    def send_note_v1(self, content=None, name=None, images=None, id=None, trx_id=None):
+        """发送/回复内容到一个组(仅图片, 仅文本, 或两者都有)
+        
+        content: 要发送的文本内容
+        name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
+        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
+            content 和 images 必须至少一个不是 None
+        id: 自己已经发送成功的某条 Trx 的 ID, rum-app 用来标记, 如果提供该参数,
+            再次发送一条消息, 前端将只显示新发送的这条, 从而实现更新(实际两条内容都在链上)
+        trx_id: 要回复的内容的 Trx ID, 如果提供, 内容将回复给这条指定内容
+
+        返回值 {"trx_id": "string"}
+        """
+        if images is not None:
+            images = Img(images).image_objs()
+        if content is None and images is None:
+            raise ValueError("need some content. images,text,or both.")
+        obj = {"id": id, "type": "Note", "content": content, "name": name, "image": images}
+        if trx_id is not None:
+            obj["inreplyto"] = {"trxid": trx_id}
+        return self._send(obj)
+
+    def reply_v1(self, trx_id: str, content=None, images=None):
+        """回复某条内容(仅图片, 仅文本, 或两者都有)
+        
+        trx_id: 要回复的内容的 Trx ID
+        content: 用于回复的文本内容
+        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
+            content 和 images 必须至少一个不是 None
+        """
+        return self.send_note(content, images=images, trx_id=trx_id)
+
+    def send_text_v1(self, content: str, name: str = None):
+        """post text cotnent to group
+        
+        content: 要发送的文本内容
+        name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
+        """
+        return self.send_note(content=content, name=name)
+
+    def send_img_v1(self, images):
+        """post images to group, up to 4
+        
+        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
+        """
+        return self.send_note(images=images)
+
     def block(self, block_id: str = None):
         """get the info of a block in a group"""
         self._check_group_id()

@@ -133,7 +133,7 @@ class Img:
         kb = int(200 // len(self.imgs))
         im_objs = []
         for i in self.imgs:
-            image = Img.image_obj(i, kb=kb)
+            image = Img(i).image_obj(kb=kb)
             im_objs.append(image)
 
         return im_objs
