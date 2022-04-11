@@ -130,7 +130,6 @@ dmypy.json
 
 # TBC
 /Makefile
-*version.cfg 
 *temp*
 examples/*/*.json
 examples/*/data/
