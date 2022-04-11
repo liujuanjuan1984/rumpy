@@ -7,6 +7,7 @@ import datetime
 from PIL import Image
 from pygifsicle import gifsicle
 
+
 class Img:
     """
     将图片转换为 RUM 支持的图片对象.
@@ -28,7 +29,7 @@ class Img:
     @staticmethod
     def image_to_bytes(image):
         """获取图片字节
-        
+
         image: 图片路径
         """
         with open(image, "rb") as f:
@@ -38,10 +39,10 @@ class Img:
     @staticmethod
     def zip_image(img_bytes, kb=200):
         """压缩图片(非动图)到指定大小 (kb) 以下
-        
+
         img_bytes: 图片字节
         kb: 指定压缩大小, 默认 200kb
-        
+
         返回压缩后的图片字节
         """
         with io.BytesIO(img_bytes) as im:
@@ -61,7 +62,7 @@ class Img:
     @staticmethod
     def zip_gif(gif, kb=200, cover=False):
         """压缩动图(gif)到指定大小(kb)以下
-        
+
         gif: gif 格式动图本地路径
         kb: 指定压缩大小, 默认 200kb
         cover: 是否覆盖原图, 默认不覆盖
@@ -94,6 +95,8 @@ class Img:
 
     def group_icon(self):
         """将一张图片处理成组配置项 value 字段的值, 例如组的图标对象"""
+        if self.img is None:
+            raise ValueError("The parameter of Img should be the path of an image")
         img_bytes = Img.image_to_bytes(self.img)
         if filetype.guess(img_bytes).extension == "gif":
             zimg = Img.zip_gif(self.img, cover=False)
@@ -108,9 +111,11 @@ class Img:
 
     def image_obj(self, kb=200):
         """将一张图片处理成 RUM 支持的图片对象, 例如用户头像, 要求大小小于 200kb
-        
+
         kb: 设置图片大小, 需要小于 200kb
         """
+        if self.img is None:
+            raise ValueError("The parameter of Img should be the path of an image")
         img_bytes = Img.image_to_bytes(self.img)
         if filetype.guess(img_bytes).extension == "gif":
             zimg = Img.zip_gif(self.img, kb=kb, cover=False)
