@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.data import *
-
+from .img import Img
 
 class Group(BaseAPI):
     def create(
@@ -12,7 +12,15 @@ class Group(BaseAPI):
         encryption_type="public",
     ) -> Dict:
         """create a group, return the seed of the group.
-        app_key: 可以为自定义字段，只是如果不是 group_timeline,group_post,group_note 这三种，可能无法在 rumapp 中识别，如果是自己开发客户端，则可以自定义类型
+
+        group_name: 组名, 自定义, 不可更改
+        consensus_type: 共识类型, "poa", "pos", "pow", 当前仅支持 "poa"
+        encryption_type: 加密类型, "public" 公开, "private" 私有
+        app_key: 可以为自定义字段，只是如果不是 group_timeline,
+            group_post, group_note 这三种，可能无法在 rum-app 中识别，
+            如果是自己开发客户端，则可以自定义类型
+
+        创建成功, 返回值是一个种子, 通过它其他人可加入该组
         """
 
         if encryption_type.lower() not in ["public", "private"]:
@@ -93,6 +101,7 @@ class Group(BaseAPI):
         return self._post(f"{self.baseurl}/group/clear", {"group_id": self.group_id})
 
     def startsync(self):
+        """触发同步"""
         if self.is_joined():
             return self._post(f"{self.baseurl}/group/{self.group_id}/startsync")
 
@@ -102,28 +111,39 @@ class Group(BaseAPI):
             return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
 
     def content_trxs(
-        self,
-        trx_id: str = None,
-        num: int = 20,
-        is_reverse=False,
-        is_include_starttrx=False,
+        self, reverse=False, trx_id=None, num=None, includestarttrx=False
     ) -> List:
-        """requests the content trxs of a group,return the list of the trxs data."""
-
+        """requests the content trxs of a group,return the list of the trxs data.
+        
+        按条件获取某个组的内容并去重返回
+        
+        reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
+        trx_id: 某条内容的 Trx ID, 如果提供, 从该条之后(不包含)获取
+        num: 要获取内容条数, 默认获取最前面的 20 条内容
+        includestarttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
+        """
         if not self.is_joined():
             return []
 
         url = self.baseurl.replace("api", "app/api")
 
-        if trx_id:
-            apiurl = f"{url}/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
-        else:
-            apiurl = f"{url}/group/{self.group_id}/content?num={num}&start=0"
+        reverse = "&reverse=true" if reverse else ""
+        trx_id = f"&starttrx={trx_id}" if trx_id else ""
+        num = f"&num={num}" if num else ""
+        includestarttrx = "&includestarttrx=true" if includestarttrx else ""
+
+        apiurl = f"{url}/group/{self.group_id}/content?{reverse}{trx_id}{num}{includestarttrx}"
+
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
 
     def _send(self, obj: Dict = None, sendtype="Add") -> Dict:
-        """return the {trx_id:trx_id} of this action if send successed"""
+        """return the {trx_id:trx_id} of this action if send successed
+        
+        obj: 要发送的对象
+        sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
+        返回值 {"trx_id": "string"}
+        """
 
         self._check_group_id()
         if sendtype not in [4, "Add", "Like", "Dislike"]:
@@ -146,7 +166,9 @@ class Group(BaseAPI):
     def send_note(
         self, content=None, name: str = None, image: List = None, inreplyto: str = None
     ):
-        """send note to a group. can be used to send: text only,image only,text with image,reply...etc
+        """send note to a group. can be used to send: text only, image only,
+        text with image, reply...etc
+
         content: str,text
         name:str, title for group_post if needed
         image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
@@ -215,6 +237,11 @@ class Group(BaseAPI):
         return trx_id
 
     def trxs_by(self, pubkeys, trx_id=None):
+        """获取从指定的 Trx 之后, 指定用户产生的所有 Trxs
+        
+        pubkeys: 指定用户的用户公钥组成的列表
+        trx_id: 指定 Trx 的 ID
+        """
         trxs = self.all_content_trxs(trx_id)
         trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
         return trxs_by
