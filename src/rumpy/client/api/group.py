@@ -125,9 +125,12 @@ class Group(BaseAPI):
             return []
 
         if trx_id:
-            apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+            apiurl = (
+                f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&starttrx={trx_id}"
+                f"&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+            )
         else:
-            apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&start=0"
+            apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
 
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
@@ -163,6 +166,7 @@ class Group(BaseAPI):
         content: str = None,
         name: str = None,
         images: List = None,
+        update_id: str = None,
         inreplyto: str = None,
     ):
         """send note to a group. can be used to send: text only, image only,
@@ -178,15 +182,17 @@ class Group(BaseAPI):
         name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
             content 和 images 必须至少一个不是 None
-        id: 自己已经发送成功的某条 Trx 的 ID, rum-app 用来标记, 如果提供该参数,
+        update_id: 自己已经发送成功的某条 Trx 的 ID, rum-app 用来标记, 如果提供该参数,
             再次发送一条消息, 前端将只显示新发送的这条, 从而实现更新(实际两条内容都在链上)
-        trx_id: 要回复的内容的 Trx ID, 如果提供, 内容将回复给这条指定内容
+        inreplyto: 要回复的内容的 Trx ID, 如果提供, 内容将回复给这条指定内容
 
         返回值 {"trx_id": "string"}
 
         """
         obj = {"type": "Note"}
 
+        if update_id:
+            obj["id"] = update_id
         if content:
             obj["content"] = content
         if name:
