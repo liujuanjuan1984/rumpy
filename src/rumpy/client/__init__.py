@@ -1,9 +1,12 @@
+import os
 import logging
 import inspect
 import requests
-import urllib3
+from typing import Dict, List, Any
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
 from rumpy.client import api
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.module import *
@@ -80,6 +83,9 @@ class RumClient:
         if jwt_token:
             self._session.headers.update({"Authorization": f"Bearer {jwt_token}"})
         self.baseurl = f"https://{host}:{port}/api/v1"
+        self.baseurl_app = f"https://{host}:{port}/app/api/v1"
+        os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.baseurl, self.baseurl_app])
+
         self.usedb = usedb
         if self.usedb:
             self.db = BaseDB(
@@ -88,18 +94,19 @@ class RumClient:
                 reset=dbreset,
             )
 
-    def _request(self, method, url, relay={}):
+    def _request(self, method: str, url: str, relay: Dict = {}):
+
         try:
             resp = self._session.request(method=method, url=url, json=relay)
-            return resp.json()
         except Exception as e:  # SSLCertVerificationError
             resp = self._session.request(method=method, url=url, json=relay, verify=False)
-            return resp.json()
+        print(resp.status_code, url, relay)
+        return resp.json()
 
-    def get(self, url, relay={}):
+    def get(self, url: str, relay: Dict = {}):
         return self._request("get", url, relay)
 
-    def post(self, url, relay={}):
+    def post(self, url: str, relay: Dict = {}):
         if self.usedb:
             resp = self._request("post", url, relay)
             if "trx_id" in resp:

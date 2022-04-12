@@ -85,10 +85,8 @@ class Node(BaseAPI):
 
     def token(self):
         """Get a auth token for authorizing requests from remote"""
-        url = self.baseurl.replace("/api/v1", "/app/api/v1")
-        return self._post(f"{url}/token/apply")
+        return self._post(f"{self.baseurl_app}/token/apply")
 
     def token_refresh(self):
         """Get a new auth token"""
-        url = self.baseurl.replace("/api/v1", "/app/api/v1")
-        return self._post(f"{url}/token/refresh")
+        return self._post(f"{self.baseurl_app}/token/refresh")

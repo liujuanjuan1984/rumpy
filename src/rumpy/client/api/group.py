@@ -124,14 +124,10 @@ class Group(BaseAPI):
         if not self.is_joined():
             return []
 
-        url = self.baseurl.replace("api", "app/api")
-
-        is_reverse = "&reverse=true" if is_reverse else ""
-        trx_id = f"&starttrx={trx_id}" if trx_id else ""
-        num = f"&num={num}" if num else ""
-        is_include_starttrx = "&includestarttrx=true" if is_include_starttrx else ""
-
-        apiurl = f"{url}/group/{self.group_id}/content?{is_reverse}{trx_id}{num}{is_include_starttrx}"
+        if trx_id:
+            apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+        else:
+            apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&start=0"
 
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
@@ -244,7 +240,7 @@ class Group(BaseAPI):
             return True
         return False
 
-    def all_content_trxs(self, trx_id=None):
+    def all_content_trxs(self, trx_id: str = None):
         """get all the trxs of content started from trx_id"""
         trxs = []
         checked_trxids = []

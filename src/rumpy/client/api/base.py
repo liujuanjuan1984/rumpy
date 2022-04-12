@@ -13,6 +13,10 @@ class BaseAPI:
         return self._client.baseurl
 
     @property
+    def baseurl_app(self) -> str:
+        return self._client.baseurl_app
+
+    @property
     def group_id(self):
         return self._client.group_id
 
