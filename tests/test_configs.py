@@ -1,4 +1,4 @@
-from . import client
+from tests import client
 
 
 def test_configs_view(group_id=None):
@@ -6,15 +6,13 @@ def test_configs_view(group_id=None):
     client.group_id = group_id or client.group.create("mytest_configs")["group_id"]
     seed = client.group.seed()
 
-    print("==== chainconfig ====")
-    r = client.config.mode
-    print("mode", r)
+    print("==== appconfig ====")
+    r = client.config.keylist()
+    print("keylist", r)
 
-    r = client.config.allow_list
-    print("allow_list", r)
-
-    r = client.config.deny_list
-    print("deny_list", r)
+    for key in r:
+        ik = client.config.key(key)
+        print("key", key, ik)
 
     print("==== group info ====")
 

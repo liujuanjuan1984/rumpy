@@ -1,6 +1,6 @@
 import pytest
 import dataclasses
-from . import client, group_names_to_leave
+from tests import client, group_names_to_leave
 
 
 class TestCase:
@@ -196,7 +196,7 @@ class TestCase:
     def test_init(self):
 
         type(client.group)
-        type(client.config)
+
         type(client.db)
         type(client.node)
         type(client.group_id)
