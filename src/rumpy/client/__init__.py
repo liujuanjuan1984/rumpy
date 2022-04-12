@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import logging
 import inspect
 import requests

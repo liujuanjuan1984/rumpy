@@ -1,9 +1,9 @@
 import json
 from typing import List, Dict, Any
-from .base import BaseAPI
-from .group import Group
-from .data import *
-from .img import Img
+from rumpy.client.api.base import BaseAPI
+from rumpy.client.api.group import Group
+from rumpy.client.api.data import *
+from rumpy.client.api.img import Img
 
 
 class GroupConfig(BaseAPI):
@@ -28,7 +28,7 @@ class GroupConfig(BaseAPI):
 
     def trx_mode(self, trx_type: str = "POST"):
         """获取某个 trx 类型的授权方式
-        
+
         trx_type: "POST","ANNOUNCE","REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
@@ -46,7 +46,7 @@ class GroupConfig(BaseAPI):
 
     def set_mode(self, mode):
         """将所有 trx 类型设置为一种授权方式
-        
+
         mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
         """
         self._check_owner()
@@ -61,7 +61,7 @@ class GroupConfig(BaseAPI):
         memo: str = "set trx auth type",
     ):
         """设置某个 trx 类型的授权方式
-        
+
         trx_type: "POST","ANNOUNCE","REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
@@ -112,7 +112,7 @@ class GroupConfig(BaseAPI):
         self, pubkey: str, memo: str = "update allow list", trx_types: List = None
     ):
         """将某个用户加入某个/某些 trx 类型的白名单中
-        
+
         pubkey: 用户公钥
         memo: Memo
         trx_types: Trx 类型组成的列表, Trx 类型有 "POST","ANNOUNCE",
@@ -126,7 +126,7 @@ class GroupConfig(BaseAPI):
         self, pubkey: str, memo: str = "update deny list", trx_types: List = None
     ):
         """将某个用户加入某个/某些 trx 类型的黑名单中
-        
+
         pubkey: 用户公钥
         memo: Memo
         trx_types: Trx 类型组成的列表, Trx 类型有 "POST","ANNOUNCE",
@@ -152,15 +152,23 @@ class GroupConfig(BaseAPI):
         """获取某个组的黑名单"""
         return self._list("deny")
 
-    def set_appconfig(self, name="group_desc", the_type="string", value="增加组的简介", action="add", image=None, memo="add"):
+    def set_appconfig(
+        self,
+        name="group_desc",
+        the_type="string",
+        value="增加组的简介",
+        action="add",
+        image=None,
+        memo="add",
+    ):
         """组创建者更新组的某个配置项
-        
+
         name: 配置项的名称, 自定义, 以 rum-app 为例, 目前支持 'group_announcement'(组的公告),
             'group_desc'(组的简介),'group_icon'(组的图标), 均是 "string" 类型
         the_type: 配置项的类型, 可选值为 "int", "bool", "string"
         value: 配置项的值, 必须与 type 相对应
         action: "add" 或 "del", 增加/修改 或 删除
-        image: 一张图片路径, 如果提供, 将转换为 value 的值, 
+        image: 一张图片路径, 如果提供, 将转换为 value 的值,
             例如 rum-app 用作组的图标(需要 name 是 'group_icon')
         memo: Memo
         """
@@ -184,16 +192,16 @@ class GroupConfig(BaseAPI):
 
     def key(self, key: str):
         """获取组的某个配置项的信息
-        
+
         key: 配置项名称
         """
         return self._get(f"{self.baseurl}/group/{self.group_id}/appconfig/{key}")
 
     def announce(self, action="add", type="user", memo="rumpy.api"):
         """annouce user or producer,add or remove
-        
+
         申请 成为/退出 producer/user
-        
+
         action: "add" 或 "remove", 申请成为/宣布退出
         type: "user" 或 "producer"
         memo: Memo
@@ -209,9 +217,9 @@ class GroupConfig(BaseAPI):
 
     def announce_as_user(self):
         """announce self as user
-        
+
         申请成为私有组用户
-        
+
         如果已经是用户, 返回申请状态
         """
         status = self.announced_user(self.group.pubkey)
@@ -233,7 +241,7 @@ class GroupConfig(BaseAPI):
 
     def announced_user(self, pubkey):
         """获取申请 成为/退出 的 user 的申请状态
-        
+
         pubkey: 用户公钥
         """
         return self._get(
@@ -246,7 +254,7 @@ class GroupConfig(BaseAPI):
 
     def update_user(self, user_pubkey, action="add"):
         """组创建者添加或移除私有组用户
-        
+
         user_pubkey: 用户公钥
         action: "add" 或 "remove", 添加或移除
         """
@@ -268,7 +276,7 @@ class GroupConfig(BaseAPI):
 
     def update_producer(self, pubkey=None, group_id=None, action="add"):
         """组创建者添加或移除 producer
-        
+
         pubkey: producer 公钥
         group_id: 组 ID
         action: "add" 或 "remove", 添加或移除
@@ -286,7 +294,7 @@ class GroupConfig(BaseAPI):
 
     def update_profile(self, name, image=None, mixin_id=None):
         """更新组的用户配置, 以 rum-app 为例, 如昵称, 头像, 绑定钱包(以 mixin 钱包为例)
-        
+
         name: 昵称
         image: 头像, 图片的路径, rum-app 设有默认头像, 不提供, 将使用默认头像更新
         mixin_id: mixin 账号 uuid, 目前 rum-app 支持的钱包, 可选

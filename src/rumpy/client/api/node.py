@@ -56,7 +56,7 @@ class Node(BaseAPI):
 
     def psping(self, peer_id: str):
         """ping 一个节点
-        
+
         peer_id: 节点 ID, 例如 "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
         """
         return self._post(f"{self.baseurl}/psping", {"peer_id": peer_id})

@@ -4,3 +4,4 @@ pandas
 pillow
 matplotlib
 sqlalchemy
+filetype

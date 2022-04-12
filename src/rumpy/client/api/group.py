@@ -1,7 +1,8 @@
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.data import *
-from .img import Img
+from rumpy.client.api.img import Img
+
 
 class Group(BaseAPI):
     def create(
@@ -114,9 +115,9 @@ class Group(BaseAPI):
         self, reverse=False, trx_id=None, num=None, includestarttrx=False
     ) -> List:
         """requests the content trxs of a group,return the list of the trxs data.
-        
+
         按条件获取某个组的内容并去重返回
-        
+
         reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
         trx_id: 某条内容的 Trx ID, 如果提供, 从该条之后(不包含)获取
         num: 要获取内容条数, 默认获取最前面的 20 条内容
@@ -139,7 +140,7 @@ class Group(BaseAPI):
 
     def _send(self, obj: Dict = None, sendtype="Add") -> Dict:
         """return the {trx_id:trx_id} of this action if send successed
-        
+
         obj: 要发送的对象
         sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
         返回值 {"trx_id": "string"}
@@ -202,7 +203,7 @@ class Group(BaseAPI):
 
     def send_note_v1(self, content=None, name=None, images=None, id=None, trx_id=None):
         """发送/回复内容到一个组(仅图片, 仅文本, 或两者都有)
-        
+
         content: 要发送的文本内容
         name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
@@ -217,14 +218,20 @@ class Group(BaseAPI):
             images = Img(images).image_objs()
         if content is None and images is None:
             raise ValueError("need some content. images,text,or both.")
-        obj = {"id": id, "type": "Note", "content": content, "name": name, "image": images}
+        obj = {
+            "id": id,
+            "type": "Note",
+            "content": content,
+            "name": name,
+            "image": images,
+        }
         if trx_id is not None:
             obj["inreplyto"] = {"trxid": trx_id}
         return self._send(obj)
 
     def reply_v1(self, trx_id: str, content=None, images=None):
         """回复某条内容(仅图片, 仅文本, 或两者都有)
-        
+
         trx_id: 要回复的内容的 Trx ID
         content: 用于回复的文本内容
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
@@ -234,7 +241,7 @@ class Group(BaseAPI):
 
     def send_text_v1(self, content: str, name: str = None):
         """post text cotnent to group
-        
+
         content: 要发送的文本内容
         name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
         """
@@ -242,7 +249,7 @@ class Group(BaseAPI):
 
     def send_img_v1(self, images):
         """post images to group, up to 4
-        
+
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
         """
         return self.send_note(images=images)
@@ -285,7 +292,7 @@ class Group(BaseAPI):
 
     def trxs_by(self, pubkeys, trx_id=None):
         """获取从指定的 Trx 之后, 指定用户产生的所有 Trxs
-        
+
         pubkeys: 指定用户的用户公钥组成的列表
         trx_id: 指定 Trx 的 ID
         """

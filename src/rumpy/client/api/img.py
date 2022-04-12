@@ -5,7 +5,6 @@ import io
 import os
 import datetime
 from PIL import Image
-from pygifsicle import gifsicle
 
 
 class Img:
@@ -69,6 +68,7 @@ class Img:
 
         返回压缩后图片字节. 该方法需要安装 gifsicle 软件和 pygifsicle 模块
         """
+        from pygifsicle import gifsicle
 
         size = os.path.getsize(gif) / 1024
         if size < kb:
