@@ -6,9 +6,7 @@ from rumpy.client.module.base import Base
 class Trx(Base):
     __tablename__ = "trxs"
 
-    TrxId = Column(
-        "trx_id", String(40), unique=True, primary_key=True, index=True
-    )  # 36
+    TrxId = Column("trx_id", String(40), unique=True, primary_key=True, index=True)  # 36
     Publisher = Column("pubkey", String(56))  # 52
     Content = Column("content", String)
     TypeUrl = Column("type_url", String(32))  # 16

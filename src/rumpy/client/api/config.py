@@ -77,9 +77,7 @@ class GroupConfig(BaseAPI):
         relay = {
             "group_id": self.group_id,
             "type": "set_trx_auth_mode",
-            "config": json.dumps(
-                {"trx_type": trx_type, "trx_auth_mode": f"follow_{mode}_list"}
-            ),
+            "config": json.dumps({"trx_type": trx_type, "trx_auth_mode": f"follow_{mode}_list"}),
             "Memo": memo,
         }
         return self._post(f"{self.baseurl}/group/chainconfig", relay)
@@ -101,15 +99,16 @@ class GroupConfig(BaseAPI):
         relay = {
             "group_id": self.group_id,
             "type": f"upd_{mode}_list",
-            "config": json.dumps(
-                {"action": "add", "pubkey": pubkey, "trx_type": trx_types}
-            ),
+            "config": json.dumps({"action": "add", "pubkey": pubkey, "trx_type": trx_types}),
             "Memo": memo,
         }
         return self._post(f"{self.baseurl}/group/chainconfig", relay)
 
     def update_allow_list(
-        self, pubkey: str, memo: str = "update allow list", trx_types: List = None
+        self,
+        pubkey: str,
+        memo: str = "update allow list",
+        trx_types: List = None,
     ):
         """将某个用户加入某个/某些 trx 类型的白名单中
 
@@ -123,7 +122,10 @@ class GroupConfig(BaseAPI):
         return self._update_list(pubkey, "alw", memo, trx_types)
 
     def update_deny_list(
-        self, pubkey: str, memo: str = "update deny list", trx_types: List = None
+        self,
+        pubkey: str,
+        memo: str = "update deny list",
+        trx_types: List = None,
     ):
         """将某个用户加入某个/某些 trx 类型的黑名单中
 
@@ -244,9 +246,7 @@ class GroupConfig(BaseAPI):
 
         pubkey: 用户公钥
         """
-        return self._get(
-            f"{self.baseurl}/group/{self.group_id}/announced/user/{pubkey}"
-        )
+        return self._get(f"{self.baseurl}/group/{self.group_id}/announced/user/{pubkey}")
 
     def producers(self):
         """获取已经批准的 producers"""

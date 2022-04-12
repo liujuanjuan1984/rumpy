@@ -67,9 +67,7 @@ class TestCase:
         r = client.group.create(**data)
         assert "group_id" in r
 
-        r = client.group.create(
-            **{"group_name": "mytest_nihao3", "app_key": "group_note"}
-        )
+        r = client.group.create(**{"group_name": "mytest_nihao3", "app_key": "group_note"})
         assert "group_id" in r
 
         for group_id in client.node.groups_id:

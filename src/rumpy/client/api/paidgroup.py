@@ -20,9 +20,7 @@ class PaidGroup(BaseAPI):
     def payment(self):
         """Check Payment"""
         self._check_group_id()
-        resp = self._get(
-            f"https://prs-bp2.press.one/api/mvm/paidgroup/{self.group_id}/{self.group.eth_addr}"
-        )
+        resp = self._get(f"https://prs-bp2.press.one/api/mvm/paidgroup/{self.group_id}/{self.group.eth_addr}")
         if resp.get("success"):
             return resp.get("data").get("payment")
         return resp

@@ -134,9 +134,7 @@ class ProfileParams:
             d["image"] = {"mediaType": "image/png", "content": self.image}
 
         if self.wallet:
-            d["wallet"] = [
-                {"id": self.wallet, "type": "mixin", "name": "mixin messenger"}
-            ]
+            d["wallet"] = [{"id": self.wallet, "type": "mixin", "name": "mixin messenger"}]
 
         if len(d) == 0:
             raise ValueError("Person must have name or image fields")

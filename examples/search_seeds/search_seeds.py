@@ -98,9 +98,7 @@ class SearchSeeds(RumClient):
                 info[group_id]["highest_height"] = ginfo.highest_height
                 info[group_id]["last_update"] = f"{Stime.ts2datetime(gts)}"
                 info[group_id]["scores"] += int(ginfo.highest_height / 100)
-                info[group_id]["nodes"][
-                    ginfo.user_pubkey
-                ] = f"{datetime.datetime.now()}"
+                info[group_id]["nodes"][ginfo.user_pubkey] = f"{datetime.datetime.now()}"
 
         JsonFile(self.infofile).write(info)
         return info
@@ -144,8 +142,7 @@ class SearchSeeds(RumClient):
                 continue
             ginfo = self.group.info()
             if info[group_id][ginfo.user_pubkey] <= "2022-01-01" and (
-                info[group_id]["last_update"] <= "2022-01-01"
-                or info[group_id]["highest_height"] == 0
+                info[group_id]["last_update"] <= "2022-01-01" or info[group_id]["highest_height"] == 0
             ):
 
                 self.group.leave()
@@ -184,9 +181,7 @@ class SearchSeeds(RumClient):
 
         # 如果没有指定 group_id 或未加入，就新建种子网络
         if self.group_id == None or not self.group.is_joined():
-            self.group_id = group_id = self.group.create("mytest_share_seeds")[
-                "group_id"
-            ]
+            self.group_id = group_id = self.group.create("mytest_share_seeds")["group_id"]
 
         shared = self.ingroup(group_id)
 

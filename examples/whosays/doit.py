@@ -10,9 +10,7 @@ def trans():
     bot = WhoSays()
     bot.init("huoju", seedsfile)
 
-    oldfile = os.path.join(
-        os.path.dirname(__file__), "data", "huoju", "huoju_says.json"
-    )
+    oldfile = os.path.join(os.path.dirname(__file__), "data", "huoju", "huoju_says.json")
     olddata = JsonFile(oldfile).read()
     newdata = JsonFile(bot.datafile).read()
 

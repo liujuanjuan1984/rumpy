@@ -17,13 +17,9 @@ class SearchUser(RumClient):
 
         self.name_fragment = name_fragment.lower()
         this_dir = os.path.dirname(__file__)
-        self.rltfile = os.path.join(
-            this_dir, "data", f"search_user_{name_fragment}.json"
-        )
+        self.rltfile = os.path.join(this_dir, "data", f"search_user_{name_fragment}.json")
         self.seedsfile = seedsfile or os.path.join(this_dir, "data", f"seeds.json")
-        self.progressfile = os.path.join(
-            this_dir, "data", f"search_user_{name_fragment}_progress.json"
-        )
+        self.progressfile = os.path.join(this_dir, "data", f"search_user_{name_fragment}_progress.json")
         JsonFile(self.rltfile).rewrite({})
         JsonFile(self.seedsfile).rewrite({})
         JsonFile(self.progressfile).rewrite({})
@@ -81,7 +77,12 @@ class SearchUser(RumClient):
 
         for group_id in self.node.groups_id:
             self.group_id = group_id
-            print(datetime.datetime.now(), group_id, self.name_fragment, "searching...")
+            print(
+                datetime.datetime.now(),
+                group_id,
+                self.name_fragment,
+                "searching...",
+            )
 
             if group_id not in rlt:
                 rlt[group_id] = {}

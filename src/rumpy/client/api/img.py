@@ -102,10 +102,7 @@ class Img:
             zimg = Img.zip_gif(self.img, cover=False)
         else:
             zimg = Img.zip_image(img_bytes)
-        icon = (
-            f"data:{filetype.guess(zimg).mime};"
-            f'base64,{base64.b64encode(zimg).decode("utf-8")}'
-        )
+        icon = f"data:{filetype.guess(zimg).mime};" f'base64,{base64.b64encode(zimg).decode("utf-8")}'
 
         return icon
 

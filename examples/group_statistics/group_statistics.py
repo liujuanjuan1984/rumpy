@@ -81,17 +81,13 @@ class GroupStatistics(RumClient):
 
         # 数据存入 json 文件。把 datetime 数据类型转换为字符串，才能写入 json 文件
         data["daily_trxs"] = {str(k): data["daily_trxs"][k] for k in data["daily_trxs"]}
-        data["daily_pubkeys"] = {
-            str(k): data["daily_pubkeys"][k] for k in data["daily_pubkeys"]
-        }
+        data["daily_pubkeys"] = {str(k): data["daily_pubkeys"][k] for k in data["daily_pubkeys"]}
         JsonFile(filepath).write(data)
 
         # 绘图
         title = f"{data['info']['group_name']} Daily Trxs and Users Counts"
         daily_trxs = data["daily_trxs"]
-        daily_pubkeys = {
-            i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]
-        }
+        daily_pubkeys = {i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]}
         imgbytes = self.plot_lines(days, title, daily_trxs, daily_pubkeys)
         imgpath = imgpath or filepath.replace(".json", ".png")
 
@@ -121,9 +117,7 @@ class GroupStatistics(RumClient):
         # 绘图
         title = f"{data['info']['group_name']} Daily Trxs and Users Counts"
         daily_trxs = data["daily_trxs"]
-        daily_pubkeys = {
-            i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]
-        }
+        daily_pubkeys = {i: len(data["daily_pubkeys"][i]) for i in data["daily_pubkeys"]}
         imgbytes = self.plot_lines(days, title, daily_trxs, daily_pubkeys)
 
         # 文本

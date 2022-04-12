@@ -39,9 +39,7 @@ class WhoSays(RumClient):
         progress = JsonFile(self.progressfile).read({})
 
         if not self.names_info:
-            raise ValueError(
-                "add data in names_info file with data like {group_id:[pubkey]}"
-            )
+            raise ValueError("add data in names_info file with data like {group_id:[pubkey]}")
 
         for group_id in self.names_info:
             self.group_id = group_id
@@ -107,9 +105,7 @@ class WhoSays(RumClient):
             }
 
         if self.group_id != names[pubkey]["group_id"]:
-            raise ValueError(
-                f"group_id error. check it.{self.group_id},{names[pubkey]['group_id']}"
-            )
+            raise ValueError(f"group_id error. check it.{self.group_id},{names[pubkey]['group_id']}")
 
         searched_trxids = []
         while True:
@@ -193,7 +189,5 @@ class WhoSays(RumClient):
                 lines.append(self._quote_text(text))
             if img:
                 obj["image"].extend(img)
-        obj["content"] = (
-            f'{Stime.ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
-        )
+        obj["content"] = f'{Stime.ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
         return obj, flag

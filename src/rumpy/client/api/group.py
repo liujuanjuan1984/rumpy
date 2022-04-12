@@ -92,9 +92,7 @@ class Group(BaseAPI):
     def leave(self):
         """leave a group"""
         if self.is_joined():
-            return self._post(
-                f"{self.baseurl}/group/leave", {"group_id": self.group_id}
-            )
+            return self._post(f"{self.baseurl}/group/leave", {"group_id": self.group_id})
 
     def clear(self):
         """clear data of a group"""
@@ -111,9 +109,7 @@ class Group(BaseAPI):
         if self.is_joined():
             return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
 
-    def content_trxs(
-        self, reverse=False, trx_id=None, num=None, includestarttrx=False
-    ) -> List:
+    def content_trxs(self, reverse=False, trx_id=None, num=None, includestarttrx=False) -> List:
         """requests the content trxs of a group,return the list of the trxs data.
 
         按条件获取某个组的内容并去重返回
@@ -165,7 +161,11 @@ class Group(BaseAPI):
         return self._send(obj={"id": trx_id}, sendtype="Dislike")
 
     def send_note(
-        self, content=None, name: str = None, image: List = None, inreplyto: str = None
+        self,
+        content=None,
+        name: str = None,
+        image: List = None,
+        inreplyto: str = None,
     ):
         """send note to a group. can be used to send: text only, image only,
         text with image, reply...etc

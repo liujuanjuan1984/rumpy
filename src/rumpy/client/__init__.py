@@ -93,9 +93,7 @@ class RumClient:
             resp = self._session.request(method=method, url=url, json=relay)
             return resp.json()
         except Exception as e:  # SSLCertVerificationError
-            resp = self._session.request(
-                method=method, url=url, json=relay, verify=False
-            )
+            resp = self._session.request(method=method, url=url, json=relay, verify=False)
             return resp.json()
 
     def get(self, url, relay={}):
