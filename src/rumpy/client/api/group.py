@@ -9,8 +9,8 @@ class Group(BaseAPI):
         self,
         group_name: str,
         app_key: str = "group_timeline",
-        consensus_type="poa",
-        encryption_type="public",
+        consensus_type: str = "poa",
+        encryption_type: str = "public",
     ) -> Dict:
         """create a group, return the seed of the group.
 
@@ -109,32 +109,34 @@ class Group(BaseAPI):
         if self.is_joined():
             return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
 
-    def content_trxs(self, reverse=False, trx_id=None, num=None, includestarttrx=False) -> List:
+    def content_trxs(
+        self, is_reverse: bool = False, trx_id: str = None, num: int = 20, is_include_starttrx: bool = False
+    ) -> List:
         """requests the content trxs of a group,return the list of the trxs data.
 
         按条件获取某个组的内容并去重返回
 
-        reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
+        is_reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
         trx_id: 某条内容的 Trx ID, 如果提供, 从该条之后(不包含)获取
         num: 要获取内容条数, 默认获取最前面的 20 条内容
-        includestarttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
+        is_include_starttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
         """
         if not self.is_joined():
             return []
 
         url = self.baseurl.replace("api", "app/api")
 
-        reverse = "&reverse=true" if reverse else ""
+        is_reverse = "&reverse=true" if is_reverse else ""
         trx_id = f"&starttrx={trx_id}" if trx_id else ""
         num = f"&num={num}" if num else ""
-        includestarttrx = "&includestarttrx=true" if includestarttrx else ""
+        is_include_starttrx = "&includestarttrx=true" if is_include_starttrx else ""
 
-        apiurl = f"{url}/group/{self.group_id}/content?{reverse}{trx_id}{num}{includestarttrx}"
+        apiurl = f"{url}/group/{self.group_id}/content?{is_reverse}{trx_id}{num}{is_include_starttrx}"
 
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
 
-    def _send(self, obj: Dict = None, sendtype="Add") -> Dict:
+    def _send(self, obj: Dict, sendtype: str = "Add") -> Dict:
         """return the {trx_id:trx_id} of this action if send successed
 
         obj: 要发送的对象
@@ -162,9 +164,9 @@ class Group(BaseAPI):
 
     def send_note(
         self,
-        content=None,
+        content: str = None,
         name: str = None,
-        image: List = None,
+        images: List = None,
         inreplyto: str = None,
     ):
         """send note to a group. can be used to send: text only, image only,
@@ -172,37 +174,9 @@ class Group(BaseAPI):
 
         content: str,text
         name:str, title for group_post if needed
-        image: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
-        """
-        obj = {"type": "Note"}
+        images: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
 
-        if content:
-            obj["content"] = content
-        if name:
-            obj["name"] = name
-        if image:
-            obj["image"] = [ImgObj(img).__dict__ for img in image]
-        if inreplyto:
-            obj["inreplyto"] = {"trxid": inreplyto}
-
-        if obj.get("content") == None and obj.get("image") == None:
-            raise ValueError("need some content. images,text,or both.")
-
-        return self._send(obj=obj)
-
-    def reply(self, content: str, trx_id: str):
-        return self.send_note(content=content, inreplyto=trx_id)
-
-    def send_text(self, content: str, name: str = None):
-        """post text cotnent to group"""
-        return self.send_note(content=content, name=name)
-
-    def send_img(self, image):
-        """post an image to group"""
-        return self.send_note(image=[image])
-
-    def send_note_v1(self, content=None, name=None, images=None, id=None, trx_id=None):
-        """发送/回复内容到一个组(仅图片, 仅文本, 或两者都有)
+        发送/回复内容到一个组(仅图片, 仅文本, 或两者都有)
 
         content: 要发送的文本内容
         name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
@@ -213,23 +187,25 @@ class Group(BaseAPI):
         trx_id: 要回复的内容的 Trx ID, 如果提供, 内容将回复给这条指定内容
 
         返回值 {"trx_id": "string"}
-        """
-        if images is not None:
-            images = Img(images).image_objs()
-        if content is None and images is None:
-            raise ValueError("need some content. images,text,or both.")
-        obj = {
-            "id": id,
-            "type": "Note",
-            "content": content,
-            "name": name,
-            "image": images,
-        }
-        if trx_id is not None:
-            obj["inreplyto"] = {"trxid": trx_id}
-        return self._send(obj)
 
-    def reply_v1(self, trx_id: str, content=None, images=None):
+        """
+        obj = {"type": "Note"}
+
+        if content:
+            obj["content"] = content
+        if name:
+            obj["name"] = name
+        if images:
+            obj["image"] = [ImgObj(img).__dict__ for img in images]  # Img(images).image_objs()
+        if inreplyto:
+            obj["inreplyto"] = {"trxid": inreplyto}
+
+        if obj.get("content") == None and obj.get("image") == None:
+            raise ValueError("need some content. images,text,or both.")
+
+        return self._send(obj=obj)
+
+    def reply(self, content: str, trx_id: str, images=None):
         """回复某条内容(仅图片, 仅文本, 或两者都有)
 
         trx_id: 要回复的内容的 Trx ID
@@ -237,9 +213,9 @@ class Group(BaseAPI):
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
             content 和 images 必须至少一个不是 None
         """
-        return self.send_note(content, images=images, trx_id=trx_id)
+        return self.send_note(content=content, images=images, inreplyto=trx_id)
 
-    def send_text_v1(self, content: str, name: str = None):
+    def send_text(self, content: str, name: str = None):
         """post text cotnent to group
 
         content: 要发送的文本内容
@@ -247,14 +223,16 @@ class Group(BaseAPI):
         """
         return self.send_note(content=content, name=name)
 
-    def send_img_v1(self, images):
-        """post images to group, up to 4
+    def send_img(self, images):
+        """post images to group
 
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
         """
+        if type(images) != list:
+            images = [images]
         return self.send_note(images=images)
 
-    def block(self, block_id: str = None):
+    def block(self, block_id: str):
         """get the info of a block in a group"""
         self._check_group_id()
         return self._get(f"{self.baseurl}/block/{self.group_id}/{block_id}")
@@ -282,7 +260,7 @@ class Group(BaseAPI):
             trx_id = self.last_trx_id(trx_id, newtrxs)
         return trxs
 
-    def last_trx_id(self, trx_id, trxs):
+    def last_trx_id(self, trx_id: str, trxs: List):
         """get the last-trx_id of trxs which if different from given trx_id"""
         for i in range(-1, -1 * len(trxs), -1):
             tid = trxs[i]["TrxId"]
@@ -290,7 +268,7 @@ class Group(BaseAPI):
                 return tid
         return trx_id
 
-    def trxs_by(self, pubkeys, trx_id=None):
+    def trxs_by(self, pubkeys: List, trx_id: str = None):
         """获取从指定的 Trx 之后, 指定用户产生的所有 Trxs
 
         pubkeys: 指定用户的用户公钥组成的列表
@@ -335,7 +313,7 @@ class Group(BaseAPI):
             return self._get(f"{self.baseurl}/trx/{self.group_id}/{trx_id}")
         return {"error": "nothing got."}
 
-    def trxs_unique(self, trxs):
+    def trxs_unique(self, trxs: List):
         """remove the duplicate trx from the trxs list"""
         new = {}
         for trx in trxs:

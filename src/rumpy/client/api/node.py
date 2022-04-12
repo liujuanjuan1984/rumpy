@@ -41,7 +41,7 @@ class Node(BaseAPI):
         """return dict of different peers which this node has connected"""
         return self.info.peers
 
-    def connect(self, peers: list):
+    def connect(self, peers: List):
         """直连指定节点
 
         peers = [
@@ -50,7 +50,7 @@ class Node(BaseAPI):
         """
         return self._post(f"{self.baseurl}/network/peers", peers)
 
-    def peers(self):
+    def get_peers(self):
         """获取能 ping 通的节点"""
         return self._get(f"{self.baseurl}/network/peers/ping")
 

@@ -101,10 +101,10 @@ class TestCase:
         resp = client.group.send_note(content="你好")
         assert "trx_id" in resp
 
-        resp = client.group.send_note(content="nihao", image=["D:\\test-sample.png"])
+        resp = client.group.send_note(content="nihao", images=["D:\\test-sample.png"])
         assert "trx_id" in resp
 
-        resp = client.group.send_note(image=["D:\\test-sample.png"])
+        resp = client.group.send_note(images=["D:\\test-sample.png"])
         assert "trx_id" in resp
 
         # 回复
@@ -112,7 +112,7 @@ class TestCase:
         resp = client.group.reply("我回复你了", trx_id)
         assert "trx_id" in resp
 
-        resp = client.group.send_note(content="nihao", image=[], inreplyto=trx_id)
+        resp = client.group.send_note(content="nihao", images=[], inreplyto=trx_id)
         assert "trx_id" in resp
 
         resp = client.group.like(trx_id)
