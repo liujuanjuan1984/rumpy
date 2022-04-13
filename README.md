@@ -10,6 +10,8 @@ Python SDK for [QuoRum](https://github.com/rumsystem/quorum).
 
 ### Install
 
+[rumpy@pypi](https://pypi.org/project/rumpy/)
+
 ```sh
 pip install rumpy
 ```
@@ -22,9 +24,10 @@ pip install rumpy
 pip install -r requirements_examples.txt
 ```
 
-### Bug Tracker
+### Contributing
 
-[>> GitHub issues](https://github.com/liujuanjuan1984/rumpy/issues/new)
+- [>> Contributing](https://github.com/liujuanjuan1984/rumpy/tree/master/.github/CONTRIBUTING.md)
+- [>> Bug Tracker](https://github.com/liujuanjuan1984/rumpy/issues/new)
 
 ### License
 

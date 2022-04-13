@@ -38,7 +38,7 @@ def main():
     print(resp4)
 
     relay = {
-        "content": f"{str(datetime.datetime.now())} thi is reply to reply",
+        "content": f"{str(datetime.datetime.now())} this is reply to reply",
         "inreplyto": resp4["trx_id"],
     }
     resp5 = client.group.send_note(**relay)

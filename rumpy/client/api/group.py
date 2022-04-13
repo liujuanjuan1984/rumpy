@@ -141,7 +141,7 @@ class Group(BaseAPI):
         return self.trxs_unique(trxs)
 
     def _send(self, obj: Dict, sendtype: str = "Add") -> Dict:
-        """return the {trx_id:trx_id} of this action if send successed
+        """return the {trx_id:trx_id} of this action if send successded
 
         obj: 要发送的对象
         sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
@@ -304,7 +304,7 @@ class Group(BaseAPI):
         try:
             resp = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
             if len(resp) > 1:
-                print("somthing is error", resp)
+                print("something is error", resp)
             elif len(resp) == 0:
                 raise ValueError(f"nothing got. {resp} {trx_id} {self.group_id}")
             else:

@@ -8,7 +8,7 @@ from typing import List, Dict
 
 
 def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
-    """get the lastest name of the person published the trx_id"""
+    """get the latest name of the person published the trx_id"""
     key = "SenderPubkey" if "Publisher" not in trxs[0] else "Publisher"
     if trx_id_or_pubkey.endswith("=="):
         pubkey = trx_id_or_pubkey
@@ -127,7 +127,7 @@ def _trans(one):
     elif t == "person":
         lines.append(f'<font color="darkred">修改了个人信息。</font>\n\n')
 
-    elif t == "annouce":
+    elif t == "announce":
         lines.append(f'<font color="darkred">处理了链上请求。</font>\n\n')
     elif t == "reply":
         lines.append(f'<font color="darkred">发布了回复：</font>\n\n')

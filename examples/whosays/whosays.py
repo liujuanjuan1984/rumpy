@@ -166,7 +166,7 @@ class WhoSays(RumClient):
 
         elif t == "person":
             lines.append(f"修改了个人信息。")
-        elif t == "annouce":
+        elif t == "announce":
             lines.append(f"处理了链上请求。")
         elif t == "reply":
             lines.append(f"回复说：")

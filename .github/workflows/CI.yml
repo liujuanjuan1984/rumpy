@@ -1,0 +1,47 @@
+on: [push, pull_request]
+
+name: CI
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.8, 3.9, "3.10"]
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: --entrypoint redis-server
+      memcached:
+        image: memcached:alpine
+        ports:
+          - 11211:11211
+    steps:
+      - uses: actions/checkout@v2
+      - uses: codespell-project/actions-codespell@master
+        with:
+          ignore_words_list: ba
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        shell: python
+        run: |
+            import sys
+            print(sys.version)
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: pytest
+        run: |
+          pytest tests
+      - name: Check code style
+        if: matrix.python-version == 3.8
+        run: |
+          pip install black
+          black -l 120 -t py38 -t py39 -t py310 --check .

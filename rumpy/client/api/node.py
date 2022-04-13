@@ -23,12 +23,12 @@ class Node(BaseAPI):
 
     @property
     def status(self) -> str:
-        """return status of this node;unkown,online or offline"""
+        """return status of this node; unknown, online or offline"""
         return self.info.node_status
 
     @property
     def type(self) -> str:
-        """return type of this node;default peer"""
+        """return type of this node; default peer"""
         return self.info.node_type
 
     @property

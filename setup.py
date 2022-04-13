@@ -24,8 +24,8 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src"),
+    package_dir={"": "rumpy"},
+    packages=setuptools.find_packages(where="rumpy"),
     python_requires=">=3.8",
     install_requires=[
         "pytest",
