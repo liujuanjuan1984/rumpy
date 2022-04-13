@@ -3,7 +3,7 @@ import uuid
 import filetype
 import io
 import os
-import datetime
+import time
 from PIL import Image
 
 
@@ -102,7 +102,7 @@ class Img:
             zimg = Img.zip_gif(self.img, cover=False)
         else:
             zimg = Img.zip_image(img_bytes)
-        icon = f"data:{filetype.guess(zimg).mime};" f'base64,{base64.b64encode(zimg).decode("utf-8")}'
+        icon = f'data:{filetype.guess(zimg).mime}base64,{base64.b64encode(zimg).decode("utf-8")}'
 
         return icon
 
@@ -121,7 +121,7 @@ class Img:
         im_obj = {
             "mediaType": filetype.guess(zimg).mime,
             "content": base64.b64encode(zimg).decode("utf-8"),
-            "name": f"{uuid.uuid4()}-{datetime.datetime.now().isoformat()}",
+            "name": f"{uuid.uuid4()}-{round(int(time.time()*1000000))}",
         }
         return im_obj
 
