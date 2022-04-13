@@ -110,7 +110,12 @@ class Group(BaseAPI):
             return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
 
     def content_trxs(
-        self, is_reverse: bool = False, trx_id: str = None, num: int = 20, is_include_starttrx: bool = False
+        self,
+        is_reverse: bool = False,
+        trx_id: str = None,
+        num: int = 20,
+        is_include_starttrx: bool = False,
+        senders: List = None,
     ) -> List:
         """requests the content trxs of a group,return the list of the trxs data.
 
@@ -128,8 +133,7 @@ class Group(BaseAPI):
             apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
         else:
             apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&start=0"
-
-        trxs = self._post(apiurl) or []
+        trxs = self._post(apiurl, {"senders": (senders or [])}) or []
         return self.trxs_unique(trxs)
 
     def _send(self, obj: Dict, sendtype: str = "Add") -> Dict:
@@ -240,10 +244,11 @@ class Group(BaseAPI):
             return True
         return False
 
-    def all_content_trxs(self, trx_id: str = None):
+    def all_content_trxs(self, trx_id: str = None, senders=None):
         """get all the trxs of content started from trx_id"""
         trxs = []
         checked_trxids = []
+        senders = senders or []
         while True:
             if trx_id in checked_trxids:
                 break
@@ -252,7 +257,10 @@ class Group(BaseAPI):
             newtrxs = self.content_trxs(trx_id=trx_id, num=100)
             if len(newtrxs) == 0:
                 break
-            trxs.extend(newtrxs)
+            if senders:
+                trxs.extend([itrx for itrx in newtrxs if itrx.get("Publisher") in senders])
+            else:
+                trxs.extend(newtrxs)
             trx_id = self.last_trx_id(trx_id, newtrxs)
         return trxs
 
@@ -263,16 +271,6 @@ class Group(BaseAPI):
             if tid != trx_id:
                 return tid
         return trx_id
-
-    def trxs_by(self, pubkeys: List, trx_id: str = None):
-        """获取从指定的 Trx 之后, 指定用户产生的所有 Trxs
-
-        pubkeys: 指定用户的用户公钥组成的列表
-        trx_id: 指定 Trx 的 ID
-        """
-        trxs = self.all_content_trxs(trx_id)
-        trxs_by = [i for i in trxs if i["Publisher"] in pubkeys]
-        return trxs_by
 
     def trx_type(self, trxdata: Dict):
         """get type of trx, trx is one of group content list"""

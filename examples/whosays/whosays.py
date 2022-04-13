@@ -54,7 +54,7 @@ class WhoSays(RumClient):
                 progress[group_id] = None
             pubkeys = self.names_info[group_id]
 
-            trxs = self.group.trxs_by(pubkeys, progress[group_id])
+            trxs = self.group.all_content_trxs(senders=pubkeys, trx_id=progress[group_id])
 
             for trx in trxs:
                 if trx["TrxId"] not in data[group_id]:
