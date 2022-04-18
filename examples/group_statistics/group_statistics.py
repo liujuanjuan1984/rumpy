@@ -124,7 +124,7 @@ class GroupStatistics(RumClient):
         note = f"""【{data['info']['group_name']}】数据概况\n创建 {data['create_at']}\n更新 {data['update_at']}\n区块 {data['info']['highest_height']} Trxs {sum(list(data['trxtype'].values()))} 用户 {len(data['pubkeys'])}"""
 
         # 推送结果到指定组
-        kwargs = {"content": note, "image": [imgbytes]}
+        kwargs = {"content": note, "images": [imgbytes]}
         toshare_group_id = toshare_group_id or toview_group_id
         self.group_id = toshare_group_id
         return self.group.send_note(**kwargs)

@@ -150,7 +150,7 @@ class WhoSays(RumClient):
         return text, img, text or img
 
     def _trans(self, trx):
-        obj = {"image": []}
+        obj = {"images": []}
         lines = []
         flag = False
         t = self.group.trx_type(trx)
@@ -162,7 +162,7 @@ class WhoSays(RumClient):
             if text:
                 lines.append(self._quote_text(text))
             if img:
-                obj["image"].extend(img)
+                obj["images"].extend(img)
 
         elif t == "person":
             lines.append(f"修改了个人信息。")
@@ -174,20 +174,20 @@ class WhoSays(RumClient):
             if text:
                 lines.append(self._quote_text(text))
             if img:
-                obj["image"].extend(img)
+                obj["images"].extend(img)
             trxid = trx["Content"]["inreplyto"]["trxid"]
             lines.append(f"回复给 `{self._name(trxid)}` 所发布的内容：")
             text, img, flag = self._refer_content(trxid)
             if text:
                 lines.append(self._quote_text(text))
             if img:
-                obj["image"].extend(img)
+                obj["images"].extend(img)
         else:
             lines.append("说：")
             text, img, flag = self._refer_content(trx["TrxId"])
             if text:
                 lines.append(self._quote_text(text))
             if img:
-                obj["image"].extend(img)
+                obj["images"].extend(img)
         obj["content"] = f'{Stime.ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
         return obj, flag

@@ -18,7 +18,7 @@ def main():
 
     relay = {
         "content": f"{str(datetime.datetime.now())} hello again.can  u see the picture i posted?",
-        "image": [os.path.join(os.path.dirname(__file__), "girl.png")],
+        "images": [os.path.join(os.path.dirname(__file__), "girl.png")],
     }
     resp2 = client.group.send_note(**relay)
     print(resp2)
