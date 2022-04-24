@@ -326,3 +326,11 @@ class Group(BaseAPI):
         self._check_group_id()
         resp = self._get(f"{self.baseurl}/group/{self.group_id}/pubqueue")
         return resp.get("Data")
+
+    def ack(self, trx_ids: List):
+        return self._post(f"{self.baseurl}/trx/ack", {"trx_ids": trx_ids})
+
+    def autoack(self):
+        self._check_group_id()
+        tids = [i["Trx"]["TrxId"] for i in self.pubqueue() if i["State"] == "FAIL"]
+        return self.ack(tids)

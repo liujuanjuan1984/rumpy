@@ -90,3 +90,7 @@ class Node(BaseAPI):
     def token_refresh(self):
         """Get a new auth token"""
         return self._post(f"{self.baseurl_app}/token/refresh")
+
+    def stats(self):
+        """Get network stats summary"""
+        return self._post(f"{self.baseurl_app}/network/stats")
