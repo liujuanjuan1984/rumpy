@@ -4,6 +4,7 @@ import math
 import hashlib
 import base64
 import json
+import filetype
 
 CHUNK_SIZE = 150 * 1024  # 150kb
 
@@ -37,11 +38,9 @@ class FileBot(RumClient):
 
         file_total_size = os.path.getsize(file_path)
         file_name = os.path.basename(file_path).encode().decode("utf-8")
-
         file_obj = open(file_path, "rb")
-
         fileinfo = {
-            "mediaType": "application/epub+zip",
+            "mediaType": filetype.guess(file_path).mime,
             "name": file_name,
             "title": file_name.split(".")[0],
             "sha256": self._sha256(file_obj.read()),
@@ -56,7 +55,6 @@ class FileBot(RumClient):
                 current_size = file_total_size % CHUNK_SIZE
             else:
                 current_size = CHUNK_SIZE
-
             file_obj.seek(i * CHUNK_SIZE)
             ibytes = file_obj.read(current_size)
             fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": self._sha256(ibytes)})
@@ -68,10 +66,60 @@ class FileBot(RumClient):
 
     def upload(self, file_path):
         if not os.path.isfile(file_path):
-            raise ValueError(f"{file_path} is not a file.")
-
-        if not file_path.endswith(".epub"):
-            raise ValueError(f"{file_path} is not a .epub file.")
-
+            return print(f"{file_path} is not a file.")
         for obj in self._file_to_objs(file_path):
             self.group._send(obj)
+
+    def _file_infos(self):
+        trxs = self.group.all_content_trxs()
+        infos = []
+        filetrxs = []
+        for trx in trxs:
+            if trx["Content"]["name"] == "fileinfo":
+                info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
+                print(info)
+                infos.append(info)
+            if trx["Content"].get("type") == "File":
+                filetrxs.append(trx)
+        return infos, filetrxs
+
+    def _down_load(self, file_dir, info, trxs):
+
+        ifilepath = os.path.join(file_dir, info["name"])
+        if os.path.exists(ifilepath):
+            return print(ifilepath, "file exists.")
+
+        # _check_trxs
+        right_shas = [i["sha256"] for i in info["segments"]]
+        contents = {}
+
+        for trx in trxs:
+            content = base64.b64decode(trx["Content"]["file"]["content"])
+            csha = hashlib.sha256(content).hexdigest()
+            if csha in right_shas:
+                contents[csha] = trx
+
+        flag = True
+
+        for seg in info["segments"]:
+            if seg["sha256"] not in contents:
+                print(seg, "trx is not exists...")
+                flag = False
+                break
+            if contents[seg["sha256"]]["Content"].get("name") != seg["id"]:
+                print(seg, "name is different...")
+                flag = False
+                break
+
+        if flag:
+            ifile = open(ifilepath, "wb+")
+            for seg in info["segments"]:
+                content = base64.b64decode(contents[seg["sha256"]]["Content"]["file"]["content"])
+                ifile.write(content)
+            ifile.close()
+            print(ifilepath, "downloaded!")
+
+    def download(self, file_dir):
+        infos, trxs = self._file_infos()
+        for info in infos:
+            self._down_load(file_dir, info, trxs)
