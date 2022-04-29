@@ -36,6 +36,5 @@ setuptools.setup(
         "filetype",
         "base64",
         "urllib",
-        "hashlib",
     ],
 )
