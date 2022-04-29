@@ -34,7 +34,5 @@ setuptools.setup(
         "matplotlib",
         "sqlalchemy",
         "filetype",
-        "base64",
-        "urllib",
     ],
 )
