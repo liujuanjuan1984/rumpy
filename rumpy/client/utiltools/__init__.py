@@ -1,3 +1,4 @@
+import hashlib
 import os
 import uuid
 import filetype
@@ -6,6 +7,10 @@ import os
 from PIL import Image
 
 IMAGE_MAX_SIZE_KB = 200
+
+
+def sha256(ibytes):
+    return hashlib.sha256(ibytes).hexdigest()
 
 
 def read_file_to_bytes(file_path):
