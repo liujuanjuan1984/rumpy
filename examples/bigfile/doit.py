@@ -7,19 +7,22 @@ from rumpy import RumClient
 
 bot = RumClient(port=58356)
 
-seedfile = os.path.join(os.path.dirname(__file__), "group_seed.json")
 
-if os.path.exists(seedfile):
-    seed = JsonFile(seedfile).read()
-else:
-    seed = bot.group.create("mytest_bigfile")
+def check_group():
+    seedfile = os.path.join(os.path.dirname(__file__), "group_seed.json")
+
+    seed = JsonFile(seedfile).read({}) or bot.group.create("mytest_bigfile")
     JsonFile(seedfile).write(seed)
 
-bot.group_id = seed["group_id"]
+    bot.group_id = seed["group_id"]
+
+    if not bot.group.is_joined():
+        JsonFile(seedfile).write({})
+        check_group()
 
 
 asku = input("0 byebye\n1 upload\n2 download\n>>")
-
+check_group()
 if asku == "1":
     # upload files
     file_path = r"D:\books\73198_171789_他者的消失.epub"

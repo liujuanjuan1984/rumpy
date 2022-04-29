@@ -44,6 +44,9 @@ def test_configs_view(group_id=None):
     r = client.paid.payment()
     print("payment", r)
 
+    r = client.config.update_profile(name="juanjuan", image=r"D:\test-sample.png")
+    print(r)
+
 
 if __name__ == "__main__":
     print("Default configs of new group:")

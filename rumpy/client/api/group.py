@@ -1,7 +1,6 @@
 import base64
 import filetype
 import json
-import uuid
 import time
 import os
 import math
@@ -155,73 +154,21 @@ class Group(BaseAPI):
         trxs = self._post(apiurl) or []
         return self.trxs_unique(trxs)
 
-    def _send(self, obj: Dict, sendtype: str = "Add") -> Dict:
+    def _send(self, obj=None, sendtype=None, **kwargs) -> Dict:
         """return the {trx_id:trx_id} of this action if send successded
 
         obj: 要发送的对象
         sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
         返回值 {"trx_id": "string"}
         """
-
-        self._check_group_id()
-        if sendtype not in [4, "Add", "Like", "Dislike"]:
-            sendtype = "Add"
-
-        relay = {
-            "type": sendtype,
-            "object": obj,
-            "target": {"id": self.group_id, "type": "Group"},
-        }
-
+        relay = NewTrx(group_id=self.group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
         return self._post(f"{self.baseurl}/group/content", relay)
 
     def like(self, trx_id: str) -> Dict:
-        return self._send(obj={"id": trx_id}, sendtype="Like")
+        return self._send(trx_id=trx_id, sendtype="Like")
 
     def dislike(self, trx_id: str) -> Dict:
-        return self._send(obj={"id": trx_id}, sendtype="Dislike")
-
-    def img_obj_bytes(self, bytes_content):
-        extension = filetype.guess(bytes_content).extension
-        name = f"{uuid.uuid4()}-{round(int(time.time()*1000000))}"
-        return {
-            "mediaType": filetype.guess(bytes_content).mime,
-            "content": base64.b64encode(bytes_content).decode("utf-8"),
-            "name": ".".join([name, extension]),
-        }
-
-    def img_obj(self, file_path, kb=None):
-        """将一张图片处理成 RUM 支持的图片对象, 例如用户头像, 要求大小小于 200kb
-
-        kb: 设置图片大小, 需要小于 200kb
-        """
-        img_bytes = utiltools.zip_image_file(file_path, kb)
-        return {
-            "mediaType": filetype.guess(img_bytes).mime,
-            "content": base64.b64encode(img_bytes).decode("utf-8"),
-            "name": os.path.basename(file_path).encode().decode("utf-8"),
-        }
-
-    def img_objs(self, file_paths):
-        """将一张或多张图片处理成 RUM 支持的图片对象列表, 要求总大小小于 200kb"""
-        kb = int(200 // len(file_paths))
-        return [self.img_obj(file_path, kb) for file_path in file_paths]
-
-    def _fileinfo_obj(self, file_info):
-        content = base64.b64encode(json.dumps(file_info).encode()).decode("utf-8")
-        return {
-            "type": "File",
-            "name": "fileinfo",
-            "file": {"compression": 0, "mediaType": "application/json", "content": content},
-        }
-
-    def _file_seg_obj(self, name, ibytes):
-        content = base64.b64encode(ibytes).decode("utf-8")
-        return {
-            "type": "File",
-            "name": name,
-            "file": {"compression": 0, "mediaType": "application/octet-stream", "content": content},
-        }
+        return self._send(trx_id=trx_id, sendtype="Dislike")
 
     def _file_to_objs(self, file_path):
 
@@ -247,9 +194,13 @@ class Group(BaseAPI):
             file_obj.seek(i * CHUNK_SIZE)
             ibytes = file_obj.read(current_size)
             fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": utiltools.sha256(ibytes)})
-            objs.append(self._file_seg_obj(f"seg-{i + 1}", ibytes))
+            obj = FileObj(name=f"seg-{i + 1}", content=ibytes, mediaType="application/octet-stream")
+            objs.append(obj)
 
-        objs.insert(0, self._fileinfo_obj(fileinfo))
+        content = json.dumps(fileinfo).encode()
+        obj = FileObj(content=content, name="fileinfo", mediaType="application/json")
+
+        objs.insert(0, obj)
         file_obj.close()
         return objs
 
@@ -257,7 +208,7 @@ class Group(BaseAPI):
         if not os.path.isfile(file_path):
             return print(f"{file_path} is not a file.")
         for obj in self._file_to_objs(file_path):
-            self._send(obj)
+            self._send(obj=obj, sendtype="Add")
 
     def _file_infos(self, trx_id=None):
         trxs = self.all_content_trxs(trx_id)
@@ -313,51 +264,8 @@ class Group(BaseAPI):
         for info in infos:
             self._down_load(file_dir, info, trxs)
 
-    def send_note(
-        self,
-        content: str = None,
-        name: str = None,
-        images: List = None,
-        update_id: str = None,
-        inreplyto: str = None,
-    ):
-        """send note to a group. can be used to send: text only, image only,
-        text with image, reply...etc
-
-        content: str,text
-        name:str, title for group_post if needed
-        images: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
-
-        发送/回复内容到一个组(仅图片, 仅文本, 或两者都有)
-
-        content: 要发送的文本内容
-        name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
-        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
-            content 和 images 必须至少一个不是 None
-        update_id: 自己已经发送成功的某条 Trx 的 ID, rum-app 用来标记, 如果提供该参数,
-            再次发送一条消息, 前端将只显示新发送的这条, 从而实现更新(实际两条内容都在链上)
-        inreplyto: 要回复的内容的 Trx ID, 如果提供, 内容将回复给这条指定内容
-
-        返回值 {"trx_id": "string"}
-
-        """
-        obj = {"type": "Note"}
-
-        if update_id:
-            obj["id"] = update_id
-        if content:
-            obj["content"] = content
-        if name:
-            obj["name"] = name
-        if images:
-            obj["image"] = self.img_objs(images)
-        if inreplyto:
-            obj["inreplyto"] = {"trxid": inreplyto}
-
-        if obj.get("content") == None and obj.get("image") == None:
-            raise ValueError("need some content. images,text,or both.")
-
-        return self._send(obj=obj)
+    def send_note(self, **kwargs):
+        return self._send(sendtype="Add", objtype="Note", **kwargs)
 
     def reply(self, content: str, trx_id: str, images=None):
         """回复某条内容(仅图片, 仅文本, 或两者都有)

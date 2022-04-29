@@ -92,6 +92,6 @@ def zip_image_file(file_path, kb=IMAGE_MAX_SIZE_KB):
         else:
             img_bytes = zip_image(img_bytes, kb=kb)
     except Exception as e:
-        pritn(e)
+        print(e)
 
     return img_bytes

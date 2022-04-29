@@ -310,7 +310,7 @@ class GroupConfig(BaseAPI):
         mixin_id: mixin 账号 uuid, 目前 rum-app 支持的钱包, 可选
         """
         if image is not None:
-            image = self.group.img_obj(image)
+            image = NewTrxImg(image).__dict__
         relay = {
             "type": "Update",
             "person": {"name": name, "image": image},
