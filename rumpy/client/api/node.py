@@ -1,3 +1,4 @@
+import urllib
 from typing import List, Dict
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.group import Group
@@ -91,6 +92,19 @@ class Node(BaseAPI):
         """Get a new auth token"""
         return self._post(f"{self.baseurl_app}/token/refresh")
 
-    def stats(self):
-        """Get network stats summary"""
-        return self._post(f"{self.baseurl_app}/network/stats")
+    def stats(self, start: str = None, end: str = None):
+        """Get network stats summary
+        
+        param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
+        """
+        api = f"{self.baseurl}/network/stats"
+
+        if start or end:
+            query = "?"
+            if start:
+                query += f"&start={start}"
+            if end:
+                query += f"&end={end}"
+            api += urllib.parse.quote(query, safe="?&/")
+
+        return self._get(api)
