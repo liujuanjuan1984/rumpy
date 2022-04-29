@@ -6,7 +6,7 @@ import io
 import os
 from PIL import Image
 
-IMAGE_MAX_SIZE_KB = 200
+IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
 
 
 def sha256(ibytes):
@@ -34,6 +34,9 @@ def zip_image(img_bytes, kb=IMAGE_MAX_SIZE_KB):
 
     返回压缩后的图片字节
     """
+
+    kb = kb or IMAGE_MAX_SIZE_KB
+
     with io.BytesIO(img_bytes) as im:
         size = len(im.getvalue()) / 1024
         if size < kb:
@@ -60,6 +63,7 @@ def zip_gif(gif, kb=IMAGE_MAX_SIZE_KB, cover=False):
     """
     from pygifsicle import gifsicle
 
+    kb = kb or IMAGE_MAX_SIZE_KB
     size = os.path.getsize(gif) / 1024
     if size < kb:
         return read_file_to_bytes(gif)

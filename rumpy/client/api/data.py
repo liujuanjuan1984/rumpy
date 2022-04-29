@@ -117,6 +117,9 @@ class ProfileParams:
         self.__dict__ = d
 
 
+IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
+
+
 @dataclasses.dataclass
 class NewTrxImg:
     """将一张图片处理成 RUM 支持的图片对象, 例如用户头像, 要求大小小于 200kb
@@ -125,6 +128,8 @@ class NewTrxImg:
     """
 
     def __init__(self, file_path=None, file_bytes=None, kb=None):
+
+        kb = kb or IMAGE_MAX_SIZE_KB
 
         if file_path == None and file_bytes == None:
             raise ValueError("need file_path or file_bytes")
@@ -180,8 +185,9 @@ class NewTrxObject:
 
         if images:
             # 将一张或多张图片处理成 RUM 支持的图片对象列表, 要求总大小小于 200kb
-            kb = int(200 // len(images))
-            self.image = [NewTrxImg(file_path, kb).__dict__ for file_path in images]
+            # 客户端限定：单条 trx 最多4 张图片
+            kb = int(200 // min(len(images), 4))
+            self.image = [NewTrxImg(file_path=file_path, kb=kb).__dict__ for file_path in images[:4]]
 
         self.name = name
         self.inreplyto = {"trxid": inreplyto} if inreplyto else None
