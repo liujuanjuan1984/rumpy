@@ -1,11 +1,7 @@
 import dataclasses
 from typing import Dict, List, Any
 from PIL import Image
-import base64
-import io
-import uuid
 import time
-import datetime
 
 
 TRX_TYPES = [
@@ -17,33 +13,6 @@ TRX_TYPES = [
     "BLOCK_PRODUCED",
     "ASK_PEERID",
 ]
-
-
-@dataclasses.dataclass
-class ImgObj:
-    content: Any
-    mediaType: str = "image/png"
-    name: str = f"{uuid.uuid4()}-{round(int(time.time()*1000000))}"
-
-    def __post_init__(self):
-        tgt = self.content
-        try:
-            if type(tgt) == str:
-                with open(tgt, "rb") as f:
-                    self.content = self.encode(f.read())
-                self.mediaType = tgt.split(".")[-1]
-            elif type(tgt) == bytes:
-                self.content = self.encode(tgt)
-            elif type(tgt) == dict:
-                self.mediaType = tgt.get("mediaType") or self.mediaType
-                self.content = tgt.get("content") or ""
-                self.name = tgt.get("name") or self.name
-        except Exception as e:
-            print(e)
-            return print(tgt, "must be imgpath or imgbytes")
-
-    def encode(self, imgbytes):
-        return base64.b64encode(imgbytes).decode("utf-8")
 
 
 @dataclasses.dataclass

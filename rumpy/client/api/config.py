@@ -1,9 +1,11 @@
 import json
+import base64
+import filetype
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.group import Group
 from rumpy.client.api.data import *
-from rumpy.client.api.img import Img
+from rumpy.client import utiltools
 
 
 class GroupConfig(BaseAPI):
@@ -154,6 +156,14 @@ class GroupConfig(BaseAPI):
         """获取某个组的黑名单"""
         return self._list("deny")
 
+    def group_icon(self, file_path):
+        """将一张图片处理成组配置项 value 字段的值, 例如组的图标对象"""
+
+        img_bytes = utiltools.zip_image_file(file_path)
+        icon = f'data:{filetype.guess(img_bytes).mime}base64,{base64.b64encode(img_bytes).decode("utf-8")}'
+
+        return icon
+
     def set_appconfig(
         self,
         name="group_desc",
@@ -175,7 +185,7 @@ class GroupConfig(BaseAPI):
         memo: Memo
         """
         if image is not None:
-            value = Img(image).group_icon()
+            value = self.group_icon(image)
         relay = {
             "action": action,
             "group_id": self.group_id,
@@ -300,7 +310,7 @@ class GroupConfig(BaseAPI):
         mixin_id: mixin 账号 uuid, 目前 rum-app 支持的钱包, 可选
         """
         if image is not None:
-            image = Img(image).image_obj()
+            image = self.group.img_obj(image)
         relay = {
             "type": "Update",
             "person": {"name": name, "image": image},

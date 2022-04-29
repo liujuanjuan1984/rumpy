@@ -1,7 +1,12 @@
+import base64
+import filetype
+import uuid
+import time
+import os
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.data import *
-from rumpy.client.api.img import Img
+from rumpy.client import utiltools
 
 
 class Group(BaseAPI):
@@ -23,9 +28,13 @@ class Group(BaseAPI):
 
         创建成功, 返回值是一个种子, 通过它其他人可加入该组
         """
-
-        if encryption_type.lower() not in ["public", "private"]:
+        # check encryption_type
+        if encryption_type.lower() not in ("public", "private"):
             raise ValueError("encryption_type should be `public` or `private`")
+
+        # check consensus_type
+        if consensus_type.lower() not in ("poa",):
+            raise ValueError("consensus_type should be `poa` or `pos` or `pow`, but only `poa` is supported now.")
 
         relay = {
             "group_name": group_name,
@@ -166,6 +175,32 @@ class Group(BaseAPI):
     def dislike(self, trx_id: str) -> Dict:
         return self._send(obj={"id": trx_id}, sendtype="Dislike")
 
+    def img_obj_bytes(self, bytes_content):
+        extension = filetype.guess(bytes_content).extension
+        name = f"{uuid.uuid4()}-{round(int(time.time()*1000000))}"
+        return {
+            "mediaType": filetype.guess(bytes_content).mime,
+            "content": base64.b64encode(bytes_content).decode("utf-8"),
+            "name": ".".join([name, extension]),
+        }
+
+    def img_obj(self, file_path, kb=None):
+        """将一张图片处理成 RUM 支持的图片对象, 例如用户头像, 要求大小小于 200kb
+
+        kb: 设置图片大小, 需要小于 200kb
+        """
+        img_bytes = utiltools.zip_image_file(file_path, kb)
+        return {
+            "mediaType": filetype.guess(img_bytes).mime,
+            "content": base64.b64encode(img_bytes).decode("utf-8"),
+            "name": os.path.basename(file_path),
+        }
+
+    def img_objs(self, file_paths):
+        """将一张或多张图片处理成 RUM 支持的图片对象列表, 要求总大小小于 200kb"""
+        kb = int(200 // len(file_paths))
+        return [self.img_obj(file_path, kb) for file_path in file_paths]
+
     def send_note(
         self,
         content: str = None,
@@ -203,7 +238,7 @@ class Group(BaseAPI):
         if name:
             obj["name"] = name
         if images:
-            obj["image"] = [ImgObj(img).__dict__ for img in images]  # Img(images).image_objs()
+            obj["image"] = self.img_objs(images)
         if inreplyto:
             obj["inreplyto"] = {"trxid": inreplyto}
 

@@ -33,5 +33,9 @@ setuptools.setup(
         "pillow",
         "matplotlib",
         "sqlalchemy",
+        "filetype",
+        "base64",
+        "urllib",
+        "hashlib",
     ],
 )

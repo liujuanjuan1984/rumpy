@@ -94,7 +94,7 @@ class Node(BaseAPI):
 
     def stats(self, start: str = None, end: str = None):
         """Get network stats summary
-        
+
         param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
         """
         api = f"{self.baseurl}/network/stats"
