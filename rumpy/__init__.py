@@ -2,7 +2,7 @@ import logging
 from rumpy.client import RumClient
 from rumpy.client.module import *
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 __author__ = "liujuanjuan1984"
 
 # Set default logging handler to avoid "No handler found" warnings.
