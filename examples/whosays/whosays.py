@@ -33,6 +33,21 @@ class WhoSays(RumClient):
         JsonFile(self.nicknamesfile).rewrite({})
         self.names_info = JsonFile(namesinfofile).read({})
 
+    def check_data(self):
+        data = JsonFile(self.datafile).read({})
+        newdata = {}
+        for group_id in data:
+            pubkeys = [k for k in self.names_info[group_id]]
+            if len(pubkeys) == 0:
+                continue
+            newdata[group_id] = {}
+            for trx_id in data[group_id]:
+                trx = data[group_id][trx_id]
+                if trx["Publisher"] not in pubkeys:
+                    continue
+                newdata[group_id][trx_id] = trx
+        JsonFile(self.datafile).write(newdata)
+
     def search(self):
         data = JsonFile(self.datafile).read({})
         seeds = JsonFile(self.seedsfile).read({})

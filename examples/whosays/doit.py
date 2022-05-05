@@ -31,6 +31,7 @@ def main():
     bot = WhoSays()
     bot.init("huoju", seedsfile)
     bot.search()
+    bot.check_data()
     group_id = bot.group.create("mytest_whosays")["group_id"]
     bot.send("HuoJu", group_id)
 
