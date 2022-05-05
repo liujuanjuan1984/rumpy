@@ -20,6 +20,9 @@ async def run():
         if not rum.group.is_joined():
             continue
 
+        gname = rum_groups.get(gid) or rum.group.seed()["group_name"]
+        print(gid, gname)
+
         if gid not in progress:
             _trxs = rum.group.content_trxs(is_reverse=True)
             if len(_trxs) > 0:
@@ -29,15 +32,10 @@ async def run():
         else:
             trx_id = progress.get(gid)
 
-        trxs = rum.group.content_trxs(trx_id=trx_id)
-
-        if len(trxs) > 0:
-            progress[gid] = trxs[-1]["TrxId"]
-        else:
-            progress[gid] = trx_id
+        progress[gid] = trx_id
         JsonFile(progress_file).write(progress)
 
-        gname = rum_groups.get(gid) or rum.group.seed()["group_name"]
+        trxs = rum.group.content_trxs(trx_id=trx_id)
 
         for trx in trxs:
 
@@ -54,7 +52,11 @@ async def run():
 
             if text:
                 data = f"{ts}@{gname}\n" + text.encode().decode("utf-8")
+                print(data)
                 await xin.send_text_message(conversation_id, data)
+
+                progress[gid] = trx_id
+                JsonFile(progress_file).write(progress)
 
             """ 
             elif rum.group.trx_type(trx) == "image_only":
