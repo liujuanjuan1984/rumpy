@@ -42,6 +42,11 @@ class WhoSays(RumClient):
             raise ValueError("add data in names_info file with data like {group_id:[pubkey]}")
 
         for group_id in self.names_info:
+            pubkeys = [k for k in self.names_info[group_id]]
+
+            if len(pubkeys) == 0:
+                continue
+
             self.group_id = group_id
 
             if group_id not in data:
@@ -52,7 +57,6 @@ class WhoSays(RumClient):
                     seeds[group_id] = seed
             if group_id not in progress:
                 progress[group_id] = None
-            pubkeys = self.names_info[group_id]
 
             trxs = self.group.all_content_trxs(senders=pubkeys, trx_id=progress[group_id])
 

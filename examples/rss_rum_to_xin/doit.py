@@ -55,7 +55,7 @@ async def run():
                 print(data)
                 await xin.send_text_message(conversation_id, data)
 
-                progress[gid] = trx_id
+                progress[gid] = trx["TrxId"]
                 JsonFile(progress_file).write(progress)
 
             """ 
