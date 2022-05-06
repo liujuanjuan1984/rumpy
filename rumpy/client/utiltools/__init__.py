@@ -1,10 +1,8 @@
 import hashlib
 import os
 import uuid
-import filetype
 import io
 import os
-from PIL import Image
 
 IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
 
@@ -34,6 +32,7 @@ def zip_image(img_bytes, kb=IMAGE_MAX_SIZE_KB):
 
     返回压缩后的图片字节
     """
+    from PIL import Image
 
     kb = kb or IMAGE_MAX_SIZE_KB
 
@@ -89,6 +88,8 @@ def zip_gif(gif, kb=IMAGE_MAX_SIZE_KB, cover=False):
 
 
 def zip_image_file(file_path, kb=IMAGE_MAX_SIZE_KB):
+    import filetype
+
     img_bytes = read_file_to_bytes(file_path)
     try:
         if filetype.guess(img_bytes).extension == "gif":

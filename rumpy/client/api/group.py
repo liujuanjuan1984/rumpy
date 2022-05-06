@@ -1,5 +1,4 @@
 import base64
-import filetype
 import json
 import time
 import os
@@ -171,6 +170,7 @@ class Group(BaseAPI):
         return self._send(trx_id=trx_id, sendtype="Dislike")
 
     def _file_to_objs(self, file_path):
+        import filetype
 
         file_total_size = os.path.getsize(file_path)
         file_name = os.path.basename(file_path).encode().decode("utf-8")

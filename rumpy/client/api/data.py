@@ -1,13 +1,11 @@
 import dataclasses
 import time
 import base64
-import filetype
 import json
 import uuid
 import time
 import os
 from typing import Dict, List, Any
-from PIL import Image
 from rumpy.client import utiltools
 
 
@@ -128,6 +126,7 @@ class NewTrxImg:
     """
 
     def __init__(self, file_path=None, file_bytes=None, kb=None):
+        import filetype
 
         kb = kb or IMAGE_MAX_SIZE_KB
 

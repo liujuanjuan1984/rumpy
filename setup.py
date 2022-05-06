@@ -27,12 +27,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["tests"]),
     python_requires=">=3.8",
     install_requires=[
-        "pytest",
         "requests",
-        "pandas",
-        "pillow",
-        "matplotlib",
         "sqlalchemy",
-        "filetype",
     ],
 )
