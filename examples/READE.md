@@ -17,6 +17,7 @@
 - [seedstore 种子商店](https://github.com/liujuanjuan1984/seedstore)：发现和分享更多种子~
 - [sudoku 数独游戏](https://github.com/liujuanjuan1984/rum_sudoku)：玩数独游戏，把游戏结果推送到 rum group 上链存储。
 - [todolist 待办清单](https://github.com/liujuanjuan1984/todolist)：只能把 Rum 当微博/博客用吗？Rum 的想象空间很大，待办清单这个雏形可以给你带来启发。
+- [rss rum_to_xin RUM动态转发到XIN](https://github.com/liujuanjuan1984/rss_rum_to_xin)：根据用户订阅，把 RUM 指定种子网络的动态转发到 Mixin Messenger，用户可以在 MM 上随时查阅 Rum 指定种子网络的最新动态。当然，如需互动和提交数据，需要下载 Rum。
 
 部分案例需安装 officy 以支持 JsonFile、Dir 等自定义方法：
 
