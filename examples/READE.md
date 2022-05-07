@@ -9,6 +9,7 @@
 - [group statistics 种子网络数据概况](./group_statistics)：统计指定组的数据概况，并生成图文发布，或保存到文件中。
 - [export data 批量数据导出](./export_data)：你所加入的 所有 groups 的数据其实已经保存在你的本地。这个工具帮你把数据导出为排版良好的 markdown 文件及图片。
 - [bigfile 大文件上传和下载](./bigfile)：大文件上传及下载；展示了 电子书 epub、图片 jpeg、视频 mp4 文件三种类型。超出大小的文件，将拆分多个trx上链，并由包含 fileinfo trx 来描述这种拆分。客户端同步到 trxs 后，可以把这些文件块重新拼成文件，并渲染给用户查看。
+- [users_profiles](./users_profiles)：获取指定种子网络（group_id）中所有用户的 profile 信息并更新至最新数据。每个用户的 profile 包含：name 昵称，image 头像，wallet（钱包）三个属性。注意：这些属性并非必须的，由用户自行决定是否修改。
 
 其它案例：
 
