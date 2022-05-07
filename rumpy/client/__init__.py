@@ -101,10 +101,6 @@ class RumClient:
         except Exception as e:  # SSLCertVerificationError
             resp = self._session.request(method=method, url=url, json=relay, verify=False)
 
-        if resp.status_code == 200:
-            print(resp.status_code, url)
-        else:
-            print(resp.status_code, url, resp.json())
         return resp.json()
 
     def get(self, url: str, relay: Dict = {}):
