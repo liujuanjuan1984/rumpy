@@ -4,6 +4,7 @@ import os
 from typing import List, Dict
 from officy import JsonFile, Dir, Stime
 from rumpy import RumClient
+from examples.users_profiles.users_profiles import update_profiles
 
 
 class WhoSays(RumClient):
@@ -22,15 +23,10 @@ class WhoSays(RumClient):
         datadir = os.path.join(os.path.dirname(__file__), "data", dirname)
         Dir(datadir).check()
         namesinfofile = os.path.join(datadir, "names_info.json")
+        self.datadir = datadir
         self.datafile = os.path.join(datadir, "whosays_trxs.json")
         self.progressfile = os.path.join(datadir, "progress.json")
         self.seedsfile = seedsfile or os.path.join(datadir, "seeds.json")
-        self.nicknamesfile = os.path.join(datadir, "nicknames.json")
-        JsonFile(namesinfofile).rewrite({})
-        JsonFile(self.datafile).rewrite({})
-        JsonFile(self.progressfile).rewrite({})
-        JsonFile(self.seedsfile).rewrite({})
-        JsonFile(self.nicknamesfile).rewrite({})
         self.names_info = JsonFile(namesinfofile).read({})
 
     def check_data(self):
@@ -113,44 +109,15 @@ class WhoSays(RumClient):
     def _quote_text(self, text):
         return "".join(["> ", "\n> ".join(text.split("\n")), "\n"])
 
-    def _nickname(self, pubkey):
-        names = JsonFile(self.nicknamesfile).read({})
-        if pubkey not in names:
-            names[pubkey] = {
-                "pubkey": pubkey,
-                "group_id": self.group_id,
-                "nicknames": ["某人"],
-                "trx_id": None,
-            }
+    def _nickname(self, trx_id):
+        pubkey = self.group.trx(trx_id).get("Publisher") or ""
+        nicknames = update_profiles(self, users_profiles_dir=self.datadir, profile_types=("name",)).get("data") or {}
+        try:
+            name = nicknames[pubkey]["name"] + f"({pubkey[-10:-2]})"
+        except:
+            name = pubkey[-10:-2] or "某人"
 
-        if self.group_id != names[pubkey]["group_id"]:
-            raise ValueError(f"group_id error. check it.{self.group_id},{names[pubkey]['group_id']}")
-
-        searched_trxids = []
-        while True:
-            trx_id = names[pubkey]["trx_id"]
-            if trx_id in searched_trxids:
-                break
-            else:
-                searched_trxids.append(trx_id)
-            print(datetime.datetime.now(), "_nickname", trx_id, "...")
-            trxs = self.group.content_trxs(num=400, trx_id=trx_id)
-            if len(trxs) == 0:
-                break
-            for trx in trxs:
-                if trx["Publisher"] != pubkey:
-                    continue
-                if trx["TypeUrl"] == "quorum.pb.Person":
-                    name = trx["Content"].get("name") or ""
-                    if name not in names[pubkey]["nicknames"]:
-                        names[pubkey]["nicknames"].append(name)
-            names[pubkey]["trx_id"] = trxs[-1]["TrxId"]
-
-        JsonFile(self.nicknamesfile).write(names)
-        return names[pubkey]["nicknames"][-1]
-
-    def _name(self, trx_id):
-        return self._nickname(self.group.trx(trx_id).get("Publisher"))
+        return name
 
     def _refer_content(self, trx):
         if type(trx) == str:
@@ -176,7 +143,7 @@ class WhoSays(RumClient):
         _info = {"like": "赞", "dislike": "踩"}
         if t in _info:
             trxid = trx["Content"]["id"]
-            lines.append(f"点{_info[t]}给 `{self._name(trxid)}` 发布的内容。")
+            lines.append(f"点{_info[t]}给 `{self._nickname( trxid)}` 发布的内容。")
             text, img, flag = self._refer_content(trxid)
             if text:
                 lines.append(self._quote_text(text))
@@ -195,7 +162,7 @@ class WhoSays(RumClient):
             if img:
                 obj["images"].extend(img)
             trxid = trx["Content"]["inreplyto"]["trxid"]
-            lines.append(f"回复给 `{self._name(trxid)}` 所发布的内容：")
+            lines.append(f"回复给 `{self._nickname(trxid)}` 所发布的内容：")
             text, img, flag = self._refer_content(trxid)
             if text:
                 lines.append(self._quote_text(text))

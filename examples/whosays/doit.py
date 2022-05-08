@@ -28,7 +28,7 @@ def trans():
 
 def main():
 
-    bot = WhoSays()
+    bot = WhoSays(port=58356)
     bot.init("huoju", seedsfile)
     bot.search()
     bot.check_data()
