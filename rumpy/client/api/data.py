@@ -219,6 +219,10 @@ class NewTrx:
         self.type = sendtype
         if isinstance(obj, NewTrxObject):
             self.object = obj.__dict__
+        elif isinstance(obj, dict):
+            if "type" not in obj:
+                raise ValueError("obj need a `type` such as: `Note` or `File`")
+            self.object = obj
         else:
             self.object = NewTrxObject(**kwargs).__dict__
         self.target = {"id": group_id, "type": "Group"}

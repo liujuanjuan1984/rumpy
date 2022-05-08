@@ -3,12 +3,9 @@ from officy import JsonFile
 from whosays import WhoSays
 
 
-seedsfile = r"D:\Jupyter\seeds\data\seeds.json"
-
-
 def trans():
     bot = WhoSays()
-    bot.init("huoju", seedsfile)
+    bot.init("huoju")
 
     oldfile = os.path.join(os.path.dirname(__file__), "data", "huoju", "huoju_says.json")
     olddata = JsonFile(oldfile).read()
@@ -29,9 +26,8 @@ def trans():
 def main():
 
     bot = WhoSays(port=58356)
-    bot.init("huoju", seedsfile)
+    bot.init("huoju")
     bot.search()
-    bot.check_data()
     group_id = bot.group.create("mytest_whosays")["group_id"]
     bot.send("HuoJu", group_id)
 
