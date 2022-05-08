@@ -73,10 +73,11 @@ def trx_to_newobj(client, trx, nicknames):
 
             if refer_tid:
                 refer_trx = client.group.trx(refer_tid)
-                refer_text = refer_trx["Content"].get("content") or ""
-                refer_img = refer_trx["Content"].get("image") or []
-                lines.append(_quote(refer_text))
-                obj["image"].extend(refer_img)
+                if "Content" in refer_trx:
+                    refer_text = refer_trx["Content"].get("content") or ""
+                    refer_img = refer_trx["Content"].get("image") or []
+                    lines.append(_quote(refer_text))
+                    obj["image"].extend(refer_img)
     else:
         print(trx)
         return None, False
