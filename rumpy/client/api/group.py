@@ -1,4 +1,5 @@
 import base64
+import datetime
 import json
 import time
 import os
@@ -11,6 +12,18 @@ from rumpy.client import utiltools
 
 
 CHUNK_SIZE = 150 * 1024  # 150kb
+
+
+def _quote(text):
+    return "".join(["> ", "\n> ".join(text.split("\n")), "\n"]) if text else ""
+
+
+def _nickname(pubkey, nicknames):
+    try:
+        name = nicknames[pubkey]["name"] + f"({pubkey[-10:-2]})"
+    except:
+        name = pubkey[-10:-2] or "某人"
+    return name
 
 
 class Group(BaseAPI):
@@ -389,3 +402,151 @@ class Group(BaseAPI):
         self._check_group_id()
         tids = [i["Trx"]["TrxId"] for i in self.pubqueue() if i["State"] == "FAIL"]
         return self.ack(tids)
+
+    def get_users_profiles(self, users_data: Dict, types=("name", "image", "wallet")) -> Dict:
+        """Returns:
+        {
+            group_id:  "",
+            group_name: "",
+            trx_id: "",
+            update_at: "",
+            data:{
+                name:"",
+                image:{},
+                wallet:[],
+            }
+        }
+        """
+
+        # get new trxs from the trx_id
+        trx_id = users_data.get("trx_id")
+        trxs = self.group.all_content_trxs(trx_id=trx_id)
+
+        # update trx_id: to record the progress to get new trxs
+        if len(trxs) > 0:
+            to_tid = trxs[-1]["TrxId"]
+        else:
+            to_tid = trx_id
+
+        users_data.update(
+            {
+                "group_id": self.group_id,
+                "group_name": self.group.seed()["group_name"],
+                "trx_id": to_tid,
+                "update_at": str(datetime.datetime.now()),
+            }
+        )
+
+        users = users_data.get("data") or {}
+        profile_trxs = [trx for trx in trxs if trx.get("TypeUrl") == "quorum.pb.Person"]
+
+        for trx in profile_trxs:
+            if "Content" not in trx:
+                continue
+            pubkey = trx["Publisher"]
+            if pubkey not in users:
+                users[pubkey] = {}
+            for key in trx["Content"]:
+                if key in types:
+                    users[pubkey].update({key: trx["Content"][key]})
+        users_data.update({"data": users})
+        return users_data
+
+    def update_profiles(
+        self,
+        users_data=None,
+        users_profiles_file=None,
+        datadir=None,
+        types=("name", "wallet", "image"),
+    ):
+        from officy import JsonFile
+
+        if users_data:
+            return self.get_users_profiles(users_data, types)
+
+        filename = f"users_profiles_group_{self.group_id}.json"
+        if datadir:
+            users_profiles_file = os.path.join(datadir, filename)
+        else:
+            users_profiles_file = users_profiles_file or filename
+
+        users_data = JsonFile(users_profiles_file).read({})
+        users_data = self.get_users_profiles(users_data, types)
+
+        JsonFile(users_profiles_file).write(users_data)
+        return users_data
+
+    def trx_to_newobj(self, trx, nicknames, refer_trx=None):
+        """trans from trx to an object of new trx to send to chain.
+
+        Args:
+            trx (dict): the trx data
+            nicknames (dict): the nicknames data of the group
+
+        Returns:
+            obj: object of NewTrx,can be used as: self.group.send_note(obj=obj).
+            result: True,or False, if True, the obj can be send to chain.
+        """
+
+        if "Content" not in trx:
+            return None, False
+
+        obj = {"type": "Note", "image": []}
+        ttype = trx["TypeUrl"]
+        tcontent = trx["Content"]
+        lines = []
+
+        if ttype == "quorum.pb.Person":
+            _name = "昵称" if "name" in tcontent else ""
+            _wallet = "钱包" if "wallet" in tcontent else ""
+            _image = "头像" if "image" in tcontent else ""
+            _profile = "、".join([i for i in [_name, _image, _wallet] if i])
+            lines.append(f"修改了个人信息：{_profile}。")
+        elif ttype == "quorum.pb.Object":
+            if tcontent.get("type") == "File":
+                lines.append(f"上传了文件。")
+            else:
+                text = trx["Content"].get("content") or ""
+                img = trx["Content"].get("image") or []
+                lines.append(text)
+                obj["image"].extend(img)
+
+                t = self.group.trx_type(trx)
+                refer_tid = None
+                _info = {"like": "赞", "dislike": "踩"}
+                if t == "announce":
+                    lines.insert(0, f"处理了链上请求。")
+                elif t in _info:
+                    refer_tid = trx["Content"]["id"]
+                    refer_pubkey = self.group.trx(refer_tid).get("Publisher") or ""
+                    lines.insert(0, f"点{_info[t]}给 `{_nickname( refer_pubkey,nicknames)}` 所发布的内容：")
+                elif t == "reply":
+                    lines.insert(0, f"回复说：")
+                    refer_tid = trx["Content"]["inreplyto"]["trxid"]
+                    refer_pubkey = self.group.trx(refer_tid).get("Publisher") or ""
+                    lines.append(f"\n回复给 `{_nickname(refer_pubkey,nicknames)}` 所发布的内容：")
+                else:
+                    if text and img:
+                        lines.insert(0, f"发布了图片，并且说：")
+                    elif img:
+                        lines.insert(0, f"发布了图片。")
+                    else:
+                        lines.insert(0, f"说：")
+
+                if refer_tid:
+
+                    refer_trx = refer_trx or self.group.trx(refer_tid)
+                    if "Content" in refer_trx:
+                        refer_text = refer_trx["Content"].get("content") or ""
+                        refer_img = refer_trx["Content"].get("image") or []
+                        lines.append(_quote(refer_text))
+                        obj["image"].extend(refer_img)
+        else:
+            print(trx)
+            return None, False
+
+        obj["content"] = f'{utiltools.ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
+        obj["image"] = obj["image"][:4]
+        obj = {key: obj[key] for key in obj if obj[key]}
+
+        return obj, True

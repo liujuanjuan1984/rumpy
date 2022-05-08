@@ -108,3 +108,8 @@ class Node(BaseAPI):
             api += urllib.parse.quote(query, safe="?&/")
 
         return self._get(api)
+
+    def update_profiles(self, datadir, types=("name", "wallet", "image")):
+        for gid in self.groups_id:
+            self._client.group_id = gid
+            self.group.update_profiles(datadir=datadir, types=types)

@@ -3,8 +3,6 @@ import os
 from typing import List, Dict
 from officy import JsonFile, Dir
 from rumpy import RumClient
-from examples.users_profiles.users_profiles import update_profiles
-from trx_to_newobj import trx_to_newobj
 
 
 class WhoSays(RumClient):
@@ -70,16 +68,14 @@ class WhoSays(RumClient):
             self.group_id = group_id
             if not self.group.is_joined():
                 continue
-            nicknames = (
-                update_profiles(self, users_profiles_dir=self.datadir, profile_types=("name",)).get("data") or {}
-            )
+            nicknames = self.group.update_profiles(datadir=self.datadir, types=("name",)).get("data") or {}
             for trx_id in gtrxs:
                 self.group_id = group_id
                 if "shared" not in gtrxs[trx_id]:
                     data[group_id][trx_id]["shared"] = []
                 if toshare_group_id in data[group_id][trx_id]["shared"]:
                     continue
-                obj, can_post = trx_to_newobj(self, gtrxs[trx_id], nicknames)
+                obj, can_post = self.group.trx_to_newobj(gtrxs[trx_id], nicknames)
                 if not can_post:
                     continue
                 _seed = json.dumps(self.group.seed())

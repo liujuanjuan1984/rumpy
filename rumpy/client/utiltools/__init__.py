@@ -1,8 +1,8 @@
+import datetime
 import hashlib
 import os
 import uuid
 import io
-import os
 
 IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
 
@@ -100,3 +100,9 @@ def zip_image_file(file_path, kb=IMAGE_MAX_SIZE_KB):
         print(e)
 
     return img_bytes
+
+
+def ts2datetime(timestamp):
+    ts = int(timestamp)
+    n = 10 ** (len(str(ts)) - 10)
+    return datetime.datetime.fromtimestamp(int(ts / n))
