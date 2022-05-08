@@ -67,16 +67,24 @@ class WhoSays(RumClient):
         data = JsonFile(self.trxs_file).read({})
         for group_id in data:
             gtrxs = data[group_id]
+            self.group_id = group_id
+            if not self.group.is_joined():
+                continue
+            nicknames = (
+                update_profiles(self, users_profiles_dir=self.datadir, profile_types=("name",)).get("data") or {}
+            )
             for trx_id in gtrxs:
                 self.group_id = group_id
                 if "shared" not in gtrxs[trx_id]:
                     data[group_id][trx_id]["shared"] = []
                 if toshare_group_id in data[group_id][trx_id]["shared"]:
                     continue
-                obj, flag = self._trans(gtrxs[trx_id])
-                if not flag:
+                obj, can_post = self.trx_to_newobj(gtrxs[trx_id], nicknames)
+                if not can_post:
                     continue
-                obj["content"] = f"{name} {obj['content']}\norigin: {json.dumps(self.group.seed())}"
+                _seed = json.dumps(self.group.seed())
+                _origin = f"origin: {_seed}" if _seed else f"origin: Group {group_id}"
+                obj["content"] = f"{name} {obj['content']}\n{_origin}"
                 self.group_id = toshare_group_id
                 resp = self.group.send_note(obj=obj)
 
@@ -86,75 +94,80 @@ class WhoSays(RumClient):
                 else:
                     print(resp)
 
-    def _quote_text(self, text):
-        return "".join(["> ", "\n> ".join(text.split("\n")), "\n"])
+    def _quote(self, text):
+        return "".join(["> ", "\n> ".join(text.split("\n")), "\n"]) if text else ""
 
-    def _nickname(self, trx_id):
-        pubkey = self.group.trx(trx_id).get("Publisher") or ""
-        nicknames = update_profiles(self, users_profiles_dir=self.datadir, profile_types=("name",)).get("data") or {}
+    def _nickname(self, pubkey, nicknames):
         try:
             name = nicknames[pubkey]["name"] + f"({pubkey[-10:-2]})"
         except:
             name = pubkey[-10:-2] or "某人"
-
         return name
 
-    def _refer_content(self, trx):
-        if type(trx) == str:
-            trx = self.group.trx(trx)
-        text, img = None, None
+    def trx_to_newobj(self, trx, nicknames):
+        """trans from trx to an object of new trx to send to chain.
+
+        Args:
+            trx (dict): the trx data
+            nicknames (dict): the nicknames data of the group
+
+        Returns:
+            obj: object of NewTrx,can be used as: client.group.send_note(obj=obj).
+            result: True,or False, if True, the obj can be send to chain.
+        """
+
         if "Content" not in trx:
-            return text, img, text or img
-        if "content" in trx["Content"]:
-            text = trx["Content"]["content"]
-        if "image" in trx["Content"]:
-            if type(trx["Content"]["image"]) == dict:
-                img = [trx["Content"]["image"]]
-            else:
-                img = trx["Content"]["image"]
+            return None, False
 
-        return text, img, text or img
-
-    def _trans(self, trx):
-        obj = {"image": []}
+        obj = {"type": "Note", "image": []}
+        ttype = trx["TypeUrl"]
+        tcontent = trx["Content"]
         lines = []
-        flag = False
-        t = self.group.trx_type(trx)
-        _info = {"like": "赞", "dislike": "踩"}
-        if t in _info:
-            trxid = trx["Content"]["id"]
-            lines.append(f"点{_info[t]}给 `{self._nickname( trxid)}` 所发布的内容。")
-            text, img, flag = self._refer_content(trxid)
-            if text:
-                lines.append(self._quote_text(text))
-            if img:
+
+        if ttype == "quorum.pb.Person":
+            _name = "昵称" if "name" in tcontent else ""
+            _wallet = "钱包" if "wallet" in tcontent else ""
+            _image = "头像" if "image" in tcontent else ""
+            _profile = "、".join([i for i in [_name, _image, _wallet] if i])
+            lines.append(f"修改了个人信息：{_profile}。")
+        elif ttype == "quorum.pb.Object":
+            if tcontent.get("type") == "File":
+                lines.append(f"上传了文件。")
+            else:
+                text = trx["Content"].get("content") or ""
+                img = trx["Content"].get("image") or []
+                lines.append(text)
                 obj["image"].extend(img)
 
-        elif t == "person":
-            lines.append(f"修改了个人信息。")
-        elif t == "announce":
-            lines.append(f"处理了链上请求。")
-        elif t == "reply":
-            lines.append(f"回复说：")
-            text, img, flag = self._refer_content(trx["TrxId"])
-            if text:
-                lines.append(self._quote_text(text))
-            if img:
-                obj["image"].extend(img)
-            trxid = trx["Content"]["inreplyto"]["trxid"]
-            lines.append(f"回复给 `{self._nickname(trxid)}` 所发布的内容：")
-            text, img, flag = self._refer_content(trxid)
-            if text:
-                lines.append(self._quote_text(text))
-            if img:
-                obj["image"].extend(img)
+                t = self.group.trx_type(trx)
+                refer_tid = None
+                _info = {"like": "赞", "dislike": "踩"}
+                if t == "announce":
+                    lines.insert(0, f"处理了链上请求。")
+                elif t in _info:
+                    refer_tid = trx["Content"]["id"]
+                    refer_pubkey = self.group.trx(refer_tid).get("Publisher") or ""
+                    lines.insert(0, f"点{_info[t]}给 `{self._nickname( refer_pubkey,nicknames)}` 所发布的内容：")
+                elif t == "reply":
+                    lines.insert(0, f"回复说：")
+                    refer_tid = trx["Content"]["inreplyto"]["trxid"]
+                    refer_pubkey = self.group.trx(refer_tid).get("Publisher") or ""
+                    lines.append(f"\n回复给 `{self._nickname(refer_pubkey,nicknames)}` 所发布的内容：")
+                else:
+                    lines.insert(0, f"说：")
+
+                if refer_tid:
+                    refer_trx = self.group.trx(refer_tid)
+                    refer_text = refer_trx["Content"].get("content") or ""
+                    refer_img = refer_trx["Content"].get("image") or []
+                    lines.append(self._quote(refer_text))
+                    obj["image"].extend(refer_img)
         else:
-            lines.append("说：")
-            text, img, flag = self._refer_content(trx["TrxId"])
-            if text:
-                lines.append(self._quote_text(text))
-            if img:
-                obj["image"].extend(img)
+            print(trx)
+            return None, False
+
         obj["content"] = f'{Stime.ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
-        obj["type"] = "Note"
-        return obj, flag
+        obj["image"] = obj["image"][:4]
+        obj = {key: obj[key] for key in obj if obj[key]}
+
+        return obj, True
