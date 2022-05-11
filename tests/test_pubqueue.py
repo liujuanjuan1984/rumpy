@@ -1,6 +1,6 @@
 import datetime
 from tests import client
-from officy import Stime
+from rumpy.client.utiltools import ts2datetime
 
 seed = client.group.create("mytest_pubqueque")
 client.group_id = seed["group_id"]
@@ -19,9 +19,9 @@ def test_update():
     print(data)
 
     for idata in data:
-        s1 = Stime.ts2datetime(idata["UpdateAt"])
-        s2 = Stime.ts2datetime(idata["Trx"]["TimeStamp"])
-        s3 = Stime.ts2datetime(idata["Trx"]["Expired"])
+        s1 = ts2datetime(idata["UpdateAt"])
+        s2 = ts2datetime(idata["Trx"]["TimeStamp"])
+        s3 = ts2datetime(idata["Trx"]["Expired"])
         s4 = datetime.datetime.now()
         tid = idata["Trx"]["TrxId"]
         print(idata["State"], tid, s2, s1 - s2)

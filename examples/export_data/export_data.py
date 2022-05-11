@@ -2,8 +2,9 @@ import os
 import datetime
 import uuid
 import sys
-from officy import JsonFile, Dir, Img, Stime
+from officy import JsonFile, Dir, Img
 from rumpy import RumClient
+from rumpy.client.utiltools import ts2datetime
 from typing import List, Dict
 
 
@@ -26,14 +27,14 @@ def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
     name = ""
     for trxdata in rlt:
         name = trxdata["Content"].get("name") or ""
-        if Stime.ts2datetime(trxdata.get("TimeStamp")) <= since:
+        if ts2datetime(trxdata.get("TimeStamp")) <= since:
             return name
     return name
 
 
 def trx_export(trxdata: Dict, trxs: List) -> Dict:
     """export data with refer_to data"""
-    ts = Stime.ts2datetime(trxdata.get("TimeStamp"))
+    ts = ts2datetime(trxdata.get("TimeStamp"))
     info = {
         "trx_id": trxdata["TrxId"],
         "trx_time": str(ts),

@@ -8,7 +8,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 from rumpy import RumClient
-from officy import JsonFile, Stime
+from rumpy.client.utiltools import ts2datetime
+from officy import JsonFile
 
 
 class GroupStatistics(RumClient):
@@ -35,7 +36,7 @@ class GroupStatistics(RumClient):
     def _count_daily_trxs(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = Stime.ts2datetime(i.get("TimeStamp")).date()
+            ix = ts2datetime(i.get("TimeStamp")).date()
             if ix not in rlt:
                 rlt[ix] = 1
             else:
@@ -45,7 +46,7 @@ class GroupStatistics(RumClient):
     def _count_daily_pubkeys(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = Stime.ts2datetime(i.get("TimeStamp")).date()
+            ix = ts2datetime(i.get("TimeStamp")).date()
             iy = i["Publisher"]
 
             if ix not in rlt:
@@ -62,8 +63,8 @@ class GroupStatistics(RumClient):
         if len(trxs) == 0:
             return {}, 0
 
-        create_at = Stime.ts2datetime(trxs[0].get("TimeStamp"))
-        update_at = Stime.ts2datetime(trxs[-1].get("TimeStamp"))
+        create_at = ts2datetime(trxs[0].get("TimeStamp"))
+        update_at = ts2datetime(trxs[-1].get("TimeStamp"))
         days = (update_at - create_at).days or 0
         viewdata = {
             "info": info.__dict__,

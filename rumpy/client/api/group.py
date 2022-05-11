@@ -8,7 +8,7 @@ import hashlib
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.data import *
-from rumpy.client import utiltools
+from rumpy.client.utiltools import sha256, ts2datetime
 
 
 CHUNK_SIZE = 150 * 1024  # 150kb
@@ -192,7 +192,7 @@ class Group(BaseAPI):
             "mediaType": filetype.guess(file_path).mime,
             "name": file_name,
             "title": file_name.split(".")[0],
-            "sha256": utiltools.sha256(file_obj.read()),
+            "sha256": sha256(file_obj.read()),
             "segments": [],
         }
 
@@ -206,7 +206,7 @@ class Group(BaseAPI):
                 current_size = CHUNK_SIZE
             file_obj.seek(i * CHUNK_SIZE)
             ibytes = file_obj.read(current_size)
-            fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": utiltools.sha256(ibytes)})
+            fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": sha256(ibytes)})
             obj = FileObj(name=f"seg-{i + 1}", content=ibytes, mediaType="application/octet-stream")
             objs.append(obj)
 
@@ -545,7 +545,7 @@ class Group(BaseAPI):
             print(trx)
             return None, False
 
-        obj["content"] = f'{utiltools.ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
+        obj["content"] = f'{ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
         obj["image"] = obj["image"][:4]
         obj = {key: obj[key] for key in obj if obj[key]}
 

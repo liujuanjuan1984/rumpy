@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.group import Group
 from rumpy.client.api.data import *
-from rumpy.client import utiltools
+from rumpy.client.utiltools import zip_image_file
 
 
 class GroupConfig(BaseAPI):
@@ -159,7 +159,7 @@ class GroupConfig(BaseAPI):
         """将一张图片处理成组配置项 value 字段的值, 例如组的图标对象"""
         import filetype
 
-        img_bytes = utiltools.zip_image_file(file_path)
+        img_bytes = zip_image_file(file_path)
         icon = f'data:{filetype.guess(img_bytes).mime}base64,{base64.b64encode(img_bytes).decode("utf-8")}'
 
         return icon

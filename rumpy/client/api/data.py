@@ -6,7 +6,7 @@ import uuid
 import time
 import os
 from typing import Dict, List, Any
-from rumpy.client import utiltools
+from rumpy.client.utiltools import zip_image_file
 
 
 TRX_TYPES = [
@@ -134,7 +134,7 @@ class NewTrxImg:
             raise ValueError("need file_path or file_bytes")
 
         if file_path:
-            file_bytes = utiltools.zip_image_file(file_path, kb)
+            file_bytes = zip_image_file(file_path, kb)
             self.name = os.path.basename(file_path).encode().decode("utf-8")
 
         if file_bytes:

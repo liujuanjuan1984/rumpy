@@ -3,7 +3,8 @@ import json
 import re
 from typing import Dict, List
 from rumpy import RumClient
-from officy import Stime, JsonFile
+from rumpy.client.utiltools import ts2datetime
+from officy import JsonFile
 
 DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
 DONT_JOIN_PIECES = ["mytest_", "测试", "test"]
@@ -96,7 +97,7 @@ class SearchSeeds(RumClient):
             gts = self.group.block(ginfo.highest_block_id).get("TimeStamp")
             if ginfo.highest_height > info[group_id]["highest_height"]:
                 info[group_id]["highest_height"] = ginfo.highest_height
-                info[group_id]["last_update"] = f"{Stime.ts2datetime(gts)}"
+                info[group_id]["last_update"] = f"{ts2datetime(gts)}"
                 info[group_id]["scores"] += int(ginfo.highest_height / 100)
                 info[group_id]["nodes"][ginfo.user_pubkey] = f"{datetime.datetime.now()}"
 
@@ -168,7 +169,7 @@ class SearchSeeds(RumClient):
 
         # 最后更新时间在 7 天前
         sometime = datetime.datetime.now() + datetime.timedelta(days=-7)
-        lasttime_upd = Stime.ts2datetime(info.last_updated)
+        lasttime_upd = ts2datetime(info.last_updated)
         if lasttime_upd < sometime:
             return False
 
