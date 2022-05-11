@@ -7,8 +7,10 @@ rss bot 是一个基于 mixin messenger 的 bot
 其功能是：
 
 1、用户在 mixin mesenger 上与 bot 对话交互，发出订阅指令
-2、bot 从 rum 网络获取待转发的数据并转换为动态，根据用户的订阅要求，转发给用户 [source code](./do_rss.py)
-3、bot 可以根据一定条件向用户空投 token [source code](./do_airdrop.py)
+
+2、bot 从 rum 网络获取待转发的数据并转换为动态，根据用户的订阅要求，转发给用户 [[source code]](./do_rss.py)
+
+3、bot 可以根据一定条件向用户空投 token [[source code]](./do_airdrop.py)
 
 ## airdrop 活跃奖励（空投 token）
 

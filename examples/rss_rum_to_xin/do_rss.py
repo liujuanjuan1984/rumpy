@@ -11,28 +11,17 @@ import time
 from rumpy import RumClient
 from rumpy.client.utiltools import ts2datetime
 from officy import JsonFile
-from config_dev import (
-    rum_port,
-    rum_asset_id,
-    mixin_sdk_dirpath,
-    mixin_bot_config_file,
-    rss_data_dir,
-    my_conversation_id,
-)
+from config_dev import rum_port, mixin_sdk_dirpath
 
 sys.path.insert(0, mixin_sdk_dirpath)
 from mixinsdk.clients.http_client import BotConfig, HttpClient_BotAuth
 from mixinsdk.types.message import pack_message, pack_text_data
-from config_rss import commands, rum_adds, welcome_text
+from config_rss import *
 
 
 rum = RumClient(port=rum_port)
 xin = HttpClient_BotAuth(BotConfig.from_file(mixin_bot_config_file))
 
-# files_to_records_data
-rum_groups_to_view_file = os.path.join(rss_data_dir, "rum_groups_to_view.json")
-rss_file = os.path.join(rss_data_dir, "rss.json")
-trxs_file = os.path.join(rss_data_dir, "rum_trxs_to_post.json")
 
 # read data
 rum_groups_to_view = JsonFile(rum_groups_to_view_file).read({})

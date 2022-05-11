@@ -3,7 +3,8 @@ import sys
 import os
 import random
 from officy import JsonFile
-from config_dev import rum_port, rum_asset_id, mixin_sdk_dirpath, mixin_bot_config_file
+from config_dev import rum_port, mixin_sdk_dirpath
+from config_rss import *
 from rumit import Rumit
 
 sys.path.insert(0, mixin_sdk_dirpath)

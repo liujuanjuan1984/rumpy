@@ -1,3 +1,23 @@
+import os
+from config_dev import mixin_sdk_dirpath
+
+################ token ################
+rum_asset_id = "4f2ec12c-22f4-3a9e-b757-c84b6415ea8f"
+
+################ xin ################
+
+my_conversation_id = "e81c28a6-47aa-3aa0-97d2-62ac1754c90f"
+# git clone https://github.com/liujuanjuan1984/mixin-sdk-python
+
+# files_to_records_data
+
+rss_data_dir = os.path.join(mixin_sdk_dirpath, "data")
+mixin_bot_config_file = os.path.join(rss_data_dir, "bot-keystore.json")
+rum_groups_to_view_file = os.path.join(rss_data_dir, "rum_groups_to_view.json")
+rss_file = os.path.join(rss_data_dir, "rss.json")
+trxs_file = os.path.join(rss_data_dir, "rum_trxs_to_post.json")
+
+
 # hours: 最近x小时内的内容才会被推送
 commands = {
     "0": {"text": "取消所有订阅", "group_id": None},
