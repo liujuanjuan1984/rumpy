@@ -21,6 +21,7 @@ from config_rss import *
 
 rum = RumClient(port=rum_port)
 xin = HttpClient_BotAuth(BotConfig.from_file(mixin_bot_config_file))
+rum_groups_to_view = JsonFile(rum_groups_to_view_file).read({})
 
 
 def get_trxs_from_rum(rum_trxs_to_post):
@@ -134,6 +135,16 @@ def send_msg_to_xin(rum_trxs_to_post):
     return rum_trxs_to_post
 
 
+def send_to_rum():
+    data = JsonFile(send_to_rum_file).read({})
+    for msgid in data:
+        if "is_send" not in data[msgid]:
+            resp = rum.group.send_note(content=data[msgid]["text"])
+            if "trx_id" in resp:
+                data[msgid]["send_at"] = str(datetime.datetime.now())
+                JsonFile(send_to_rum_file).write(data)
+
+
 def main():
     rum_trxs_to_post = JsonFile(trxs_file).read({})
     while True:
@@ -142,6 +153,7 @@ def main():
 
         try:
             check_files()
+            send_to_rum()
             rum_trxs_to_post = get_trxs_from_rum(rum_trxs_to_post)
             time.sleep(10)
             rum_trxs_to_post = send_msg_to_xin(rum_trxs_to_post)

@@ -1,8 +1,8 @@
 import os
-import datetime 
+import datetime
 from config_dev import rum_port, mixin_sdk_dirpath, rss_data_dir
 from rumpy import RumClient
-from officy import JsonFile 
+from officy import JsonFile
 
 ################ token ################
 rum_asset_id = "4f2ec12c-22f4-3a9e-b757-c84b6415ea8f"
