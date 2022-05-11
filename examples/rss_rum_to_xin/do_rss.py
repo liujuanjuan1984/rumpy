@@ -137,6 +137,7 @@ def send_msg_to_xin(rum_trxs_to_post):
 
 def send_to_rum():
     data = JsonFile(send_to_rum_file).read({})
+    rum.group_id = '4e784292-6a65-471e-9f80-e91202e3358c'
     for msgid in data:
         if "is_send" not in data[msgid]:
             resp = rum.group.send_note(content=data[msgid]["text"])
