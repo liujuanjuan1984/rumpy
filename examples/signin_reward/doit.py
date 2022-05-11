@@ -1,48 +1,57 @@
 import datetime
 import sys
+import os
+import random
+from officy import JsonFile
+from config_dev import rum_port, rum_asset_id, mixin_sdk_dirpath, mixin_bot_config_file
+from rumit import Rumit
 
-# git clone https://github.com/liujuanjuan1984/mixin-sdk-python
-mixin_dirpath = r"D:\Jupyter\mixin-sdk-python"
-sys.path.insert(0, mixin_dirpath)
-import mixinsdk
+sys.path.insert(0, mixin_sdk_dirpath)
 from mixinsdk.clients.http_client import BotConfig, HttpClient_BotAuth
-from examples._example_vars import BOT_CONFIG_FILE, CNB_ASSET_ID, MY_USER_ID
+
+rum = Rumit(port=rum_port)
+xin = HttpClient_BotAuth(BotConfig.from_file(mixin_bot_config_file))
+num_trxs = 1
+days = -1
 
 
-def get_rewards():
-    from rumit import Rumit
+def reward_by_group(group_id):
+    rum.group_id = group_id
+    group_name = rum.group.seed()["group_name"]
+    to_rewards = rum.rewards(n=num_trxs, days=days)
+    date = to_rewards["date"]
+    print(datetime.datetime.now(), group_id, group_name, "...")
 
-    rum = Rumit(port=58356)
-    rum.group_id = "4e784292-6a65-471e-9f80-e91202e3358c"  # 刘娟娟的朋友圈
-    # rum.group_id = '3bb7a3be-d145-44af-94cf-e64b992ff8f0' # 去中心微博
-    to_rewards = rum.rewards(days=-2)
-    print(to_rewards)
-    return to_rewards
+    group_data = {"group_id": group_id, "group_name": group_name, "date": date, "to_rewards": to_rewards}
 
+    for to_userid in to_rewards["data"]:
+        name = to_rewards["data"][to_userid]["name"]
+        _num = str(round(0.001 + random.randint(1, 100) / 1000000, 6))
+        r = xin.api.transfer.send_to_user(to_userid, rum_asset_id, _num, f"[{date}]Rum 种子网络“{group_name}” 空投")
+        print(to_userid, str(_num), name, "balance:", r.get("data").get("closing_balance"))
+        to_rewards["data"][to_userid]["rum"] = _num
 
-to_rewards = {
-    "group_id": "4e784292-6a65-471e-9f80-e91202e3358c",
-    "date": "2022-05-07",
-    "data": {
-        "bae95683-eabb-422f-9588-24dadffd0323": {
-            "pubkey": "CAISIQNKNsvS2jHrqPqQZoHfShqu9P7a81glEa/A2WUVFtwRBQ==",
-            "wallet": "bae95683-eabb-422f-9588-24dadffd0323",
-            "name": "编程自由",
-            "num": 20,
-        },
-    },
-}
-
-xin = HttpClient_BotAuth(BotConfig.from_file(BOT_CONFIG_FILE))
+    group_data["to_rewards"] = to_rewards
+    return group_data
 
 
-def send_reward(to_userid, name, asset, num, memo):
-    r = xin.api.transfer.send_to_user(to_userid, asset, str(num), memo)
-    print("账户余额", r.get("data").get("closing_balance"))
+def reward_by_node():
+    all_data = {}
+    for group_id in rum.node.groups_id:
+        all_data[group_id] = reward_by_group(group_id)
+    return all_data
 
 
-rum_asset_id = "4f2ec12c-22f4-3a9e-b757-c84b6415ea8f"
-for to_userid in to_rewards["data"]:
-    name = to_rewards["data"][to_userid]["name"]
-    d = to_rewards["date"]
-    send_reward(to_userid, name, rum_asset_id, "0.00001", f"[debug]Rum 种子网络“刘娟娟的朋友圈” {d} 空投奖励")
+def main():
+    date = str(datetime.datetime.now().date() + datetime.timedelta(days=days))
+    datafile = os.path.join(os.path.dirname(__file__), "data", f"{date}_rewards_all.json")
+    if os.path.exists(datafile):
+        return print(datetime.datetime.now(), "file exists. rewards is done.", datafile)
+
+    data = reward_by_node()
+    # data = reward_by_node(group_id="4e784292-6a65-471e-9f80-e91202e3358c") #刘娟娟的朋友圈
+    JsonFile(datafile).write(data)
+
+
+if __name__ == "__main__":
+    main()
