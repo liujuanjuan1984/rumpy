@@ -15,7 +15,7 @@ num_trxs = 1
 days = -1
 
 
-def reward_by_group(group_id):
+def airdrop_to_group(group_id):
     rum.group_id = group_id
     group_name = rum.group.seed()["group_name"]
     to_rewards = rum.rewards(n=num_trxs, days=days)
@@ -35,16 +35,31 @@ def reward_by_group(group_id):
     return group_data
 
 
-def reward_by_node():
+def airdrop_to_node():
     all_data = {}
     for group_id in rum.node.groups_id:
-        all_data[group_id] = reward_by_group(group_id)
+        all_data[group_id] = airdrop_to_group(group_id)
     return all_data
+
+
+def airdrop_to_xin_bot_users():
+    to_useids = []
+    for gid in rss:
+        for conversation_id in rss[gid]:
+            to_userid = rss[gid][conversation_id].get("user_id") or ""
+            if to_userid and to_userid not in to_useids:
+                to_useids.append(to_userid)
+    _today = str(datetime.datetime.now().date())
+    for to_userid in to_useids:
+        _num = str(round(0.001 + random.randint(1, 100) / 1000000, 6))
+        r = xin.api.transfer.send_to_user(to_userid, rum_asset_id, _num, f"[{_today}]Rum订阅器空投")
+        time.sleep(1)
+        print(to_userid, str(_num), "账户余额：", r.get("data").get("closing_balance"))
 
 
 def main():
     date = str(datetime.datetime.now().date() + datetime.timedelta(days=days))
-    datafile = os.path.join(os.path.dirname(__file__), "data", f"{date}_rewards_all.json")
+    datafile = os.path.join(os.path.dirname(__file__), "data", f"{date}_rewards.json")
     if os.path.exists(datafile):
         return print(datetime.datetime.now(), "file exists. rewards is done.", datafile)
 

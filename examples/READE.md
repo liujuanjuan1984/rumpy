@@ -10,6 +10,7 @@
 - [export data 批量数据导出](./export_data)：你所加入的 所有 groups 的数据其实已经保存在你的本地。这个工具帮你把数据导出为排版良好的 markdown 文件及图片。
 - [bigfile 大文件上传和下载](./bigfile)：大文件上传及下载；展示了 电子书 epub、图片 jpeg、视频 mp4 文件三种类型。超出大小的文件，将拆分多个trx上链，并由包含 fileinfo trx 来描述这种拆分。客户端同步到 trxs 后，可以把这些文件块重新拼成文件，并渲染给用户查看。
 - [users_profiles](./users_profiles)：获取指定种子网络（group_id）中所有用户的 profile 信息并更新至最新数据。每个用户的 profile 包含：name 昵称，image 头像，wallet（钱包）三个属性。注意：这些属性并非必须的，由用户自行决定是否修改。
+- [rss bot 转发 RUM 网络动态到 XIN；空投](./rss_rum_to_xin)：创建 xin bot。根据用户订阅，把 RUM 指定种子网络的动态转发到 Mixin Messenger，用户可以在 MM 上随时查阅 Rum 指定种子网络的最新动态。还可以通过该 bot 向用户空投 token。
 
 其它案例：
 
@@ -18,7 +19,6 @@
 - [seedstore 种子商店](https://github.com/liujuanjuan1984/seedstore)：发现和分享更多种子~
 - [sudoku 数独游戏](https://github.com/liujuanjuan1984/rum_sudoku)：玩数独游戏，把游戏结果推送到 rum group 上链存储。
 - [todolist 待办清单](https://github.com/liujuanjuan1984/todolist)：只能把 Rum 当微博/博客用吗？Rum 的想象空间很大，待办清单这个雏形可以给你带来启发。
-- [rss rum_to_xin RUM动态转发到XIN](https://github.com/liujuanjuan1984/rss_rum_to_xin)：根据用户订阅，把 RUM 指定种子网络的动态转发到 Mixin Messenger，用户可以在 MM 上随时查阅 Rum 指定种子网络的最新动态。当然，如需互动和提交数据，需要下载 Rum。
 
 部分案例需安装 officy 以支持 JsonFile、Dir 等自定义方法：
 
