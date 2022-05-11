@@ -1,6 +1,5 @@
 # Application case https://github.com/infowoods/oogway-mixin-bot
 
-import asyncio
 import time
 import datetime
 import sys
@@ -10,10 +9,10 @@ from config_rss import *
 
 sys.path.insert(0, mixin_sdk_dirpath)
 
-from mixinsdk.clients.bot_config import BotConfig
 from mixinsdk.clients.blaze_client import BlazeClient
-from mixinsdk.clients.http_client import HttpClient_BotAuth
-from mixinsdk.types.message import MessageView, pack_text_data, pack_message
+from mixinsdk.clients.http_client import HttpClient_AppAuth
+from mixinsdk.clients.user_config import AppConfig
+from mixinsdk.types.message import MessageView, pack_message, pack_text_data
 
 
 # read data
@@ -25,14 +24,14 @@ bot_comments = JsonFile(bot_comments_file).read({})
 class MixinBotClient:
     def __init__(self):
         self.blaze: BlazeClient = None
-        self.http: HttpClient_BotAuth = None
+        self.http: HttpClient_AppAuth = None
 
 
 def message_handle_error_callback(error, details):
-    print("===== error_callback =====")
+    print(datetime.datetime.now(), "===== error_callback =====")
     print(f"error: {error}")
     print(f"details: {details}")
-    print("-" * 80)
+    print(datetime.datetime.now(), "-" * 80)
 
 
 async def message_handle(message):
@@ -160,10 +159,9 @@ async def message_handle(message):
     return
 
 
-bot_config = BotConfig.from_file(mixin_bot_config_file)
+bot_config = AppConfig.from_file(mixin_bot_config_file)
 bot = MixinBotClient()
-
-bot.http = HttpClient_BotAuth(bot_config)
+bot.http = HttpClient_AppAuth(bot_config)
 bot.blaze = BlazeClient(
     bot_config,
     on_message=message_handle,
@@ -171,4 +169,4 @@ bot.blaze = BlazeClient(
 )
 
 
-asyncio.run(bot.blaze.run_forever(2))
+bot.blaze.run_forever(2)

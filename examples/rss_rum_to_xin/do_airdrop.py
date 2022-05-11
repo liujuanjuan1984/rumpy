@@ -8,10 +8,10 @@ from config_rss import *
 from rumit import Rumit
 
 sys.path.insert(0, mixin_sdk_dirpath)
-from mixinsdk.clients.http_client import BotConfig, HttpClient_BotAuth
+from mixinsdk.clients.http_client import AppConfig, HttpClient_AppAuth
 
 rum = Rumit(port=rum_port)
-xin = HttpClient_BotAuth(BotConfig.from_file(mixin_bot_config_file))
+xin = HttpClient_AppAuth(AppConfig.from_file(mixin_bot_config_file))
 num_trxs = 1
 days = -1
 

@@ -14,13 +14,13 @@ from officy import JsonFile
 from config_dev import rum_port, mixin_sdk_dirpath
 
 sys.path.insert(0, mixin_sdk_dirpath)
-from mixinsdk.clients.http_client import BotConfig, HttpClient_BotAuth
+from mixinsdk.clients.http_client import AppConfig, HttpClient_AppAuth
 from mixinsdk.types.message import pack_message, pack_text_data
 from config_rss import *
 
 
 rum = RumClient(port=rum_port)
-xin = HttpClient_BotAuth(BotConfig.from_file(mixin_bot_config_file))
+xin = HttpClient_AppAuth(AppConfig.from_file(mixin_bot_config_file))
 rum_groups_to_view = JsonFile(rum_groups_to_view_file).read({})
 
 
@@ -137,9 +137,9 @@ def send_msg_to_xin(rum_trxs_to_post):
 
 def send_to_rum():
     data = JsonFile(send_to_rum_file).read({})
-    rum.group_id = '4e784292-6a65-471e-9f80-e91202e3358c'
+    rum.group_id = "4e784292-6a65-471e-9f80-e91202e3358c"
     for msgid in data:
-        if "is_send" not in data[msgid]:
+        if "send_at" not in data[msgid]:
             resp = rum.group.send_note(content=data[msgid]["text"])
             if "trx_id" in resp:
                 data[msgid]["send_at"] = str(datetime.datetime.now())
