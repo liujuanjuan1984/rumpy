@@ -23,59 +23,8 @@ rum = RumClient(port=rum_port)
 xin = HttpClient_BotAuth(BotConfig.from_file(mixin_bot_config_file))
 
 
-# read data
-rum_groups_to_view = JsonFile(rum_groups_to_view_file).read({})
-rss = JsonFile(rss_file).read({})
+def get_trxs_from_rum(rum_trxs_to_post):
 
-
-def check_files():
-    global rum_groups_to_view
-    global rss
-    # init data or checks
-    if rum_groups_to_view == {}:
-        for k in commands:
-            _gid = commands[k]["group_id"]
-            if _gid not in (None, -1):
-                rum.group_id = _gid
-                rum_groups_to_view[_gid] = {
-                    "group_id": _gid,
-                    "group_name": rum.group.seed()["group_name"],
-                    "hours": commands[k].get("hours") or -1,
-                }
-        else:
-            JsonFile(rum_groups_to_view_file).write(rum_groups_to_view)
-
-    for gid in rum_groups_to_view:
-        if gid not in rss:
-            rss[gid] = {}
-    else:
-        JsonFile(rss_file).write(rss)
-
-    # trxs data is large. split old data to other file. daily job.
-
-    data = JsonFile(trxs_file).read({})
-    _xday = str(datetime.datetime.now() + datetime.timedelta(hours=-24))
-    oldfile = trxs_file.replace(".json", f"_{str(datetime.datetime.now().date())}.json")
-    if os.path.exists(oldfile):
-        return print(oldfile, "exists...")
-
-    old = {}
-    new = {}
-    #
-    for gid in data:
-        old[gid] = {"progress": data[gid]["progress"], "data": {}, "update_at": str(datetime.datetime.now())}
-        new[gid] = {"progress": data[gid]["progress"], "data": {}, "update_at": str(datetime.datetime.now())}
-        for tid in data[gid]["data"]:
-            if data[gid]["data"][tid]["trx_ts"] < _xday:
-                old[gid]["data"][tid] = data[gid]["data"][tid]
-            else:
-                new[gid]["data"][tid] = data[gid]["data"][tid]
-    JsonFile(trxs_file).write(new)
-    JsonFile(oldfile).write(old)
-
-
-def get_trxs_from_rum():
-    global rum_trxs_to_post
     print(datetime.datetime.now(), "get_trxs_from_rum ...")
     # get rum data to post:
     for gid in rum_groups_to_view:
@@ -137,10 +86,10 @@ def get_trxs_from_rum():
     return rum_trxs_to_post
 
 
-def send_msg_to_xin():
-    global rum_trxs_to_post
-    print(datetime.datetime.now(), "send_msg_to_xin ...")
+def send_msg_to_xin(rum_trxs_to_post):
 
+    print(datetime.datetime.now(), "send_msg_to_xin ...")
+    rss = JsonFile(rss_file).read({})
     for gid in rss:
         if gid not in rum_trxs_to_post:
             continue
@@ -182,25 +131,23 @@ def send_msg_to_xin():
                     print(e)
 
     print(datetime.datetime.now(), "send_msg_to_xin done.")
+    return rum_trxs_to_post
 
 
 def main():
-    global rum_trxs_to_post
-    global rss
-
+    rum_trxs_to_post = JsonFile(trxs_file).read({})
     while True:
         print("+" * 100)
         print(datetime.datetime.now(), "new round begin ...")
+
         try:
             check_files()
-            rum_trxs_to_post = JsonFile(trxs_file).read({})
-            rss = JsonFile(rss_file).read({})
-            get_trxs_from_rum()
+            rum_trxs_to_post = get_trxs_from_rum(rum_trxs_to_post)
             time.sleep(10)
-            send_msg_to_xin()
-            JsonFile(trxs_file).write(rum_trxs_to_post)
+            rum_trxs_to_post = send_msg_to_xin(rum_trxs_to_post)
         except Exception as e:
             print(e)
+            JsonFile(trxs_file).write(rum_trxs_to_post)
         time.sleep(10)
 
 
