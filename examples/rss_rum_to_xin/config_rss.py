@@ -1,8 +1,17 @@
 import os
 import datetime
-from config_dev import rum_port, mixin_sdk_dirpath, rss_data_dir
 from rumpy import RumClient
 from officy import JsonFile
+
+################ Rum ################
+# quorum_client_port
+rum_port = 58356
+
+basedir = r"D:\Jupyter"
+mixin_sdk_dirpath = os.path.join(basedir, "mixin-sdk-python")
+
+rss_data_dir = os.path.join(basedir, "rss_rum_to_xin_data")
+
 
 ################ token ################
 rum_asset_id = "4f2ec12c-22f4-3a9e-b757-c84b6415ea8f"
@@ -11,6 +20,8 @@ rum_asset_id = "4f2ec12c-22f4-3a9e-b757-c84b6415ea8f"
 
 my_conversation_id = "e81c28a6-47aa-3aa0-97d2-62ac1754c90f"
 # git clone https://github.com/liujuanjuan1984/mixin-sdk-python
+
+################ files data ################
 
 # files_to_records_data
 

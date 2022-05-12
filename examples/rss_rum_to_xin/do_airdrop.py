@@ -1,9 +1,9 @@
 import datetime
 import sys
 import os
+import time
 import random
 from officy import JsonFile
-from config_dev import rum_port, mixin_sdk_dirpath
 from config_rss import *
 from rumit import Rumit
 
@@ -44,6 +44,7 @@ def airdrop_to_node():
 
 
 def airdrop_to_xin_bot_users():
+    rss = JsonFile(rss_file).read({})
     to_useids = []
     for gid in rss:
         for conversation_id in rss[gid]:
@@ -64,10 +65,11 @@ def main():
     if os.path.exists(datafile):
         return print(datetime.datetime.now(), "file exists. rewards is done.", datafile)
 
-    data = reward_by_node()
-    # data = reward_by_node(group_id="4e784292-6a65-471e-9f80-e91202e3358c") #刘娟娟的朋友圈
+    # data = reward_by_node()
+    data = airdrop_to_group(group_id="4e784292-6a65-471e-9f80-e91202e3358c")  # 刘娟娟的朋友圈
     JsonFile(datafile).write(data)
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    airdrop_to_xin_bot_users()

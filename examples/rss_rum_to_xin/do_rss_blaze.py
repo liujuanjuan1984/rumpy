@@ -4,7 +4,6 @@ import time
 import datetime
 import sys
 from officy import JsonFile
-from config_dev import mixin_sdk_dirpath
 from config_rss import *
 
 sys.path.insert(0, mixin_sdk_dirpath)

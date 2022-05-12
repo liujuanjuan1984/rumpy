@@ -11,12 +11,11 @@ import time
 from rumpy import RumClient
 from rumpy.client.utiltools import ts2datetime
 from officy import JsonFile
-from config_dev import rum_port, mixin_sdk_dirpath
+from config_rss import *
 
 sys.path.insert(0, mixin_sdk_dirpath)
 from mixinsdk.clients.http_client import AppConfig, HttpClient_AppAuth
 from mixinsdk.types.message import pack_message, pack_text_data
-from config_rss import *
 
 
 rum = RumClient(port=rum_port)
