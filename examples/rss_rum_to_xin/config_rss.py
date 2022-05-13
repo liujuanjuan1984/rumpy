@@ -113,6 +113,8 @@ def check_files():
     else:
         JsonFile(rss_file).write(rss)
 
+
+def split_rss_file():
     # trxs data is large. split old data to other file. daily job.
 
     data = JsonFile(trxs_file).read({})
@@ -136,4 +138,33 @@ def check_files():
     JsonFile(oldfile).write(old)
 
 
+def split_comments_file():
+    # trxs data is large. split old data to other file. daily job.
+
+    data = JsonFile(bot_comments_file).read({})
+    _xday = str(datetime.datetime.now() + datetime.timedelta(hours=-24))
+    oldfile = bot_comments_file.replace(".json", f"_{str(datetime.datetime.now().date())}.json")
+    if os.path.exists(oldfile):
+        return print(oldfile, "exists...")
+
+    old = {}
+    new = {}
+
+    for conversation_id in data:
+        old[conversation_id] = {}
+        new[conversation_id] = {}
+        for message_id in data[conversation_id]:
+            is_replyed = data[conversation_id][message_id]["is_replyed"]
+            if is_replyed == False:
+                continue
+            if type(is_replyed) == str and is_replyed < _xday:
+                old[conversation_id][message_id] = data[conversation_id][message_id]
+            else:
+                new[conversation_id][message_id] = data[conversation_id][message_id]
+    JsonFile(bot_comments_file).write(new)
+    JsonFile(oldfile).write(old)
+
+
 check_files()
+split_rss_file()
+split_comments_file()

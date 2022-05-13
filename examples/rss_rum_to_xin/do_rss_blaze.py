@@ -45,11 +45,11 @@ async def message_handle(message):
         return
 
     if action == "LIST_PENDING_MESSAGES":
-        print("Mixin blaze server: 👂")
+        print(datetime.datetime.now(), "Mixin blaze server:")
         return
 
     if action == "ERROR":
-        print(message["error"])
+        print(datetime.datetime.now(), message["error"])
         return
 
     if action != "CREATE_MESSAGE":
@@ -57,7 +57,7 @@ async def message_handle(message):
 
     error = message.get("error")
     if error:
-        print(error)
+        print(datetime.datetime.now(), error)
         return
 
     msgview = MessageView.from_dict(message["data"])
