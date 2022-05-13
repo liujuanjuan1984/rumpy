@@ -165,6 +165,10 @@ def split_comments_file():
     JsonFile(oldfile).write(old)
 
 
-check_files()
-split_rss_file()
-split_comments_file()
+def do_checkfiles():
+    check_files()
+    split_rss_file()
+    split_comments_file()
+
+
+do_checkfiles()

@@ -91,7 +91,7 @@ async def message_handle(message):
     if msgview.type != "message":
         return
 
-    print(datetime.datetime.now(), f"message from: {msgview.user_id} {msg_text}")
+    print(datetime.datetime.now(), f"message from: {msgview.user_id} {msgview.created_at}")
 
     # help to send note to rum network
     if msg_cid == my_conversation_id and len(msg_text) > 10 and msg_text.startswith("代发："):
@@ -101,6 +101,7 @@ async def message_handle(message):
         JsonFile(send_to_rum_file).write(to_sends)
         bot_comments[msg_cid][msg_id]["is_replyed"] = str(datetime.datetime.now())
         JsonFile(bot_comments_file).write(bot_comments)
+        await bot.blaze.echo(msg_id)
         return
 
     # get the reply_text

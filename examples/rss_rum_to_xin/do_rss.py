@@ -115,6 +115,8 @@ def send_msg_to_xin(rum_trxs_to_post):
                         continue
                     if idata.find(" 修改了个人信息：") >= 0:
                         continue
+                    if idata.find("OBJECT_STATUS_DELETED") >= 0:
+                        continue
 
                     _lenth = 200
                     if len(idata) > _lenth:
@@ -152,7 +154,7 @@ def main():
         print(datetime.datetime.now(), "new round begin ...")
 
         try:
-            check_files()
+            do_checkfiles()
             send_to_rum()
             rum_trxs_to_post = get_trxs_from_rum(rum_trxs_to_post)
             time.sleep(10)
