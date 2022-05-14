@@ -6,7 +6,7 @@ import uuid
 import time
 import os
 from typing import Dict, List, Any
-from rumpy.client.utiltools import zip_image_file
+from rumpy.client.utils import zip_image_file
 
 
 TRX_TYPES = [

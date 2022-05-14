@@ -1,6 +1,6 @@
 import datetime
 from tests import client
-from rumpy.client.utiltools import ts2datetime
+from rumpy.client.utils import ts2datetime
 
 seed = client.group.create("mytest_pubqueque")
 client.group_id = seed["group_id"]

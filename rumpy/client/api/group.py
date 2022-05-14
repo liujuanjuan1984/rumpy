@@ -8,7 +8,7 @@ import hashlib
 from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.data import *
-from rumpy.client.utiltools import sha256, ts2datetime
+from rumpy.client.utils import sha256, ts2datetime
 
 
 CHUNK_SIZE = 150 * 1024  # 150kb
@@ -410,10 +410,11 @@ class Group(BaseAPI):
             group_name: "",
             trx_id: "",
             update_at: "",
-            data:{
+            data:{ pubkey:{
                 name:"",
                 image:{},
                 wallet:[],
+                }
             }
         }
         """
@@ -427,12 +428,12 @@ class Group(BaseAPI):
             to_tid = trxs[-1]["TrxId"]
         else:
             to_tid = trx_id
-
         users_data.update(
             {
                 "group_id": self.group_id,
                 "group_name": self.group.seed()["group_name"],
                 "trx_id": to_tid,
+                "trx_timestamp": str(ts2datetime(self.group.trx(to_tid).get("TimeStamp"))),
                 "update_at": str(datetime.datetime.now()),
             }
         )

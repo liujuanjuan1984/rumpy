@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import MultipleLocator
 from rumpy import RumClient
-from rumpy.client.utiltools import ts2datetime
+from rumpy.client.utils import ts2datetime
 from officy import JsonFile
 
 

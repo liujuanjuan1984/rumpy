@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 from rumpy.client.api.base import BaseAPI
 from rumpy.client.api.group import Group
 from rumpy.client.api.data import *
-from rumpy.client.utiltools import zip_image_file
+from rumpy.client.utils import zip_image_file
 
 
 class GroupConfig(BaseAPI):
