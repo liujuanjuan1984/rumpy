@@ -90,12 +90,14 @@ class RssBot:
             _gid = commands[k]["group_id"]
             if _gid not in (None, -1):
                 self.rum.group_id = _gid
+                seed = self.rum.group.seed() or {}
+
                 existd = self.db.session.query(BotRumGroups).filter(BotRumGroups.group_id == _gid).first()
                 _m = commands[k].get("minutes") or -30
                 if existd is None:
                     _p = {
                         "group_id": _gid,
-                        "group_name": self.rum.group.seed().get("group_name"),
+                        "group_name": seed.get("group_name"),
                         "minutes": _m,
                     }
                     self.db.add(BotRumGroups(_p))
@@ -328,7 +330,8 @@ class RssBot:
             # 修改订阅：增加或推定
             self.rum.group_id = _gidx
             print(_gidx)
-            _gname = self.rum.group.seed().get("group_name")
+            seed = self.rum.group.seed() or {}
+            _gname = seed.get("group_name")
             if _num > 0:
                 irss[_gidx] = True
                 reply_text = f"✅ Yes，您已成功订阅 {_gname}{rum_adds}"
@@ -434,7 +437,8 @@ class RssBot:
 
     def airdrop_to_group(self, group_id, num_trxs=1, days=-1):
         self.rum.group_id = group_id
-        group_name = self.rum.group.seed().get("group_name")
+        seed = self.rum.group.seed() or {}
+        group_name = seed.get("group_name")
         print(datetime.datetime.now(), group_id, group_name, "...")
 
         counts_result = self.counts_trxs(days=days)
