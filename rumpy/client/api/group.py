@@ -68,6 +68,7 @@ class Group(BaseAPI):
             seed = self._get(f"{self.baseurl}/group/{self.group_id}/seed")
             if "error" not in seed:
                 return seed
+        return {}
 
     def is_seed(self, seed: Dict) -> bool:
         try:
