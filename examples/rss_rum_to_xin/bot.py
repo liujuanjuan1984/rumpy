@@ -285,6 +285,7 @@ class RssBot:
             self.db.commit()
 
     def do_rss(self):
+        self.update_all_profiles("node")
         self.send_to_rum()
         self.send_msg_to_xin()
         self.get_trxs_from_rum()
