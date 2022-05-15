@@ -191,25 +191,9 @@ class RssBot:
         print(datetime.datetime.now(), "send_msg_to_xin ...")
         rss = self.db.session.query(BotRss).all()
 
-        """ 
-        # test:我订阅所有
-        for g in self.groups:
-            user_id = "bae95683-eabb-422f-9588-24dadffd0323"  # "b807ebea-4b46-4cf6-89c5-3a810ba9d32e"
-            conversation_id = "e81c28a6-47aa-3aa0-97d2-62ac1754c90f"
-            _d = {
-                "user_id": user_id,
-                "group_id": g.group_id,
-                "is_rss": True,
-                "user_group": user_id + g.group_id,
-                "conversation_id": conversation_id,
-            }
-            self.db.add(BotRss(_d))
-        """
-
         for r in rss:
-            # if r.conversation_id != my_conversation_id:
-            #    continue
-
+            if r.is_rss != True:
+                continue
             gid = r.group_id
             uid = r.user_id
             _g = self.db.session.query(BotRumGroups).filter(BotRumGroups.group_id == gid).first()
