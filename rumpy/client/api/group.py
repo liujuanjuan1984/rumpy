@@ -432,7 +432,7 @@ class Group(BaseAPI):
         users_data.update(
             {
                 "group_id": self.group_id,
-                "group_name": self.group.seed()["group_name"],
+                "group_name": self.group.seed().get("group_name"),
                 "trx_id": to_tid,
                 "trx_timestamp": str(ts2datetime(self.group.trx(to_tid).get("TimeStamp"))),
                 "update_at": str(datetime.datetime.now()),

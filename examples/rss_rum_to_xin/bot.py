@@ -29,11 +29,10 @@ class RssBot:
         self.rum = RumClient(port=rum_port)
         self.config = AppConfig.from_file(mixin_bot_config_file)
         self.xin = HttpClient_AppAuth(self.config)
-        self.db = BaseDB("rss_bot_test", echo=False, reset=False)
+        self.db = BaseDB("rss_bot_test", echo=True, reset=False)
         self.check_groups()
         self.groups = self.db.session.query(BotRumGroups).all()
-        self.update_all_profiles()
-        self.count_users()
+        self.update_all_profiles("node")
 
     def update_profiles(self, group_id):
         self.rum.group_id = group_id
@@ -74,14 +73,17 @@ class RssBot:
                 if _wallet != existd.wallet:
                     _p["wallet"] = _wallet
 
-                self.db.session.query(BotRumProfiles).filter(-x).update(_p)
+                self.db.session.query(BotRumProfiles).filter(_x).update(_p)
                 self.db.commit()
 
-    def update_all_profiles(self):
-
-        for g in self.groups:
-            print(datetime.datetime.now(), g.minutes, g.group_id, g.group_name)
-            self.update_profiles(g.group_id)
+    def update_all_profiles(self, where="bot"):
+        if where == "bot":
+            for g in self.groups:
+                print(datetime.datetime.now(), g.minutes, g.group_id, g.group_name)
+                self.update_profiles(g.group_id)
+        elif where == "node":
+            for group_id in self.rum.node.groups_id:
+                self.update_profiles(group_id)
 
     def check_groups(self):
 
@@ -103,21 +105,6 @@ class RssBot:
                 elif existd.minutes != _m:
                     self.db.session.query(BotRumGroups).filter(BotRumGroups.group_id == _gid).update({"minutes": _m})
                     self.db.commit()
-
-    def count_users(self):
-
-        print("🤖 Rss Rum to Xin bot 7000104017 🤖")
-        print("=== 每个种子网络的订阅数 ===")
-        counts = {}
-        for g in self.groups:
-            _c = self.db.session.query(BotRss).filter(BotRss.group_id == g.group_id).all()
-            counts[g.group_name] = len(_c)
-        countsit = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-        for name, n in countsit:
-            print(n, name)
-
-        _c = self.db.session.query(BotRss).filter(BotRss.user_id).all()
-        print("🥂 共计", len(_c), "个用户使用 bot🥂")
 
     def get_nicknames(self, group_id):
         _nn = self.db.session.query(BotRumProfiles).filter(BotRumProfiles.group_id == group_id).all()
@@ -303,14 +290,16 @@ class RssBot:
         self.get_trxs_from_rum()
 
     def get_reply_text(self, text):
+        if type(text) == str and text.lower() in ["hi", "hello", "你好", "订阅"]:
+            return welcome_text, None
         try:
             _num = int(text)
             _abs = abs(_num)
         except:
-            return welcome_text, None
+            return "输入 hi 查看操作说明", None
 
         if str(_abs) not in list(commands.keys()):
-            return welcome_text, None
+            return "输入 hi 查看操作说明", None
 
         irss = {}  # init
         for g in self.groups:
@@ -329,14 +318,14 @@ class RssBot:
             # 修改订阅：增加或推定
             self.rum.group_id = _gidx
             print(_gidx)
-            _gname = self.rum.group.seed().get("group_name")
+            _gname = commands[str(_abs)]["text"]
             if _num > 0:
                 irss[_gidx] = True
-                reply_text = f"✅ Yes，您已成功订阅 {_gname}{rum_adds}"
+                reply_text = f"✅ Yes，您已成功{_gname}{rum_adds}"
             else:
                 # 取消订阅
                 irss[_gidx] = False
-                reply_text = f"👌 Ok，您已取消订阅{_gname}{rum_adds}"
+                reply_text = f"👌 Ok，您已取消{_gname}{rum_adds}"
         return reply_text, irss
 
     def update_rss(self, user_id, irss):

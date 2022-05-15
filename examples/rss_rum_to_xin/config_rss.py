@@ -25,7 +25,7 @@ my_rum_group = "4e784292-6a65-471e-9f80-e91202e3358c"
 # files_to_records_data
 
 mixin_bot_config_file = os.path.join(rss_data_dir, "bot-keystore.json")
-# rss_file = os.path.join(rss_data_dir, "rss.json")
+rss_file = os.path.join(rss_data_dir, "rss.json")
 # trxs_file = os.path.join(rss_data_dir, "rum_trxs_to_post.json")
 # bot_comments_file = os.path.join(rss_data_dir, "bot_comments.json")
 # note_file = os.path.join(rss_data_dir, "notes_sent_to_rum.txt")  # 代发
