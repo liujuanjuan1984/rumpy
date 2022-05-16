@@ -459,6 +459,9 @@ class RssBot:
         memo = memo or f"{_today} Rum 订阅器空投"
         users = self.db.session.query(distinct(BotRss.user_id)).all()
         for user in users:
+            if len(users) < 1:
+                continue
+            user = user[0]
             sent = (
                 self.db.session.query(BotAirDrops)
                 .filter(and_(BotAirDrops.mixin_id == user, BotAirDrops.memo == memo))
