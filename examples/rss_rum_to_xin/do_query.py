@@ -20,4 +20,4 @@ def count_users():
 
 all = bot.db.session.query(BotRss).all()
 for i in all:
-    print(i)
+    print(i.is_rss, i.user_id, i.group_id)
