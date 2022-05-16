@@ -7,7 +7,7 @@ import datetime
 
 # bot.airdrop_to_group(my_rum_group)
 bot.airdrop_to_node()
-# bot.airdrop_to_bot()
+bot.airdrop_to_bot()
 
 _today = datetime.datetime.now().date()
 

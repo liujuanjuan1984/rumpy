@@ -41,18 +41,15 @@ class RssBot:
 
         if progress == None:
             _p = {"progress_type": "GET_PROFILES", "trx_id": None, "timestamp": None, "group_id": group_id}
-            print(_p)
             self.db.add(BotRumProgress(_p))
 
         p_tid = None if progress == None else progress.trx_id
-        print(datetime.datetime.now(), "update_profiles", group_id, p_tid)
 
         data = self.rum.group.get_users_profiles({"trx_id": p_tid}, ("name", "wallet"))
         tid = data.get("trx_id")
         ts = data.get("trx_timestamp")
 
         if tid and tid != p_tid:
-            print(tid, ts)
             self.db.session.query(BotRumProgress).filter(_x).update({"trx_id": tid, "timestamp": ts})
             self.db.session.commit()
 
@@ -79,7 +76,7 @@ class RssBot:
     def update_all_profiles(self, where="bot"):
         if where == "bot":
             for g in self.groups:
-                print(datetime.datetime.now(), g.minutes, g.group_id, g.group_name)
+                # print(datetime.datetime.now(), g.minutes, g.group_id, g.group_name)
                 self.update_profiles(g.group_id)
         elif where == "node":
             for group_id in self.rum.node.groups_id:
@@ -302,7 +299,6 @@ class RssBot:
         else:
             # 修改订阅：增加或推定
             self.rum.group_id = _gidx
-            print(_gidx)
             _gname = commands[str(_abs)]["text"]
             if _num > 0:
                 irss[_gidx] = True
@@ -463,7 +459,6 @@ class RssBot:
         memo = memo or f"{_today} Rum 订阅器空投"
         users = self.db.session.query(distinct(BotRss.user_id)).all()
         for user in users:
-            print(user)
             sent = (
                 self.db.session.query(BotAirDrops)
                 .filter(and_(BotAirDrops.mixin_id == user, BotAirDrops.memo == memo))

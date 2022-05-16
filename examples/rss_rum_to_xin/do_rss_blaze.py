@@ -34,14 +34,17 @@ async def message_handle(message):
 
     if action == "ERROR":
         print(datetime.datetime.now(), message["error"])
+        await bot.blaze.echo(msgview.message_id)
         return
 
     if action != "CREATE_MESSAGE":
+        await bot.blaze.echo(msgview.message_id)
         return
 
     error = message.get("error")
     if error:
         print(datetime.datetime.now(), error)
+        await bot.blaze.echo(msgview.message_id)
         return
 
     msgview = MessageView.from_dict(message["data"])
@@ -52,14 +55,20 @@ async def message_handle(message):
         return
 
     if msgview.type != "message":
+        await bot.blaze.echo(msgview.message_id)
         return
 
     if msgview.conversation_id in ("", None):
+        await bot.blaze.echo(msgview.message_id)
         return
 
     if msgview.data_decoded in ("", None):
+        await bot.blaze.echo(msgview.message_id)
         return
 
+    if type(msgview.data_decoded) != str:
+        await bot.blaze.echo(msgview.message_id)
+        return
     # record the message
     # 查询 bot_comments
     print(datetime.datetime.now(), str(msgview.created_at), msgview.user_id)
