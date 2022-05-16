@@ -29,7 +29,7 @@ class RssBot:
         self.rum = RumClient(port=rum_port)
         self.config = AppConfig.from_file(mixin_bot_config_file)
         self.xin = HttpClient_AppAuth(self.config)
-        self.db = BaseDB("rss_bot_test", echo=True, reset=False)
+        self.db = BaseDB("rss_bot_test", echo=False, reset=False)
         self.check_groups()
         self.groups = self.db.session.query(BotRumGroups).all()
         self.update_all_profiles("node")
@@ -94,7 +94,7 @@ class RssBot:
                 self.rum.group_id = _gid
 
                 existd = self.db.session.query(BotRumGroups).filter(BotRumGroups.group_id == _gid).first()
-                _m = commands[k].get("minutes") or -30
+                _m = commands[k].get("minutes") or default_minutes
                 if existd is None:
                     _p = {
                         "group_id": _gid,
@@ -132,7 +132,7 @@ class RssBot:
             gname = g.group_name
             minutes = self.db.session.query(BotRumGroups.minutes).filter(BotRumGroups.group_id == g.group_id).first()
             if minutes[0] is None:
-                minutes = -15
+                minutes = default_minutes
             else:
                 minutes = minutes[0]
             if not existd:
@@ -200,7 +200,7 @@ class RssBot:
             if _g:
                 minutes = _g.minutes
             else:
-                minutes = -15
+                minutes = default_minutes
             nice_ts = str(datetime.datetime.now() + datetime.timedelta(minutes=minutes))
             trxs = self.db.session.query(BotTrxs).filter(BotTrxs.group_id == gid).all()
             if len(trxs) == 0:
