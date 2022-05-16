@@ -5,17 +5,13 @@ from officy import JsonFile
 import random
 import datetime
 
-# bot.airdrop_to_group(my_rum_group)
-bot.airdrop_to_node()
-bot.airdrop_to_bot()
-
 _today = datetime.datetime.now().date()
+memo = f"{_today} Rum 订阅器升级空投"
 
 
 def do_rss():
     done = """"""
     rss = JsonFile(rss_file).read()
-    memo = f"{_today} Rum 订阅器空投"
     for group_id in rss:
         for cid in rss[group_id]:
             wallet = rss[group_id][cid].get("user_id")
@@ -40,6 +36,12 @@ def do_rss():
                 _a["is_sent"] = True
 
             bot.db.add(BotAirDrops(_a))
+
+
+bot.airdrop_to_group(group_id=my_rum_group, memo=memo)
+bot.airdrop_to_node(memo=memo)
+bot.airdrop_to_bot(memo=memo)
+do_rss()
 
 
 rlts = bot.db.session.query(BotAirDrops).all()

@@ -33,6 +33,7 @@ rss_file = os.path.join(rss_data_dir, "rss.json")
 
 # minutes: 最近小段时间内的内容才会被推送
 default_minutes = -60
+rum_reward_base = 0.001
 
 commands = {
     "0": {"text": "取消所有订阅", "group_id": None},

@@ -403,14 +403,14 @@ class RssBot:
 
         return counts_result
 
-    def airdrop_to_group(self, group_id, num_trxs=1, days=-1):
+    def airdrop_to_group(self, group_id, num_trxs=1, days=-1, memo=None):
         self.rum.group_id = group_id
         group_name = self.rum.group.seed().get("group_name")
         print(datetime.datetime.now(), group_id, group_name, "...")
 
         counts_result = self.counts_trxs(days=days)
         date = datetime.datetime.now().date() + datetime.timedelta(days=days)
-        memo = f"{date} Rum 种子网络空投"
+        memo = memo or f"{date} Rum 种子网络空投"
         for pubkey in counts_result["data"]:
             # trxs 条数够了
             if counts_result["data"][pubkey] < num_trxs:
@@ -432,12 +432,12 @@ class RssBot:
                 if sent:  # 用钱包排重，不重复空投
                     continue
 
-                _num = str(round(0.001 + random.randint(1, 100) / 1000000, 6))
+                _num = str(round(rum_reward_base + random.randint(1, 300) / 1000000, 6))
                 _a = {
                     "mixin_id": existd.wallet,
                     "group_id": group_id,
                     "pubkey": pubkey,
-                    "num": str(_num),
+                    "num": _num,
                     "token": "RUM",
                     "memo": memo,
                     "is_sent": False,
@@ -445,12 +445,12 @@ class RssBot:
                 r = self.xin.api.transfer.send_to_user(existd.wallet, rum_asset_id, _num, memo)
 
                 if "data" in r:
-                    print(existd.wallet, str(_num), "账户余额：", r.get("data").get("closing_balance"))
+                    print(existd.wallet, _num, "账户余额：", r.get("data").get("closing_balance"))
                     _a["is_sent"] = True
 
                 self.db.add(BotAirDrops(_a))
 
-    def airdrop_to_node(self, num_trxs=1, days=-1):
+    def airdrop_to_node(self, num_trxs=1, days=-1, memo=None):
         for group_id in self.rum.node.groups_id:
             self.airdrop_to_group(group_id, num_trxs, days)
 
@@ -470,11 +470,11 @@ class RssBot:
             if sent:  # 用钱包排重，不重复空投
                 continue
 
-            _num = str(round(0.00001 + random.randint(1, 10) / 1000000, 6))
+            _num = str(round(rum_reward_base + random.randint(1, 300) / 1000000, 6))
             r = self.xin.api.transfer.send_to_user(user, rum_asset_id, _num, memo)
-            _a = {"mixin_id": user, "num": str(_num), "token": "RUM", "memo": memo, "is_sent": False}
+            _a = {"mixin_id": user, "num": _num, "token": "RUM", "memo": memo, "is_sent": False}
             if "data" in r:
-                print(user, str(_num), "账户余额：", r.get("data").get("closing_balance"))
+                print(user, _num, "账户余额：", r.get("data").get("closing_balance"))
                 _a["is_sent"] = True
 
             self.db.add(BotAirDrops(_a))
