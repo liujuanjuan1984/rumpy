@@ -91,10 +91,16 @@ async def message_handle(message):
     msg = pack_message(
         pack_text_data(reply_text), conversation_id=msgview.conversation_id, quote_message_id=msgview.message_id
     )
-    bot.xin.api.send_messages(msg)
-    await bot.blaze.echo(msgview.message_id)
-    bot.db.session.query(BotComments).filter(BotComments.message_id == msgview.message_id).update({"is_reply": True})
-    bot.db.commit()
+    resp = bot.xin.api.send_messages(msg)
+    if "data" in resp:
+        await bot.blaze.echo(msgview.message_id)
+        bot.db.session.query(BotComments).filter(BotComments.message_id == msgview.message_id).update(
+            {"is_reply": True}
+        )
+        bot.db.commit()
+    else:
+        print(resp)
+        bot.reconnect()
     return
 
 

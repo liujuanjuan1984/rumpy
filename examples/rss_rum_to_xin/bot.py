@@ -32,7 +32,12 @@ class RssBot:
         self.db = BaseDB("rss_bot_test", echo=False, reset=False)
         self.check_groups()
         self.groups = self.db.session.query(BotRumGroups).all()
-        self.update_all_profiles("node")
+        self.update_all_profiles("bot")
+
+    def reconnect(self):
+        print(datetime.datetime.now(), "http reconnect...")
+        self.xin = HttpClient_AppAuth(self.config)
+        print(datetime.datetime.now(), "http reconnect done")
 
     def update_profiles(self, group_id):
         self.rum.group_id = group_id
@@ -239,7 +244,7 @@ class RssBot:
                 msg = pack_message(pack_text_data(trx.text), r.conversation_id)
 
                 resp = self.xin.api.send_messages(msg)
-                # print(datetime.datetime.now(), r.conversation_id, trx.text[:30].replace("\n", " "), "...")
+                print(datetime.datetime.now(), r.conversation_id, "..." + trx.text[10:30] + "...")
 
                 if "data" in resp:
                     _d = {
@@ -250,15 +255,30 @@ class RssBot:
                         "is_sent": True,
                     }
                     self.db.add(BotTrxsSent(_d))
+                else:
+                    print(resp)
+                    self.reconnect()
 
         print(datetime.datetime.now(), "send_msg_to_xin done.")
 
     def send_to_rum(self, group_id=my_rum_group):
         self.rum.group_id = group_id
-        data = self.db.session.query(BotComments).filter(BotComments.is_to_rum == False).all()
+        data = (
+            self.db.session.query(BotComments)
+            .filter(
+                and_(
+                    BotComments.user_id == my_user_id,
+                    BotComments.text.like("代发%"),
+                    BotComments.text.is_to_rum != True,
+                )
+            )
+            .all()
+        )
         for r in data:
             resp = self.rum.group.send_note(content=r.text[3:])
+            print(datetime.datetime.now(), "send_to_rum", r.text[3:10] + "...")
             if "trx_id" not in resp:
+                print(datetime.datetime.now(), "send_to_rum ERROR", resp)
                 continue
             self.db.session.query(BotComments).filter(BotComments.message_id == r.message_id).update(
                 {"is_to_rum": True}
@@ -266,7 +286,7 @@ class RssBot:
             self.db.commit()
 
     def do_rss(self):
-        self.update_all_profiles("node")
+        self.update_all_profiles("bot")
         self.send_to_rum()
         self.send_msg_to_xin()
         self.get_trxs_from_rum()
@@ -319,7 +339,7 @@ class RssBot:
                 if irss[group_id] != None and existd.is_rss != irss[group_id]:
                     self.db.session.query(BotRss).filter(BotRss.user_group == ug).update({"is_rss": irss[group_id]})
                     self.db.commit()
-
+                print(datetime.datetime.now(), "update rss", group_id, irss[group_id])
             else:
                 data = {
                     "user_id": user_id,
@@ -329,6 +349,7 @@ class RssBot:
                     "conversation_id": self.xin.get_conversation_id_with_user(user_id),
                 }
                 self.db.add(BotRss(data))
+                print(datetime.datetime.now(), "add rss", group_id, irss[group_id])
 
     def check_str_param(self, text):
         if type(text) == str:
@@ -359,11 +380,11 @@ class RssBot:
             and msgview.data_decoded.startswith("代发：")
         )
         if is_to_rum:
-
             self.db.session.query(BotComments).filter(BotComments.message_id == msgview.message_id).update(
                 {"is_reply": True, "is_to_rum": False}
             )
             self.db.commit()
+            print(datetime.datetime.now(), "新增代发：", msgview.data_decoded[3:10] + "...")
         return is_to_rum
 
     def counts_trxs(self, days=-1, num=100):
