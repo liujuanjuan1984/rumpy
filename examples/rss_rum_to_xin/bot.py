@@ -10,7 +10,7 @@ from modules import *
 from rumpy import RumClient
 from rumpy.client.module_op import BaseDB
 from rumpy.client.module.base import Base
-from rumpy.client.utils import ts2datetime
+from rumpy.utils import ts2datetime
 
 sys.path.insert(1, mixin_sdk_dirpath)
 from mixinsdk.clients.http_client import HttpClient_AppAuth
@@ -269,7 +269,7 @@ class RssBot:
                 and_(
                     BotComments.user_id == my_user_id,
                     BotComments.text.like("代发%"),
-                    BotComments.text.is_to_rum != True,
+                    BotComments.is_to_rum != True,
                 )
             )
             .all()
@@ -402,9 +402,11 @@ class RssBot:
         """
 
         thatday = datetime.datetime.now().date() + datetime.timedelta(days=days)
-
+        counts_result = {"data": {}, "date": str(thatday)}
         while True:
             _trxs = self.rum.group.content_trxs(is_reverse=True, num=num)
+            if len(_trxs) == 0:
+                return counts_result
             lastest_day = ts2datetime(_trxs[-1]["TimeStamp"]).date()
             if lastest_day < thatday:
                 counts = {}
