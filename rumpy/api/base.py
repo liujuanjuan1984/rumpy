@@ -2,19 +2,11 @@ class BaseAPI:
     def __init__(self, client=None):
         self._client = client
 
-    def _get(self, url: str, relay={}):
-        return self._client.get(url, relay)
+    def _get(self, path: str, relay={}, api_base=None):
+        return self._client.get(path, relay, api_base)
 
-    def _post(self, url: str, relay={}):
-        return self._client.post(url, relay)
-
-    @property
-    def baseurl(self) -> str:
-        return self._client.baseurl
-
-    @property
-    def baseurl_app(self) -> str:
-        return self._client.baseurl_app
+    def _post(self, path: str, relay={}, api_base=None):
+        return self._client.post(path, relay, api_base)
 
     @property
     def group_id(self):

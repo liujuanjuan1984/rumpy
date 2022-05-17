@@ -1,6 +1,6 @@
 import time
 from sqlalchemy import Column, Integer, String
-from rumpy.client.module.base import Base
+from rumpy.modules.base import Base
 
 
 class Block(Base):
@@ -20,7 +20,7 @@ class Block(Base):
     def __init__(self, block):
         super().__init__(**block)
         # genesis_block don't have Trxs.
-        self.Trxs = block.get("Trxs") or []
+        self.Trxs = block.get("Trxs", [])
 
     def __repr__(self):
         return f"Block({self.to_dict()})"

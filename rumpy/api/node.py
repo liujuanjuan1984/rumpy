@@ -1,15 +1,15 @@
 import urllib
 from typing import List, Dict
-from rumpy.client.api.base import BaseAPI
-from rumpy.client.api.group import Group
-from rumpy.client.api.data import *
+from rumpy.api.base import BaseAPI
+from rumpy.api.group import Group
+from rumpy.types.data import *
 
 
 class Node(BaseAPI):
     @property
     def info(self):
         """return node info, dataclasses.dataclass type"""
-        resp = self._get(f"{self.baseurl}/node")
+        resp = self._get("/node")
         return NodeInfo(**resp)
 
     @property
@@ -49,23 +49,23 @@ class Node(BaseAPI):
             "/ip4/94.23.17.189/tcp/10666/p2p/16Uiu2HAmGTcDnhj3KVQUwVx8SGLyKBXQwfAxNayJdEwfsnUYKK4u"
             ]
         """
-        return self._post(f"{self.baseurl}/network/peers", peers)
+        return self._post("/network/peers", peers)
 
     def get_peers(self):
         """获取能 ping 通的节点"""
-        return self._get(f"{self.baseurl}/network/peers/ping")
+        return self._get("/network/peers/ping")
 
     def psping(self, peer_id: str):
         """ping 一个节点
 
         peer_id: 节点 ID, 例如 "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
         """
-        return self._post(f"{self.baseurl}/psping", {"peer_id": peer_id})
+        return self._post("/psping", {"peer_id": peer_id})
 
     @property
     def network(self) -> Dict:
         """return network info of this node"""
-        return self._get(f"{self.baseurl}/network")
+        return self._get("/network")
 
     @property
     def eth_addr(self):
@@ -73,7 +73,7 @@ class Node(BaseAPI):
 
     def groups(self) -> List:
         """return list of group info which node has joined"""
-        return self._get(f"{self.baseurl}/groups")["groups"]
+        return self._get("/groups")["groups"]
 
     @property
     def groups_id(self) -> List:
@@ -82,22 +82,22 @@ class Node(BaseAPI):
 
     def backup(self):
         """Backup my group seed/keystore/config"""
-        return self._get(f"{self.baseurl}/backup")
+        return self._get("/backup")
 
     def token(self):
         """Get a auth token for authorizing requests from remote"""
-        return self._post(f"{self.baseurl_app}/token/apply")
+        return self._post("/token/apply", api_base=self._client.api_base_app)
 
     def token_refresh(self):
         """Get a new auth token"""
-        return self._post(f"{self.baseurl_app}/token/refresh")
+        return self._post("/token/refresh", api_base=self._client.api_base_app)
 
     def stats(self, start: str = None, end: str = None):
         """Get network stats summary
 
         param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
         """
-        api = f"{self.baseurl}/network/stats"
+        api = "/network/stats"
 
         if start or end:
             query = "?"

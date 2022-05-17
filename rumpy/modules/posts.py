@@ -1,6 +1,6 @@
 import time
 from sqlalchemy import Column, Integer, String, Boolean
-from rumpy.client.module.base import Base
+from rumpy.modules.base import Base
 
 
 class Post(Base):

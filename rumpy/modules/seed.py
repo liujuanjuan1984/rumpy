@@ -1,6 +1,6 @@
 import time
 from sqlalchemy import Column, Integer, String
-from rumpy.client.module.base import Base
+from rumpy.modules.base import Base
 
 
 class Seed(Base):
@@ -19,7 +19,7 @@ class Seed(Base):
 
     def __init__(self, seed):
         super().__init__(**seed)
-        self.genesis_block = str(seed.get("genesis_block") or {})
+        self.genesis_block = str(seed.get("genesis_block", {}))
 
     def __repr__(self):
         return f"Seed({self.to_dict()})"

@@ -7,9 +7,10 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-from rumpy.client import api
-from rumpy.client.api.base import BaseAPI
+from rumpy import api
+from rumpy.api.base import BaseAPI
 from rumpy.client.config import PORT, CRTFILE
+from rumpy.types.errors import RequestError
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class RumClient:
         host: str = "127.0.0.1",
         appid: str = "peer",
         jwt_token: str = None,
+        api_base: str = None,
     ):
         """
         :param appid, str, Rum 客户端标识，自定义，随便写
@@ -71,24 +73,34 @@ class RumClient:
         )
         if jwt_token:
             self._session.headers.update({"Authorization": f"Bearer {jwt_token}"})
-        self.baseurl = f"https://{host}:{port}/api/v1"
-        self.baseurl_app = f"https://{host}:{port}/app/api/v1"
-        os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.baseurl, self.baseurl_app])
+        self.api_base = f"https://{host}:{port}/api/v1"
+        self.api_base_app = f"https://{host}:{port}/app/api/v1"
+        self.api_base_paid = "https://prs-bp2.press.one/api"
+        os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.api_base, self.api_base_app])
 
-    def _request(self, method: str, url: str, relay: Dict = {}):
-
+    def _request(self, method: str, path: str, relay: Dict = {}, api_base=None):
+        url = (api_base or self.api_base) + path
         try:
             resp = self._session.request(method=method, url=url, json=relay)
         except Exception as e:  # SSLCertVerificationError
             resp = self._session.request(method=method, url=url, json=relay, verify=False)
 
-        return resp.json()
+        try:
+            body_json = resp.json()
+        except Exception as e:
+            print(e)
+            body_json = {}
 
-    def get(self, url: str, relay: Dict = {}):
-        return self._request("get", url, relay)
+        if resp.status_code != 200:
+            print(resp.status_code, method, url, resp)
+            # raise RequestError(resp.status_code, method, url, resp)
+        return body_json
 
-    def post(self, url: str, relay: Dict = {}):
-        return self._request("post", url, relay)
+    def get(self, path: str, relay: Dict = {}, api_base=None):
+        return self._request("get", path, relay, api_base)
+
+    def post(self, path: str, relay: Dict = {}, api_base=None):
+        return self._request("post", path, relay, api_base)
 
     @property
     def group_id(self):

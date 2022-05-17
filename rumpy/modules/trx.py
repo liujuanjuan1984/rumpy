@@ -1,6 +1,6 @@
 import time
 from sqlalchemy import Column, Integer, String
-from rumpy.client.module.base import Base
+from rumpy.modules.base import Base
 
 
 class Trx(Base):
@@ -15,7 +15,7 @@ class Trx(Base):
 
     def __init__(self, trx):
         super().__init__(**trx)
-        self.Content = str(trx.get("Content") or {})
+        self.Content = str(trx.get("Content", {}))
 
     def __repr__(self):
         return f"Trx({self.to_dict()})"

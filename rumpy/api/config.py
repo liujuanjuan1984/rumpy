@@ -1,10 +1,10 @@
 import json
 import base64
 from typing import List, Dict, Any
-from rumpy.client.api.base import BaseAPI
-from rumpy.client.api.group import Group
-from rumpy.client.api.data import *
-from rumpy.client.utils import zip_image_file
+from rumpy.api.base import BaseAPI
+from rumpy.api.group import Group
+from rumpy.types.data import *
+from rumpy.utils import zip_image_file
 
 
 class GroupConfig(BaseAPI):
@@ -34,7 +34,7 @@ class GroupConfig(BaseAPI):
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
         trx_type = self._check_trx_type(trx_type)
-        return self._get(f"{self.baseurl}/group/{self.group_id}/trx/auth/{trx_type}")
+        return self._get(f"/group/{self.group_id}/trx/auth/{trx_type}")
 
     @property
     def mode(self):
@@ -81,7 +81,7 @@ class GroupConfig(BaseAPI):
             "config": json.dumps({"trx_type": trx_type, "trx_auth_mode": f"follow_{mode}_list"}),
             "Memo": memo,
         }
-        return self._post(f"{self.baseurl}/group/chainconfig", relay)
+        return self._post("/group/chainconfig", relay)
 
     def _update_list(
         self,
@@ -103,7 +103,7 @@ class GroupConfig(BaseAPI):
             "config": json.dumps({"action": "add", "pubkey": pubkey, "trx_type": trx_types}),
             "Memo": memo,
         }
-        return self._post(f"{self.baseurl}/group/chainconfig", relay)
+        return self._post("/group/chainconfig", relay)
 
     def update_allow_list(
         self,
@@ -143,7 +143,7 @@ class GroupConfig(BaseAPI):
         if mode not in ["allow", "deny"]:
             raise ValueError("mode must be one of these: allow,deny")
 
-        return self._get(f"{self.baseurl}/group/{self.group_id}/trx/{mode}list") or []
+        return self._get(f"/group/{self.group_id}/trx/{mode}list") or []
 
     @property
     def allow_list(self):
@@ -196,18 +196,18 @@ class GroupConfig(BaseAPI):
         }
         self._check_owner()
 
-        return self._post(f"{self.baseurl}/group/appconfig", relay)
+        return self._post("/group/appconfig", relay)
 
     def keylist(self):
         """获取组的所有配置项"""
-        return self._get(f"{self.baseurl}/group/{self.group_id}/appconfig/keylist")
+        return self._get(f"/group/{self.group_id}/appconfig/keylist")
 
     def key(self, key: str):
         """获取组的某个配置项的信息
 
         key: 配置项名称
         """
-        return self._get(f"{self.baseurl}/group/{self.group_id}/appconfig/{key}")
+        return self._get(f"/group/{self.group_id}/appconfig/{key}")
 
     def announce(self, action="add", type="user", memo="rumpy.api"):
         """announce user or producer,add or remove
@@ -225,7 +225,7 @@ class GroupConfig(BaseAPI):
             "type": type,  # user or producer
             "memo": memo,
         }
-        return self._post(f"{self.baseurl}/group/announce", relay)
+        return self._post("/group/announce", relay)
 
     def announce_as_user(self):
         """announce self as user
@@ -245,22 +245,22 @@ class GroupConfig(BaseAPI):
 
     def announced_producers(self):
         """获取申请 成为/退出 的 producers"""
-        return self._get(f"{self.baseurl}/group/{self.group_id}/announced/producers")
+        return self._get(f"/group/{self.group_id}/announced/producers")
 
     def announced_users(self):
         """获取申请 成为/退出 的 users"""
-        return self._get(f"{self.baseurl}/group/{self.group_id}/announced/users")
+        return self._get(f"/group/{self.group_id}/announced/users")
 
     def announced_user(self, pubkey):
         """获取申请 成为/退出 的 user 的申请状态
 
         pubkey: 用户公钥
         """
-        return self._get(f"{self.baseurl}/group/{self.group_id}/announced/user/{pubkey}")
+        return self._get(f"/group/{self.group_id}/announced/user/{pubkey}")
 
     def producers(self):
         """获取已经批准的 producers"""
-        return self._get(f"{self.baseurl}/group/{self.group_id}/producers")
+        return self._get(f"/group/{self.group_id}/producers")
 
     def update_user(self, user_pubkey, action="add"):
         """组创建者添加或移除私有组用户
@@ -275,7 +275,7 @@ class GroupConfig(BaseAPI):
             "group_id": self.group_id,
             "action": action,  # "add" or "remove"
         }
-        return self._post(f"{self.baseurl}/group/user", relay)
+        return self._post("/group/user", relay)
 
     def approve_as_user(self, pubkey=None):
         """添加私有组用户
@@ -300,7 +300,7 @@ class GroupConfig(BaseAPI):
             "group_id": group_id or self.group_id,
             "action": action,
         }
-        return self._post(f"{self.baseurl}/group/producer", relay)
+        return self._post("/group/producer", relay)
 
     def update_profile(self, name, image=None, mixin_id=None):
         """更新组的用户配置, 以 rum-app 为例, 如昵称, 头像, 绑定钱包(以 mixin 钱包为例)
@@ -322,4 +322,4 @@ class GroupConfig(BaseAPI):
                 "type": "mixin",
                 "name": "mixin messenger",
             }
-        return self._post(f"{self.baseurl}/group/profile", relay)
+        return self._post("/group/profile", relay)

@@ -6,9 +6,9 @@ import os
 import math
 import hashlib
 from typing import List, Dict, Any
-from rumpy.client.api.base import BaseAPI
-from rumpy.client.api.data import *
-from rumpy.client.utils import sha256, ts2datetime
+from rumpy.api.base import BaseAPI
+from rumpy.types.data import *
+from rumpy.utils import sha256, ts2datetime
 
 
 CHUNK_SIZE = 150 * 1024  # 150kb
@@ -60,12 +60,12 @@ class Group(BaseAPI):
             "app_key": app_key,
         }
 
-        return self._post(f"{self.baseurl}/group", relay)
+        return self._post("/group", relay)
 
     def seed(self) -> Dict:
         """get the seed of a group which you've joined in."""
         if self.is_joined():
-            seed = self._get(f"{self.baseurl}/group/{self.group_id}/seed")
+            seed = self._get(f"/group/{self.group_id}/seed")
             if "error" not in seed:
                 return seed
         return {}
@@ -108,7 +108,7 @@ class Group(BaseAPI):
         """join a group with the seed of the group"""
         if not self.is_seed(seed):
             raise ValueError("not a seed or the seed could not be identified.")
-        return self._post(f"{self.baseurl}/group/join", seed)
+        return self._post("/group/join", seed)
 
     def is_joined(self) -> bool:
         self._check_group_id()
@@ -119,22 +119,22 @@ class Group(BaseAPI):
     def leave(self):
         """leave a group"""
         if self.is_joined():
-            return self._post(f"{self.baseurl}/group/leave", {"group_id": self.group_id})
+            return self._post("/group/leave", {"group_id": self.group_id})
 
     def clear(self):
         """clear data of a group"""
         self._check_group_id()
-        return self._post(f"{self.baseurl}/group/clear", {"group_id": self.group_id})
+        return self._post("/group/clear", {"group_id": self.group_id})
 
     def startsync(self):
         """触发同步"""
         if self.is_joined():
-            return self._post(f"{self.baseurl}/group/{self.group_id}/startsync")
+            return self._post(f"/group/{self.group_id}/startsync")
 
     def content(self) -> List:
         """get the content trxs of a group,return the list of the trxs data."""
         if self.is_joined():
-            return self._get(f"{self.baseurl}/group/{self.group_id}/content") or []
+            return self._get(f"/group/{self.group_id}/content") or []
 
     def content_trxs(
         self,
@@ -158,13 +158,13 @@ class Group(BaseAPI):
 
         if trx_id:
             apiurl = (
-                f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&starttrx={trx_id}"
+                f"/group/{self.group_id}/content?num={num}&starttrx={trx_id}"
                 f"&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
             )
         else:
-            apiurl = f"{self.baseurl_app}/group/{self.group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
+            apiurl = f"/group/{self.group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
 
-        trxs = self._post(apiurl) or []
+        trxs = self._post(apiurl, api_base=self._client.api_base_app) or []
         return self.trxs_unique(trxs)
 
     def _send(self, obj=None, sendtype=None, **kwargs) -> Dict:
@@ -175,7 +175,7 @@ class Group(BaseAPI):
         返回值 {"trx_id": "string"}
         """
         relay = NewTrx(group_id=self.group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
-        return self._post(f"{self.baseurl}/group/content", relay)
+        return self._post("/group/content", relay)
 
     def like(self, trx_id: str) -> Dict:
         return self._send(trx_id=trx_id, sendtype="Like")
@@ -311,7 +311,7 @@ class Group(BaseAPI):
     def block(self, block_id: str):
         """get the info of a block in a group"""
         self._check_group_id()
-        return self._get(f"{self.baseurl}/block/{self.group_id}/{block_id}")
+        return self._get(f"/block/{self.group_id}/{block_id}")
 
     def is_owner(self) -> bool:
         """return True if I create this group else False"""
@@ -355,7 +355,7 @@ class Group(BaseAPI):
         if trxdata["TypeUrl"] == "quorum.pb.Person":
             return "person"
         content = trxdata["Content"]
-        trxtype = content.get("type") or "other"
+        trxtype = content.get("type", "other")
         if type(trxtype) == int:
             return "announce"
         if trxtype == "Note":
@@ -380,7 +380,7 @@ class Group(BaseAPI):
                 return resp[0]
         except Exception as e:
             print(e)
-            return self._get(f"{self.baseurl}/trx/{self.group_id}/{trx_id}")
+            return self._get(f"/trx/{self.group_id}/{trx_id}")
         return {"error": "nothing got."}
 
     def trxs_unique(self, trxs: List):
@@ -393,11 +393,11 @@ class Group(BaseAPI):
 
     def pubqueue(self):
         self._check_group_id()
-        resp = self._get(f"{self.baseurl}/group/{self.group_id}/pubqueue")
+        resp = self._get(f"/group/{self.group_id}/pubqueue")
         return resp.get("Data")
 
     def ack(self, trx_ids: List):
-        return self._post(f"{self.baseurl}/trx/ack", {"trx_ids": trx_ids})
+        return self._post("/trx/ack", {"trx_ids": trx_ids})
 
     def autoack(self):
         self._check_group_id()
@@ -439,7 +439,7 @@ class Group(BaseAPI):
             }
         )
 
-        users = users_data.get("data") or {}
+        users = users_data.get("data", {})
         profile_trxs = [trx for trx in trxs if trx.get("TypeUrl") == "quorum.pb.Person"]
 
         for trx in profile_trxs:
@@ -508,8 +508,8 @@ class Group(BaseAPI):
             if tcontent.get("type") == "File":
                 lines.append(f"上传了文件。")
             else:
-                text = trx["Content"].get("content") or ""
-                img = trx["Content"].get("image") or []
+                text = trx["Content"].get("content", "")
+                img = trx["Content"].get("image", [])
                 lines.append(text)
                 obj["image"].extend(img)
 
@@ -520,12 +520,12 @@ class Group(BaseAPI):
                     lines.insert(0, f"处理了链上请求。")
                 elif t in _info:
                     refer_tid = trx["Content"]["id"]
-                    refer_pubkey = self.group.trx(refer_tid).get("Publisher") or ""
+                    refer_pubkey = self.group.trx(refer_tid).get("Publisher", "")
                     lines.insert(0, f"点{_info[t]}给 `{_nickname( refer_pubkey,nicknames)}` 所发布的内容：")
                 elif t == "reply":
                     lines.insert(0, f"回复说：")
                     refer_tid = trx["Content"]["inreplyto"]["trxid"]
-                    refer_pubkey = self.group.trx(refer_tid).get("Publisher") or ""
+                    refer_pubkey = self.group.trx(refer_tid).get("Publisher", "")
                     lines.append(f"\n回复给 `{_nickname(refer_pubkey,nicknames)}` 所发布的内容：")
                 else:
                     if text and img:
@@ -539,8 +539,8 @@ class Group(BaseAPI):
 
                     refer_trx = refer_trx or self.group.trx(refer_tid)
                     if "Content" in refer_trx:
-                        refer_text = refer_trx["Content"].get("content") or ""
-                        refer_img = refer_trx["Content"].get("image") or []
+                        refer_text = refer_trx["Content"].get("content", "")
+                        refer_img = refer_trx["Content"].get("image", [])
                         lines.append(_quote(refer_text))
                         obj["image"].extend(refer_img)
         else:

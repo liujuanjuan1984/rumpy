@@ -1,7 +1,6 @@
 import datetime
 import hashlib
 import os
-import uuid
 import io
 
 IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200

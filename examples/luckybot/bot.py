@@ -8,8 +8,8 @@ from sqlalchemy import Column, Integer, String, Boolean, distinct, and_
 from config import *
 from modules import *
 from rumpy import RumClient
-from rumpy.client.module_op import BaseDB
-from rumpy.client.module.base import Base
+from rumpy.module_op import BaseDB
+from rumpy.modules.base import Base
 from rumpy.utils import ts2datetime
 
 sys.path.insert(0, mixin_sdk_dirpath)

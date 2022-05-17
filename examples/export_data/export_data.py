@@ -4,7 +4,7 @@ import uuid
 import sys
 from officy import JsonFile, Dir, Img
 from rumpy import RumClient
-from rumpy.client.utils import ts2datetime
+from rumpy.utils import ts2datetime
 from typing import List, Dict
 
 

@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from rumpy.client.module.base import Base
+from rumpy.modules.base import Base
 
 
 class BaseDB:

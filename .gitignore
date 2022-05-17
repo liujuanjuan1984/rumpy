@@ -136,3 +136,5 @@ examples/*/data/
 /database
 *.db
 tests/data/
+*.exe
+*private*.md

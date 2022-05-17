@@ -1,5 +1,9 @@
 import pytest
 import dataclasses
+
+import sys
+
+sys.path.insert(0, r"D:\Jupyter\rumpy")
 from tests import client, group_names_to_leave
 
 
@@ -144,7 +148,7 @@ class TestCase:
         block = client.group.block(bid)
         assert "BlockId" in block
 
-        trxs = block.get("Trxs") or []
+        trxs = block.get("Trxs", [])
         if len(trxs) > 0:
             tid = trxs[0]["TrxId"]
             x = client.group.trx(tid)
@@ -194,8 +198,6 @@ class TestCase:
     def test_init(self):
 
         type(client.group)
-
-        type(client.db)
         type(client.node)
         type(client.group_id)
 

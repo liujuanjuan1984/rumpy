@@ -1,6 +1,5 @@
 import logging
 from rumpy.client import RumClient
-from rumpy.client.module import *
 
 __version__ = "0.3.1"
 __author__ = "liujuanjuan1984"
