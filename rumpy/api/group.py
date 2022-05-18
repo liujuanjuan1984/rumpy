@@ -234,7 +234,7 @@ class Group(BaseAPI):
         infos = []
         filetrxs = []
         for trx in trxs:
-            if trx["Content"]["name"] == "fileinfo":
+            if trx["Content"].get("name") == "fileinfo":
                 info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
                 logger.debug(f"{sys._getframe().f_code.co_name}, {info}")
                 infos.append(info)
@@ -437,12 +437,16 @@ class Group(BaseAPI):
             to_tid = trxs[-1]["TrxId"]
         else:
             to_tid = trx_id
+        _trx = self.group.trx(to_tid)
+        if not _trx:
+            return users_data
+
         users_data.update(
             {
                 "group_id": self.group_id,
                 "group_name": self.group.seed().get("group_name"),
                 "trx_id": to_tid,
-                "trx_timestamp": str(ts2datetime(self.group.trx(to_tid).get("TimeStamp"))),
+                "trx_timestamp": str(ts2datetime(_trx.get("TimeStamp"))),
                 "update_at": str(datetime.datetime.now()),
             }
         )
