@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import inspect
 import requests
@@ -64,7 +65,6 @@ class RumClient:
         self._session = requests.Session()
         self._session.verify = crtfile or False
         self._session.keep_alive = False
-
         self._session.headers.update(
             {
                 "USER-AGENT": "python.api",
@@ -79,21 +79,23 @@ class RumClient:
         os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.api_base, self.api_base_app])
 
     def _request(self, method: str, path: str, relay: Dict = {}, api_base=None):
-        url = (api_base or self.api_base) + path
+        api_base = api_base or self.api_base
+        url = api_base + path
+        logger.debug(f"{sys._getframe().f_code.co_name}, {method.upper()}, {path}, {api_base}")
         try:
             resp = self._session.request(method=method, url=url, json=relay)
         except Exception as e:  # SSLCertVerificationError
+            logger.warning(f"{sys._getframe().f_code.co_name}, {e}")
             resp = self._session.request(method=method, url=url, json=relay, verify=False)
 
         try:
             body_json = resp.json()
         except Exception as e:
-            print(e)
+            logger.error(f"{sys._getframe().f_code.co_name}, {e}")
             body_json = {}
 
         if resp.status_code != 200:
-            print(resp.status_code, method, url, resp)
-            # raise RequestError(resp.status_code, method, url, resp)
+            logger.warning(f"{sys._getframe().f_code.co_name}, {resp.status_code}, {resp.json()}")
         return body_json
 
     def get(self, path: str, relay: Dict = {}, api_base=None):
@@ -104,7 +106,7 @@ class RumClient:
 
     @property
     def group_id(self):
-        logger.info(f"group_id:{self._group_id}")
+        logger.debug(f"{sys._getframe().f_code.co_name}, group_id:{self._group_id}")
         return self._group_id
 
     @group_id.setter

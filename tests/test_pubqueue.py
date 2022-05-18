@@ -1,7 +1,4 @@
 import datetime
-import sys
-
-sys.path.insert(0, r"D:\Jupyter\rumpy")
 from rumpy.utils import ts2datetime
 from tests import client
 

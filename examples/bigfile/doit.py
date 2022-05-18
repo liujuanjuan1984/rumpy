@@ -1,8 +1,5 @@
 import os
 from officy import Dir, JsonFile
-import sys
-
-sys.path.insert(0, r"D:\Jupyter\rumpy")
 from rumpy import RumClient
 
 bot = RumClient(port=58356)

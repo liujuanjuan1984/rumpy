@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from rumpy.modules.base import Base
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class BaseDB:

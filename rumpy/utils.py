@@ -2,8 +2,13 @@ import datetime
 import hashlib
 import os
 import io
+import sys
+import logging
 
 IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
+
+
+logger = logging.getLogger(__name__)
 
 
 def sha256(ibytes):
@@ -96,7 +101,7 @@ def zip_image_file(file_path, kb=IMAGE_MAX_SIZE_KB):
         else:
             img_bytes = zip_image(img_bytes, kb=kb)
     except Exception as e:
-        print(e)
+        logger.warning(f"{sys._getframe().f_code.co_name}, {e}")
 
     return img_bytes
 

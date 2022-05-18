@@ -12,7 +12,7 @@ from rumpy.module_op import BaseDB
 from rumpy.modules.base import Base
 from rumpy.utils import ts2datetime
 
-sys.path.insert(1, mixin_sdk_dirpath)
+sys.path.insert(0, mixin_sdk_dirpath)
 from mixinsdk.clients.http_client import HttpClient_AppAuth
 from mixinsdk.clients.user_config import AppConfig
 from mixinsdk.types.message import MessageView, pack_message, pack_text_data
@@ -33,11 +33,6 @@ class RssBot:
         self.check_groups()
         self.groups = self.db.session.query(BotRumGroups).all()
         self.update_all_profiles("bot")
-
-    def reconnect(self):
-        print(datetime.datetime.now(), "http reconnect...")
-        self.xin = HttpClient_AppAuth(self.config)
-        print(datetime.datetime.now(), "http reconnect done")
 
     def update_profiles(self, group_id):
         self.rum.group_id = group_id
@@ -257,7 +252,6 @@ class RssBot:
                     self.db.add(BotTrxsSent(_d))
                 else:
                     print(resp)
-                    self.reconnect()
 
         print(datetime.datetime.now(), "send_msg_to_xin done.")
 

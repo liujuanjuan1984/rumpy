@@ -1,9 +1,5 @@
 import pytest
 import dataclasses
-
-import sys
-
-sys.path.insert(0, r"D:\Jupyter\rumpy")
 from tests import client, group_names_to_leave
 
 

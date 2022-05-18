@@ -100,7 +100,6 @@ async def message_handle(message):
         bot.db.commit()
     else:
         print(resp)
-        bot.reconnect()
     return
 
 

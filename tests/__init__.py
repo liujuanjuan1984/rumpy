@@ -1,6 +1,3 @@
-import sys
-
-sys.path.insert(0, r"D:\Jupyter\rumpy")
 from rumpy import RumClient
 
 group_names_to_leave = []

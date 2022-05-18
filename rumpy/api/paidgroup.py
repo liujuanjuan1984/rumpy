@@ -1,4 +1,7 @@
 from rumpy.api.base import BaseAPI
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PaidGroup(BaseAPI):

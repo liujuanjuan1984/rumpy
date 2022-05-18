@@ -5,11 +5,14 @@ import time
 import os
 import math
 import hashlib
+import logging
+import sys
 from typing import List, Dict, Any
 from rumpy.api.base import BaseAPI
 from rumpy.types.data import *
 from rumpy.utils import sha256, ts2datetime
 
+logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 150 * 1024  # 150kb
 
@@ -68,6 +71,7 @@ class Group(BaseAPI):
             seed = self._get(f"/group/{self.group_id}/seed")
             if "error" not in seed:
                 return seed
+            logger.warning(f"{sys._getframe().f_code.co_name}, joined the group,but don't get seed.")
         return {}
 
     def is_seed(self, seed: Dict) -> bool:
@@ -75,7 +79,7 @@ class Group(BaseAPI):
             Seed(**seed)
             return True
         except Exception as e:
-            print(e)
+            logger.error(f"{sys._getframe().f_code.co_name}, {e}")
             return False
 
     def info(self):
@@ -220,7 +224,8 @@ class Group(BaseAPI):
 
     def upload(self, file_path):
         if not os.path.isfile(file_path):
-            return print(f"{file_path} is not a file.")
+            logger.info(f"{sys._getframe().f_code.co_name}, {file_path} is not a file.")
+            return
         for obj in self._file_to_objs(file_path):
             self._send(obj=obj, sendtype="Add")
 
@@ -231,7 +236,7 @@ class Group(BaseAPI):
         for trx in trxs:
             if trx["Content"]["name"] == "fileinfo":
                 info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
-                print(info)
+                logger.debug(f"{sys._getframe().f_code.co_name}, {info}")
                 infos.append(info)
             if trx["Content"].get("type") == "File":
                 filetrxs.append(trx)
@@ -241,7 +246,8 @@ class Group(BaseAPI):
 
         ifilepath = os.path.join(file_dir, info["name"])
         if os.path.exists(ifilepath):
-            return print(ifilepath, "file exists.")
+            logger.info(f"{sys._getframe().f_code.co_name}, file exists {ifilepath}")
+            return
 
         # _check_trxs
         right_shas = [i["sha256"] for i in info["segments"]]
@@ -257,11 +263,11 @@ class Group(BaseAPI):
 
         for seg in info["segments"]:
             if seg["sha256"] not in contents:
-                print(seg, "trx is not exists...")
+                logger.info(f"{sys._getframe().f_code.co_name}, " + json.dumps(seg) + ", trx is not exists...")
                 flag = False
                 break
             if contents[seg["sha256"]]["Content"].get("name") != seg["id"]:
-                print(seg, "name is different...")
+                logger.info(f"{sys._getframe().f_code.co_name}, " + json.dumps(seg) + ", name is different...")
                 flag = False
                 break
 
@@ -271,7 +277,7 @@ class Group(BaseAPI):
                 content = base64.b64decode(contents[seg["sha256"]]["Content"]["file"]["content"])
                 ifile.write(content)
             ifile.close()
-            print(ifilepath, "downloaded!")
+            logger.info(f"{sys._getframe().f_code.co_name}, {ifilepath}, downloaded!")
 
     def download(self, file_dir):
         infos, trxs = self._file_infos()
@@ -373,15 +379,17 @@ class Group(BaseAPI):
         try:
             resp = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
             if len(resp) > 1:
-                print("something is error", resp)
+                logger.error(f"{sys._getframe().f_code.co_name}, " + json.dumps(resp.json()))
             elif len(resp) == 0:
-                raise ValueError(f"nothing got. {resp} {trx_id} {self.group_id}")
+                logger.warning(
+                    f"{sys._getframe().f_code.co_name}, nothing got from group:{self.group_id} with trx:{trx_id}"
+                )
             else:
                 return resp[0]
         except Exception as e:
-            print(e)
+            logger.error(f"{sys._getframe().f_code.co_name}, {e}")
             return self._get(f"/trx/{self.group_id}/{trx_id}")
-        return {"error": "nothing got."}
+        logger.error(f"{sys._getframe().f_code.co_name}, nothing got")
 
     def trxs_unique(self, trxs: List):
         """remove the duplicate trx from the trxs list"""
@@ -544,7 +552,6 @@ class Group(BaseAPI):
                         lines.append(_quote(refer_text))
                         obj["image"].extend(refer_img)
         else:
-            print(trx)
             return None, False
 
         obj["content"] = f'{ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)

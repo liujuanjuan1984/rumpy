@@ -211,7 +211,6 @@ class LuckyBot:
                     self.db.add(BotTrxsSent(_d))
                 else:
                     print(resp)
-                    self.reconnect()
 
         print(datetime.datetime.now(), "send_msg_to_xin done.")
 

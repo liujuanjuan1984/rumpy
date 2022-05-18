@@ -1,6 +1,3 @@
-import sys
-
-sys.path.insert(0, r"D:\Jupyter\rumpy")
 from rumpy.modules import *
 from rumpy.module_op import BaseDB
 from rumpy import RumClient

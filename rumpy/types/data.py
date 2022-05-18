@@ -7,7 +7,9 @@ import time
 import os
 from typing import Dict, List, Any
 from rumpy.utils import zip_image_file
+import logging
 
+logger = logging.getLogger(__name__)
 
 TRX_TYPES = [
     "POST",

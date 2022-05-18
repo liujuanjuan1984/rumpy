@@ -3,6 +3,9 @@ from typing import List, Dict
 from rumpy.api.base import BaseAPI
 from rumpy.api.group import Group
 from rumpy.types.data import *
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Node(BaseAPI):
