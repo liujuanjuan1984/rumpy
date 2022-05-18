@@ -1,5 +1,7 @@
 import datetime
 import sys
+import json
+import logging
 from config_rss import *
 
 sys.path.insert(0, mixin_sdk_dirpath)
@@ -10,11 +12,13 @@ from modules import BotComments
 from bot import bot
 
 
+logger = logging.getLogger(__name__)
+
+
 def message_handle_error_callback(error, details):
-    print(datetime.datetime.now(), "===== error_callback =====")
-    print(f"error: {error}")
-    print(f"details: {details}")
-    print(datetime.datetime.now(), "-" * 80)
+    logger.error("===== error_callback =====")
+    logger.error(f"error: {error}")
+    logger.error(f"details: {details}")
 
 
 async def message_handle(message):
@@ -25,15 +29,15 @@ async def message_handle(message):
     action = message["action"]
 
     if action == "ACKNOWLEDGE_MESSAGE_RECEIPT":
-        print(datetime.datetime.now(), "Mixin blaze server: received the message")
+        logger.info("Mixin blaze server: received the message")
         return
 
     if action == "LIST_PENDING_MESSAGES":
-        print(datetime.datetime.now(), "Mixin blaze server: list pending message")
+        logger.info("Mixin blaze server: list pending message")
         return
 
     if action == "ERROR":
-        print(datetime.datetime.now(), message["error"])
+        logger.warning(message["error"])
         await bot.blaze.echo(msgview.message_id)
         return
 
@@ -43,7 +47,7 @@ async def message_handle(message):
 
     error = message.get("error")
     if error:
-        print(datetime.datetime.now(), error)
+        logger.info(error)
         await bot.blaze.echo(msgview.message_id)
         return
 
@@ -71,7 +75,7 @@ async def message_handle(message):
         return
     # record the message
     # 查询 bot_comments
-    print(datetime.datetime.now(), str(msgview.created_at), msgview.user_id)
+    logger.info(str(msgview.created_at), msgview.user_id)
 
     existed = bot.db.session.query(BotComments).filter(BotComments.message_id == msgview.message_id).first()
     # 消息没有计入数据库，就写入
@@ -99,7 +103,7 @@ async def message_handle(message):
         )
         bot.db.commit()
     else:
-        print(resp)
+        logger.info(json.dumps(resp))
     return
 
 
