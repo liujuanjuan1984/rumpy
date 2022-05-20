@@ -1,3 +1,18 @@
+import datetime
+import logging
+
+
+now = datetime.datetime.now()
+
+# Set default logging handler to avoid "No handler found" warnings.
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+logging.basicConfig(
+    format="%(name)s %(asctime)s %(levelname)s %(message)s",
+    filename=f"rss_{datetime.date.today()}_{now.hour}_{now.minute}.log",
+    level=logging.INFO,
+)
+
+
 import sys
 import datetime
 import time
@@ -8,12 +23,14 @@ import logging
 from sqlalchemy import Column, Integer, String, Boolean, distinct, and_
 from config_rss import *
 from modules import *
+
+sys.path.insert(0, RUMPY_PATH)
+import rumpy
 from rumpy import RumClient
-from rumpy.module_op import BaseDB
-from rumpy.modules.base import Base
 from rumpy.utils import ts2datetime
 
-sys.path.insert(0, mixin_sdk_dirpath)
+sys.path.insert(0, MIXIN_SDK_PATH)
+import mixinsdk
 from mixinsdk.clients.http_client import HttpClient_AppAuth
 from mixinsdk.clients.user_config import AppConfig
 from mixinsdk.types.message import MessageView, pack_message, pack_text_data
@@ -28,15 +45,13 @@ rss bot 是一个基于 mixin messenger 的 bot
 
 
 class RssBot:
-    def __init__(self):
-        self.rum = RumClient(port=rum_port)
-        self.config = AppConfig.from_file(mixin_bot_config_file)
+    def __init__(self, db_name=None):
+        self.rum = RumClient(port=RUM_PORT)
+        self.config = AppConfig.from_file(MIXIN_KEYSTORE_FILE)
         self.xin = HttpClient_AppAuth(self.config)
-        self.db = BaseDB("rss_bot_test", echo=False, reset=False)
-        self.check_groups()
-        self.groups = self.db.session.query(BotRumGroups).all()
+        self.db = BaseDB(db_name or DB_NAME, echo=False, reset=False)
+        self.groups = self.check_groups()
         self.update_all_profiles("bot")
-        logger.debug("rss bot init.")
 
     def update_profiles(self, group_id):
         self.rum.group_id = group_id
@@ -50,6 +65,8 @@ class RssBot:
         p_tid = None if progress == None else progress.trx_id
 
         data = self.rum.group.get_users_profiles({"trx_id": p_tid}, ("name", "wallet"))
+        if data is None:
+            return
         tid = data.get("trx_id")
         ts = data.get("trx_timestamp")
 
@@ -57,7 +74,7 @@ class RssBot:
             self.db.session.query(BotRumProgress).filter(_x).update({"trx_id": tid, "timestamp": ts})
             self.db.session.commit()
 
-        for pubkey in data.get("data"):
+        for pubkey in data.get("data") or {}:
             _name = data["data"][pubkey].get("name")
             _wallet = data["data"][pubkey].get("wallet")
             if type(_wallet) == list:
@@ -79,33 +96,24 @@ class RssBot:
 
     def update_all_profiles(self, where="bot"):
         if where == "bot":
-            for g in self.groups:
-                logger.info("update_all_profiles", g.minutes, g.group_id, g.group_name)
-                self.update_profiles(g.group_id)
+            for group_id in self.groups:
+                self.update_profiles(group_id)
         elif where == "node":
             for group_id in self.rum.node.groups_id:
                 self.update_profiles(group_id)
 
     def check_groups(self):
-
-        # BotRumGroups init or update.
-        for k in commands:
-            _gid = commands[k]["group_id"]
+        groups = {}
+        for k in RSS_BOT_COMMANDS:
+            _gid = RSS_BOT_COMMANDS[k]["group_id"]
             if _gid not in (None, -1):
                 self.rum.group_id = _gid
-
-                existd = self.db.session.query(BotRumGroups).filter(BotRumGroups.group_id == _gid).first()
-                _m = commands[k].get("minutes") or default_minutes
-                if existd is None:
-                    _p = {
-                        "group_id": _gid,
-                        "group_name": self.rum.group.seed().get("group_name"),
-                        "minutes": _m,
-                    }
-                    self.db.add(BotRumGroups(_p))
-                elif existd.minutes != _m:
-                    self.db.session.query(BotRumGroups).filter(BotRumGroups.group_id == _gid).update({"minutes": _m})
-                    self.db.commit()
+                groups[_gid] = {
+                    "group_id": _gid,
+                    "group_name": self.rum.group.seed().get("group_name"),
+                    "minutes": RSS_BOT_COMMANDS[k].get("minutes") or DEFAULT_MINUTES,
+                }
+        return groups
 
     def get_nicknames(self, group_id):
         _nn = self.db.session.query(BotRumProfiles).filter(BotRumProfiles.group_id == group_id).all()
@@ -115,27 +123,22 @@ class RssBot:
         return nicknames
 
     def get_trxs_from_rum(self):
-        logger.info("get_trxs_from_rum ...")
-
-        for g in self.groups:
-            self.rum.group_id = g.group_id
+        # logger.debug("get_trxs_from_rum start ...")
+        for group_id in self.groups:
+            self.rum.group_id = group_id
             if not self.rum.group.is_joined():
-                logger.warning(gid, "you are not in this group. pls join it.")
+                logger.warning(f"group_id: {group_id}, you are not in this group. you need to join it.")
                 continue
 
-            nicknames = self.get_nicknames(g.group_id)
+            nicknames = self.get_nicknames(group_id)
             existd = (
                 self.db.session.query(BotRumProgress)
-                .filter(and_(BotRumProgress.group_id == g.group_id, BotRumProgress.progress_type == "GET_CONTENT"))
+                .filter(and_(BotRumProgress.group_id == group_id, BotRumProgress.progress_type == "GET_CONTENT"))
                 .first()
             )
 
-            gname = g.group_name
-            minutes = self.db.session.query(BotRumGroups.minutes).filter(BotRumGroups.group_id == g.group_id).first()
-            if minutes[0] is None:
-                minutes = default_minutes
-            else:
-                minutes = minutes[0]
+            gname = self.groups[group_id]["group_name"]
+            minutes = self.groups[group_id]["minutes"]
             if not existd:
                 _trxs = self.rum.group.content_trxs(is_reverse=True, num=10)
                 if len(_trxs) > 0:
@@ -145,7 +148,7 @@ class RssBot:
                     trx_id = None
                     _ts = None
 
-                _p = {"progress_type": "GET_CONTENT", "trx_id": trx_id, "timestamp": _ts, "group_id": g.group_id}
+                _p = {"progress_type": "GET_CONTENT", "trx_id": trx_id, "timestamp": _ts, "group_id": group_id}
                 self.db.add(BotRumProgress(_p))
             else:
                 trx_id = existd.trx_id
@@ -155,7 +158,7 @@ class RssBot:
                 _tid = trx["TrxId"]
                 trx_id = _tid
                 self.db.session.query(BotRumProgress).filter(
-                    and_(BotRumProgress.group_id == g.group_id, BotRumProgress.progress_type == "GET_CONTENT")
+                    and_(BotRumProgress.group_id == group_id, BotRumProgress.progress_type == "GET_CONTENT")
                 ).update({"trx_id": trx_id})
                 self.db.commit()
                 existd2 = self.db.session.query(BotTrxs).filter(BotTrxs.trx_id == _tid).first()
@@ -179,93 +182,121 @@ class RssBot:
 
                 _trx = {
                     "trx_id": _tid,
-                    "group_id": g.group_id,
+                    "group_id": group_id,
                     "timestamp": ts,
                     "text": obj["content"].encode().decode("utf-8"),
                 }
-                logger.info("got new trx: ", _tid)
+                logger.info(f"got new trx from rum. trx_id: {_tid}, group_id: {group_id}")
                 self.db.add(BotTrxs(_trx))
-        logger.info("get_trxs_from_rum done.")
+        # logger.debug("get_trxs_from_rum done")
 
-    def send_msg_to_xin(self):
+    def send_msg_to_xin_update(self):
+        # 先筛选出等待推送的 trxs，再推送给订阅了的人。
 
-        logger.info("send_msg_to_xin ...")
-        rss = self.db.session.query(BotRss).all()
+        # 计算出时间
+        def _get_nice_ts(group_id):
+            nice_ts = str(datetime.datetime.now() + datetime.timedelta(minutes=self.groups[group_id]["minutes"]))
+            # logger.debug(f"_get_nice_ts, group_id:{group_id}, _g:{_g}, _g[0]: {_g[0]},minutes: {minutes}, nice_ts:{nice_ts}")
+            return nice_ts
 
-        for r in rss:
-            if r.is_rss != True:
-                continue
-            gid = r.group_id
-            uid = r.user_id
-            _g = self.db.session.query(BotRumGroups).filter(BotRumGroups.group_id == gid).first()
-            if _g:
-                minutes = _g.minutes
-            else:
-                minutes = default_minutes
-            nice_ts = str(datetime.datetime.now() + datetime.timedelta(minutes=minutes))
-            trxs = self.db.session.query(BotTrxs).filter(BotTrxs.group_id == gid).all()
-            if len(trxs) == 0:
-                continue
+        def _check_text(text):
+            if text.find(" 点赞给 `") >= 0:
+                return False
+            if text.find(" 点踩给 `") >= 0:
+                return False
+            if text.find(" 修改了个人信息：") >= 0:
+                return False
+            if text.find("OBJECT_STATUS_DELETED") >= 0:
+                return False
+
+            _lenth = 200
+            if len(text) > _lenth:
+                text = text[:_lenth] + "...略..."
+            return text
+
+        def _one_group(group_id):
+            nice_ts = _get_nice_ts(group_id)
+            # 获取待发的 trxs
+            trxs = (
+                self.db.session.query(BotTrxs)
+                .filter(and_(BotTrxs.group_id == group_id, BotTrxs.timestamp > nice_ts))
+                .all()
+            )
+            # 筛选出待发的人
+            users = (
+                self.db.session.query(BotRss.user_id)
+                .filter(and_(BotRss.is_rss == True, BotRss.group_id == group_id))
+                .all()
+            )
             for trx in trxs:
-                # trx 的时间较早，就不推送了
-                if trx.timestamp <= nice_ts or trx.created_at <= nice_ts:
-                    continue
-                sent = (
-                    self.db.session.query(BotTrxsSent)
-                    .filter(
-                        and_(
-                            BotTrxsSent.trx_id == trx.trx_id,
-                            BotTrxsSent.group_id == gid,
-                            BotTrxsSent.is_sent == True,
-                            BotTrxsSent.user_id == uid,
-                        )
-                    )
-                    .first()
+                logger.debug(f"trxs, trx_id:{trx.trx_id}")
+
+                sent_users = (
+                    self.db.session.query(BotTrxsSent.user_id)
+                    .filter(and_(BotTrxsSent.trx_id == trx.trx_id, BotTrxsSent.group_id == group_id))
+                    .all()
                 )
-                if sent:
-                    continue
+                _sent_users = [i[0] for i in sent_users]
+                text = _check_text(trx.text)
 
-                # 点赞、点踩及修改个人信息这几类动态就不发给别人了(但仍推给我自己)；然后长推送也精简一点。
-                if r.conversation_id != my_conversation_id:
-                    if trx.text.find(" 点赞给 `") >= 0:
-                        continue
-                    if trx.text.find(" 点踩给 `") >= 0:
-                        continue
-                    if trx.text.find(" 修改了个人信息：") >= 0:
-                        continue
-                    if trx.text.find("OBJECT_STATUS_DELETED") >= 0:
+                if text == False:
+                    if MY_XIN_USER_ID in _sent_users:
                         continue
 
-                    _lenth = 200
-                    if len(trx.text) > _lenth:
-                        trx.text = trx.text[:_lenth] + "...略..."
-
-                msg = pack_message(pack_text_data(trx.text), r.conversation_id)
-
-                resp = self.xin.api.send_messages(msg)
-                logger.info(r.conversation_id, "..." + trx.text[10:30] + "...")
-
-                if "data" in resp:
-                    _d = {
-                        "trx_id": trx.trx_id,
-                        "group_id": r.group_id,
-                        "user_id": r.user_id,
-                        "conversation_id": r.conversation_id,
-                        "is_sent": True,
-                    }
-                    self.db.add(BotTrxsSent(_d))
+                    msg = pack_message(pack_text_data(trx.text), MY_CONVERSATION_ID)
+                    logger.info(f"pack_message to myself, trx_id: {trx.trx_id}")
+                    resp = self.xin.api.send_messages(msg)
+                    logger.debug(f"send_messages to myself, trx_id: {trx.trx_id}")
+                    if "data" in resp:
+                        _d = {
+                            "trx_id": trx.trx_id,
+                            "group_id": group_id,
+                            "user_id": MY_XIN_USER_ID,
+                            "conversation_id": MY_CONVERSATION_ID,
+                            "is_sent": True,
+                        }
+                        self.db.add(BotTrxsSent(_d))
+                    else:
+                        logger.debug(f"xin.api.send_messages resp: {json.dumps(resp)}")
                 else:
-                    logger.info(json.dumps(resp))
 
-        logger.info("send_msg_to_xin done.")
+                    for user in users:
+                        user = user[0]
+                        logger.debug(f"user: {user}")
+                        if user in _sent_users:
+                            logger.debug(f"user in sent_users,user: {user},trx_id: {trx.trx_id}")
+                            continue
+                        cid = self.xin.get_conversation_id_with_user(user)
+                        logger.debug(f"user not in sent_users,user: {user}, trx_id: {trx.trx_id}")
+                        msg = pack_message(pack_text_data(trx.text), cid)
+                        logger.info(f"pack_message,user: {user}, trx_id: {trx.trx_id}")
+                        resp = self.xin.api.send_messages(msg)
+                        logger.debug(f"send_messages,user: {user}, trx_id: {trx.trx_id}")
 
-    def send_to_rum(self, group_id=my_rum_group):
+                        if "data" in resp:
+                            _d = {
+                                "trx_id": trx.trx_id,
+                                "group_id": group_id,
+                                "user_id": user,
+                                "conversation_id": cid,
+                                "is_sent": True,
+                            }
+                            self.db.add(BotTrxsSent(_d))
+                        else:
+                            logger.info(f"xin.api.send_messages resp: {json.dumps(resp)}")
+
+        for group_id in self.groups:
+            logger.debug(f"send_msg_to_xin_update, group_id: {group_id}")
+            _one_group(group_id)
+
+    def send_to_rum(self, group_id=MY_RUM_GROUP_ID):
         self.rum.group_id = group_id
+        logger.debug("send_to_rum start ...")
         data = (
             self.db.session.query(BotComments)
             .filter(
                 and_(
-                    BotComments.user_id == my_user_id,
+                    BotComments.user_id == MY_XIN_USER_ID,
                     BotComments.text.like("代发%"),
                     BotComments.is_to_rum != True,
                 )
@@ -274,116 +305,21 @@ class RssBot:
         )
         for r in data:
             resp = self.rum.group.send_note(content=r.text[3:])
-            logger.info("send_to_rum", r.text[3:10] + "...")
+            logger.debug(f"rum.group.send_note, text: {r.text[3:10]}...")
             if "trx_id" not in resp:
-                logger.info("send_to_rum ERROR", json.dumps(resp))
+                logger.warning(f"rum.group.send_note, resp: {json.dumps(resp)}")
                 continue
             self.db.session.query(BotComments).filter(BotComments.message_id == r.message_id).update(
                 {"is_to_rum": True}
             )
             self.db.commit()
+        logger.debug("send_to_rum done")
 
     def do_rss(self):
-        self.update_all_profiles("bot")
+        # self.update_all_profiles("bot")
         self.send_to_rum()
-        self.send_msg_to_xin()
+        self.send_msg_to_xin_update()
         self.get_trxs_from_rum()
-
-    def get_reply_text(self, text):
-        if type(text) == str and text.lower() in ["hi", "hello", "你好", "订阅"]:
-            return welcome_text, None
-        try:
-            _num = int(text)
-            _abs = abs(_num)
-        except:
-            return "输入 hi 查看操作说明", None
-
-        if str(_abs) not in list(commands.keys()):
-            return "输入 hi 查看操作说明", None
-
-        irss = {}  # init
-        for g in self.groups:
-            irss[g.group_id] = None
-
-        _gidx = commands[str(_abs)]["group_id"]
-        if _gidx == None:  # 取消所有
-            for _gid in irss:
-                irss[_gid] = False
-            reply_text = f"👌 Ok，您已取消订阅所有种子网络。{rum_adds}"
-        elif _gidx == -1:  # 订阅所有
-            for _gid in irss:
-                irss[_gid] = True
-            reply_text = f"✅ Yes，您已成功订阅所有种子网络。{rum_adds}"
-        else:
-            # 修改订阅：增加或推定
-            self.rum.group_id = _gidx
-            _gname = commands[str(_abs)]["text"]
-            if _num > 0:
-                irss[_gidx] = True
-                reply_text = f"✅ Yes，您已成功{_gname}{rum_adds}"
-            else:
-                # 取消订阅
-                irss[_gidx] = False
-                reply_text = f"👌 Ok，您已取消{_gname}{rum_adds}"
-        return reply_text, irss
-
-    def update_rss(self, user_id, irss):
-        if irss is None:
-            return
-        for group_id in irss:
-            ug = user_id + group_id
-            existd = self.db.session.query(BotRss).filter(BotRss.user_group == ug).first()
-            if existd:
-                if irss[group_id] != None and existd.is_rss != irss[group_id]:
-                    self.db.session.query(BotRss).filter(BotRss.user_group == ug).update({"is_rss": irss[group_id]})
-                    self.db.commit()
-                logger.info("update rss", group_id, irss[group_id])
-            else:
-                data = {
-                    "user_id": user_id,
-                    "group_id": group_id,
-                    "is_rss": irss[group_id],
-                    "user_group": ug,
-                    "conversation_id": self.xin.get_conversation_id_with_user(user_id),
-                }
-                self.db.add(BotRss(data))
-                logger.info("add rss", group_id, irss[group_id])
-
-    def check_str_param(self, text):
-        if type(text) == str:
-            return text
-        if type(text) == dict:
-            return json.dumps(text)
-        return str(text)
-
-    def to_send_to_rum(self, msgview):
-        # 帮我自己代发到Rum：由我发出的，以代发：开头的，长度超出10的文本
-
-        _c = {
-            "message_id": msgview.message_id,
-            "is_reply": False,
-            "is_to_rum": None,
-            "quote_message_id": msgview.quote_message_id,
-            "conversation_id": msgview.conversation_id,
-            "user_id": msgview.user_id,
-            "text": self.check_str_param(msgview.data_decoded),
-            "category": msgview.category,
-            "timestamp": str(msgview.created_at),
-        }
-
-        self.db.add(BotComments(_c))
-        is_to_rum = (
-            msgview.conversation_id == my_conversation_id
-            and len(msgview.data_decoded) > 10
-            and msgview.data_decoded.startswith("代发：")
-        )
-        if is_to_rum:
-            self.db.session.query(BotComments).filter(BotComments.message_id == msgview.message_id).update(
-                {"is_reply": True, "is_to_rum": False}
-            )
-            self.db.commit()
-            logger.info("新增代发：", msgview.data_decoded[3:10] + "...")
-        return is_to_rum
 
     def counts_trxs(self, days=-1, num=100):
         """counts trxs num of every pubkey published at that day.
@@ -405,6 +341,8 @@ class RssBot:
             _trxs = self.rum.group.content_trxs(is_reverse=True, num=num)
             if len(_trxs) == 0:
                 return counts_result
+            if num >= 1000:
+                return counts_result
             lastest_day = ts2datetime(_trxs[-1]["TimeStamp"]).date()
             if lastest_day < thatday:
                 counts = {}
@@ -417,17 +355,18 @@ class RssBot:
                         else:
                             counts[_pubkey] += 1
                 else:
-                    counts_result = {"data": counts, "date": str(thatday)}
+                    counts_result["data"] = counts
                 break
             else:
-                num += num
+                logger.info(f"counts_trxs num:{num}, lastest_day:{lastest_day} thatday:{thatday}")
+                num += 100
 
         return counts_result
 
     def airdrop_to_group(self, group_id, num_trxs=1, days=-1, memo=None):
         self.rum.group_id = group_id
         group_name = self.rum.group.seed().get("group_name")
-        logger.info(group_id, group_name, "...")
+        logger.debug(f"airdrop_to_group {group_id}, {group_name}, ...")
 
         counts_result = self.counts_trxs(days=days)
         date = datetime.datetime.now().date() + datetime.timedelta(days=days)
@@ -453,7 +392,7 @@ class RssBot:
                 if sent:  # 用钱包排重，不重复空投
                     continue
 
-                _num = str(round(rum_reward_base + random.randint(1, 300) / 1000000, 6))
+                _num = str(round(RUM_REWARD_BASE_NUM + random.randint(1, 300) / 1000000, 6))
                 _a = {
                     "mixin_id": existd.wallet,
                     "group_id": group_id,
@@ -463,10 +402,12 @@ class RssBot:
                     "memo": memo,
                     "is_sent": False,
                 }
-                r = self.xin.api.transfer.send_to_user(existd.wallet, rum_asset_id, _num, memo)
+                r = self.xin.api.transfer.send_to_user(existd.wallet, RUM_ASSET_ID, _num, memo)
 
                 if "data" in r:
-                    logger.info(existd.wallet, _num, "账户余额：", r.get("data").get("closing_balance"))
+                    logger.info(
+                        f"""airdrop_to_group mixin_id: {existd.wallet}, num: {_num}, balance: {r.get("data").get("closing_balance") or '???'}"""
+                    )
                     _a["is_sent"] = True
 
                 self.db.add(BotAirDrops(_a))
@@ -491,14 +432,26 @@ class RssBot:
             if sent:  # 用钱包排重，不重复空投
                 continue
 
-            _num = str(round(rum_reward_base + random.randint(1, 300) / 1000000, 6))
-            r = self.xin.api.transfer.send_to_user(user, rum_asset_id, _num, memo)
+            _num = str(round(RUM_REWARD_BASE_NUM + random.randint(1, 300) / 1000000, 6))
+            r = self.xin.api.transfer.send_to_user(user, RUM_ASSET_ID, _num, memo)
             _a = {"mixin_id": user, "num": _num, "token": "RUM", "memo": memo, "is_sent": False}
             if "data" in r:
-                logger.info(user, _num, "账户余额：", r.get("data").get("closing_balance"))
+                logger.info(
+                    f"""airdrop_to_bot mixin_id: {user}, num: {_num}, balance: {r.get("data").get("closing_balance") or '???'}"""
+                )
                 _a["is_sent"] = True
 
             self.db.add(BotAirDrops(_a))
 
 
-bot = RssBot()
+if __name__ == "__main__":
+    bot = RssBot()
+
+    print(datetime.datetime.now(), "rss start...")
+
+    while True:
+        try:
+            bot.do_rss()
+        except Exception as e:
+            print(e)
+        time.sleep(1)

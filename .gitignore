@@ -138,3 +138,6 @@ examples/*/data/
 tests/data/
 *.exe
 *private*.md
+*.7z
+*.zip
+*.db

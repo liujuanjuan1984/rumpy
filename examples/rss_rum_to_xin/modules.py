@@ -1,10 +1,57 @@
 import datetime
-from sqlalchemy import Column, Integer, String, Boolean
-from rumpy.modules.base import Base
+import logging
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+Base = declarative_base()
+
+logger = logging.getLogger(__name__)
+
+
+class BaseDB:
+    def __init__(self, db_name, echo, reset):
+        # 创建数据库
+        engine = create_engine(db_name, echo=echo, connect_args={"check_same_thread": False})
+        if reset:
+            Base.metadata.drop_all(engine)
+        # 创建表
+        Base.metadata.create_all(engine)
+        # 创建会话
+        self.Session = sessionmaker(bind=engine, autoflush=False)
+        self.session = self.Session()
+        logger.debug(f"init db, name: {db_name}, echo: {echo}, reset: {reset}")
+
+    def __commit(self):
+        """Commits the current db.session, does rollback on failure."""
+        from sqlalchemy.exc import IntegrityError
+
+        logger.debug("db commit")
+
+        try:
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+
+    def add(self, obj):
+        """Adds this model to the db (through db.session)"""
+        self.session.add(obj)
+        self.__commit()
+        return self
+
+    def commit(self):
+        self.__commit()
+        return self
+
+    def delete(self, obj):
+        """Deletes this model from the db (through db.session)"""
+        self.session.delete(self)
+        self.__commit()
 
 
 class BotRss(Base):
     """the rss requests from users by comments; the finally results."""
+
+    logger.debug("BotRss")
 
     __tablename__ = "bot_rss"
 
@@ -24,6 +71,7 @@ class BotRss(Base):
 class BotComments(Base):
     """msgs from bot users which needs to be update rss or reply or send to rum groups."""
 
+    logger.debug("BotComments")
     __tablename__ = "bot_comments"
     id = Column(Integer, unique=True, primary_key=True, index=True)
     message_id = Column(String(36), unique=True)
@@ -45,6 +93,8 @@ class BotComments(Base):
 class BotTrxs(Base):
     """trxs data from rum groups which waiting to be sent."""
 
+    logger.debug("BotTrxs")
+
     __tablename__ = "bot_trxs"
 
     id = Column(Integer, unique=True, primary_key=True, index=True)
@@ -61,6 +111,8 @@ class BotTrxs(Base):
 
 class BotTrxsSent(Base):
     """the sent trxs data ."""
+
+    logger.debug("BotTrxsSent")
 
     __tablename__ = "bot_trxs_sent"
 
@@ -80,6 +132,8 @@ class BotTrxsSent(Base):
 class BotRumProgress(Base):
     """the progress trx_id of rum groups"""
 
+    logger.debug("BotRumProgress")
+
     __tablename__ = "bot_rum_progress"
 
     id = Column(Integer, primary_key=True, unique=True, index=True)
@@ -96,6 +150,8 @@ class BotRumProgress(Base):
 
 class BotAirDrops(Base):
     """the progress trx_id of rum groups"""
+
+    logger.debug("BotAirDrops")
 
     __tablename__ = "bot_air_drops"
 
@@ -114,24 +170,10 @@ class BotAirDrops(Base):
         super().__init__(**obj)
 
 
-class BotRumGroups(Base):
-    """the groups which needs to rss"""
-
-    __tablename__ = "bot_rum_groups"
-
-    id = Column(Integer, primary_key=True, unique=True, index=True)
-    group_id = Column(String(36))
-    group_name = Column(String, default=None)
-    minutes = Column(Integer, default=-15)  # 动态转发的时间间隔
-    created_at = Column(String, default=str(datetime.datetime.now()))
-    updated_at = Column(String, default=str(datetime.datetime.now()))
-
-    def __init__(self, obj):
-        super().__init__(**obj)
-
-
 class BotRumProfiles(Base):
     """the users profiles in rum groups."""
+
+    logger.debug("BotRumProfiles")
 
     __tablename__ = "bot_rum_profiles"
 

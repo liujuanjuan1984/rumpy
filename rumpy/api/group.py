@@ -71,7 +71,7 @@ class Group(BaseAPI):
             seed = self._get(f"/group/{self.group_id}/seed")
             if "error" not in seed:
                 return seed
-            logger.warning(f"{sys._getframe().f_code.co_name}, joined the group,but don't get seed.")
+            logger.warning(f"{sys._getframe().f_code.co_name}, joined the group, but don't get seed.")
         return {}
 
     def is_seed(self, seed: Dict) -> bool:
@@ -280,9 +280,11 @@ class Group(BaseAPI):
             logger.info(f"{sys._getframe().f_code.co_name}, {ifilepath}, downloaded!")
 
     def download(self, file_dir):
+        logger.debug(f"download file to dir {file_dir} start...")
         infos, trxs = self._file_infos()
         for info in infos:
             self._down_load(file_dir, info, trxs)
+        logger.debug(f"download file to dir {file_dir} done")
 
     def send_note(self, **kwargs):
         return self._send(sendtype="Add", objtype="Note", **kwargs)
