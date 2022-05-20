@@ -1,6 +1,5 @@
 import os
 
-
 DB_NAME = f"sqlite:///rss_bot_test.db"
 ################ Rum ################
 # quorum_client_port

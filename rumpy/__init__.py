@@ -1,5 +1,6 @@
 import datetime
 import logging
+
 from rumpy.client import RumClient
 
 __version__ = "0.4.0"

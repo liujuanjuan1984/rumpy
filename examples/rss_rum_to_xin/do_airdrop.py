@@ -1,5 +1,6 @@
 import datetime
 import logging
+
 from bot import RssBot
 
 today = datetime.datetime.now().date()

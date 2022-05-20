@@ -1,11 +1,13 @@
-import os
 import datetime
-import uuid
+import os
 import sys
-from officy import JsonFile, Dir, Img
+import uuid
+from typing import Dict, List
+
+from officy import Dir, Img, JsonFile
+
 from rumpy import RumClient
 from rumpy.utils import ts2datetime
-from typing import List, Dict
 
 
 def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):

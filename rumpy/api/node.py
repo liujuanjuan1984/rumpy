@@ -1,9 +1,10 @@
+import logging
 import urllib
-from typing import List, Dict
+from typing import Dict, List
+
 from rumpy.api.base import BaseAPI
 from rumpy.api.group import Group
 from rumpy.types.data import *
-import logging
 
 logger = logging.getLogger(__name__)
 

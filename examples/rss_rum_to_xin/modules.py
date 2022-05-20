@@ -1,6 +1,7 @@
 import datetime
 import logging
-from sqlalchemy import create_engine, Column, Integer, String, Boolean
+
+from sqlalchemy import Boolean, Column, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()

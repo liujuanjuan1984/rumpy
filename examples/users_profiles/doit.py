@@ -1,4 +1,5 @@
 import os
+
 from rumpy import RumClient
 
 client = RumClient(port=58356)

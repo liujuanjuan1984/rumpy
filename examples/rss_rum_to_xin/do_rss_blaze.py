@@ -1,21 +1,21 @@
 import datetime
+import json
 import logging
 import sys
-import json
 import time
 
-
 from config_rss import *
+
 from rumpy import RumClient
 
 sys.path.insert(0, RUMPY_PATH)
 sys.path.insert(0, MIXIN_SDK_PATH)
-from sqlalchemy import Column, Integer, String, Boolean, distinct, and_
+from mixinsdk.clients.blaze_client import BlazeClient
 from mixinsdk.clients.http_client import HttpClient_AppAuth
 from mixinsdk.clients.user_config import AppConfig
-from mixinsdk.clients.blaze_client import BlazeClient
 from mixinsdk.types.message import MessageView, pack_message, pack_text_data
 from modules import *
+from sqlalchemy import Boolean, Column, Integer, String, and_, distinct
 
 now = datetime.datetime.now()
 
@@ -230,7 +230,9 @@ async def message_handle(message):
     # send reply
 
     msg = pack_message(
-        pack_text_data(reply_text), conversation_id=msgview.conversation_id, quote_message_id=msgview.message_id
+        pack_text_data(reply_text),
+        conversation_id=msgview.conversation_id,
+        quote_message_id=msgview.message_id,
     )
     logger.debug(f"pack_message {msgview.message_id} {reply_text}")
     resp = bot.xin.api.send_messages(msg)

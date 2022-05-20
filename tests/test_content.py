@@ -1,5 +1,6 @@
-from tests import client
 import base64
+
+from tests import client
 
 
 def test_fileinfo(content_str_bytes=None):

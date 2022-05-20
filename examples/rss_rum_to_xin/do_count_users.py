@@ -1,6 +1,6 @@
 from bot import RssBot
 from modules import *
-from sqlalchemy import distinct, and_
+from sqlalchemy import and_, distinct
 
 
 def count_users():

@@ -1,7 +1,7 @@
 import os
+
 from officy import JsonFile
 from search_user import SearchUser
-
 
 searchuser = SearchUser()
 seedsfile = r"D:\Jupyter\seeds\data\seeds.json"

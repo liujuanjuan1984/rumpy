@@ -2,9 +2,11 @@ import datetime
 import json
 import re
 from typing import Dict, List
+
+from officy import JsonFile
+
 from rumpy import RumClient
 from rumpy.utils import ts2datetime
-from officy import JsonFile
 
 DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
 DONT_JOIN_PIECES = ["mytest_", "测试", "test"]

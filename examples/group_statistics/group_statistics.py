@@ -1,15 +1,17 @@
 import datetime
-from pylab import *
-from typing import List, Dict
 import io
 import os
 import sys
-import pandas as pd
+from typing import Dict, List
+
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.pyplot import MultipleLocator
+from officy import JsonFile
+from pylab import *
+
 from rumpy import RumClient
 from rumpy.utils import ts2datetime
-from officy import JsonFile
 
 
 class GroupStatistics(RumClient):

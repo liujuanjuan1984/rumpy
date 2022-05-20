@@ -1,4 +1,5 @@
 import datetime
+
 from rumpy import RumClient
 
 TEST_GROUPS_TO_LEAVE = [

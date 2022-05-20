@@ -1,4 +1,5 @@
 import datetime
+
 from rumpy.utils import ts2datetime
 from tests import client
 

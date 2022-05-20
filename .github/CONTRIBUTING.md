@@ -16,10 +16,19 @@ tbd
 
 ## 代码格式化
 
-rumpy 使用 [black](https://github.com/psf/black/) 自动格式化 Python 代码并在 CI 上进行代码格式检查，请在提交 PR 前进行代码格式化：
+rumpy 使用 `isort` 及 [black](https://github.com/psf/black/) 自动格式化 Python 代码并在 CI 上进行代码格式检查，请在提交 PR 前进行代码格式化：
+
+Install:
 
 ```bash
 pip install black
+pip install isort
+```
+
+Format:
+
+```bash
+isort .
 black -l 120 -t py37 -t py38 -t py39 -t py310 .
 ```
 

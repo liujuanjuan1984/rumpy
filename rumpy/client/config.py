@@ -1,5 +1,6 @@
 # quorum config info
 import os
+
 import certifi
 
 PORT = 58356

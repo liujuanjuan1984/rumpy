@@ -1,5 +1,6 @@
-from rumpy.api.base import BaseAPI
 import logging
+
+from rumpy.api.base import BaseAPI
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,10 @@ class PaidGroup(BaseAPI):
     def paidgroup(self):
         """Get Detail of a Paidgroup"""
         self._check_group_id()
-        resp = self._get(f"/mvm/paidgroup/{self.group_id}", api_base=self._client.api_base_paid)
+        resp = self._get(
+            f"/mvm/paidgroup/{self.group_id}",
+            api_base=self._client.api_base_paid,
+        )
         if resp.get("success"):
             return resp.get("data").get("group")
         return resp
@@ -23,7 +27,10 @@ class PaidGroup(BaseAPI):
     def payment(self):
         """Check Payment"""
         self._check_group_id()
-        resp = self._get(f"/mvm/paidgroup/{self.group_id}/{self.group.eth_addr}", api_base=self._client.api_base_paid)
+        resp = self._get(
+            f"/mvm/paidgroup/{self.group_id}/{self.group.eth_addr}",
+            api_base=self._client.api_base_paid,
+        )
         if resp.get("success"):
             return resp.get("data").get("payment")
         return resp
@@ -39,7 +46,11 @@ class PaidGroup(BaseAPI):
             "amount": str(amount),
             "duration": duration,
         }
-        resp = self._post("/mvm/paidgroup/announce", payload, api_base=self._client.api_base_paid)
+        resp = self._post(
+            "/mvm/paidgroup/announce",
+            payload,
+            api_base=self._client.api_base_paid,
+        )
         if resp.get("success"):
             return resp.get("data")
         return resp

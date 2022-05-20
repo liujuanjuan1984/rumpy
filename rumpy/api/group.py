@@ -1,13 +1,14 @@
 import base64
 import datetime
-import json
-import time
-import os
-import math
 import hashlib
+import json
 import logging
+import math
+import os
 import sys
-from typing import List, Dict, Any
+import time
+from typing import Any, Dict, List
+
 from rumpy.api.base import BaseAPI
 from rumpy.types.data import *
 from rumpy.utils import sha256, ts2datetime
@@ -212,7 +213,11 @@ class Group(BaseAPI):
             file_obj.seek(i * CHUNK_SIZE)
             ibytes = file_obj.read(current_size)
             fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": sha256(ibytes)})
-            obj = FileObj(name=f"seg-{i + 1}", content=ibytes, mediaType="application/octet-stream")
+            obj = FileObj(
+                name=f"seg-{i + 1}",
+                content=ibytes,
+                mediaType="application/octet-stream",
+            )
             objs.append(obj)
 
         content = json.dumps(fileinfo).encode()
@@ -535,7 +540,10 @@ class Group(BaseAPI):
                 elif t in _info:
                     refer_tid = trx["Content"]["id"]
                     refer_pubkey = self.group.trx(refer_tid).get("Publisher", "")
-                    lines.insert(0, f"点{_info[t]}给 `{_nickname( refer_pubkey,nicknames)}` 所发布的内容：")
+                    lines.insert(
+                        0,
+                        f"点{_info[t]}给 `{_nickname( refer_pubkey,nicknames)}` 所发布的内容：",
+                    )
                 elif t == "reply":
                     lines.insert(0, f"回复说：")
                     refer_tid = trx["Content"]["inreplyto"]["trxid"]

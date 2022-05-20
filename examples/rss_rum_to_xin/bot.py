@@ -1,7 +1,6 @@
 import datetime
 import logging
 
-
 now = datetime.datetime.now()
 
 # Set default logging handler to avoid "No handler found" warnings.
@@ -13,16 +12,17 @@ logging.basicConfig(
 )
 
 
-import sys
 import datetime
-import time
 import json
+import logging
 import os
 import random
-import logging
-from sqlalchemy import Column, Integer, String, Boolean, distinct, and_
+import sys
+import time
+
 from config_rss import *
 from modules import *
+from sqlalchemy import Boolean, Column, Integer, String, and_, distinct
 
 sys.path.insert(0, RUMPY_PATH)
 import rumpy
@@ -34,7 +34,6 @@ import mixinsdk
 from mixinsdk.clients.http_client import HttpClient_AppAuth
 from mixinsdk.clients.user_config import AppConfig
 from mixinsdk.types.message import MessageView, pack_message, pack_text_data
-
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +54,19 @@ class RssBot:
 
     def update_profiles(self, group_id):
         self.rum.group_id = group_id
-        _x = and_(BotRumProgress.group_id == group_id, BotRumProgress.progress_type == "GET_PROFILES")
+        _x = and_(
+            BotRumProgress.group_id == group_id,
+            BotRumProgress.progress_type == "GET_PROFILES",
+        )
         progress = self.db.session.query(BotRumProgress).filter(_x).first()
 
         if progress == None:
-            _p = {"progress_type": "GET_PROFILES", "trx_id": None, "timestamp": None, "group_id": group_id}
+            _p = {
+                "progress_type": "GET_PROFILES",
+                "trx_id": None,
+                "timestamp": None,
+                "group_id": group_id,
+            }
             self.db.add(BotRumProgress(_p))
 
         p_tid = None if progress == None else progress.trx_id
@@ -79,10 +86,19 @@ class RssBot:
             _wallet = data["data"][pubkey].get("wallet")
             if type(_wallet) == list:
                 _wallet = _wallet[0]["id"]
-            _x = and_(BotRumProfiles.group_id == group_id, BotRumProfiles.pubkey == pubkey)
+            _x = and_(
+                BotRumProfiles.group_id == group_id,
+                BotRumProfiles.pubkey == pubkey,
+            )
             existd = self.db.session.query(BotRumProfiles).filter(_x).first()
             if not existd:
-                _p = {"group_id": group_id, "pubkey": pubkey, "name": _name, "wallet": _wallet, "timestamp": ts}
+                _p = {
+                    "group_id": group_id,
+                    "pubkey": pubkey,
+                    "name": _name,
+                    "wallet": _wallet,
+                    "timestamp": ts,
+                }
                 self.db.add(BotRumProfiles(_p))
             elif existd.timestamp < ts:
                 _p = {"timestamp": ts}
@@ -133,7 +149,12 @@ class RssBot:
             nicknames = self.get_nicknames(group_id)
             existd = (
                 self.db.session.query(BotRumProgress)
-                .filter(and_(BotRumProgress.group_id == group_id, BotRumProgress.progress_type == "GET_CONTENT"))
+                .filter(
+                    and_(
+                        BotRumProgress.group_id == group_id,
+                        BotRumProgress.progress_type == "GET_CONTENT",
+                    )
+                )
                 .first()
             )
 
@@ -148,7 +169,12 @@ class RssBot:
                     trx_id = None
                     _ts = None
 
-                _p = {"progress_type": "GET_CONTENT", "trx_id": trx_id, "timestamp": _ts, "group_id": group_id}
+                _p = {
+                    "progress_type": "GET_CONTENT",
+                    "trx_id": trx_id,
+                    "timestamp": _ts,
+                    "group_id": group_id,
+                }
                 self.db.add(BotRumProgress(_p))
             else:
                 trx_id = existd.trx_id
@@ -158,7 +184,10 @@ class RssBot:
                 _tid = trx["TrxId"]
                 trx_id = _tid
                 self.db.session.query(BotRumProgress).filter(
-                    and_(BotRumProgress.group_id == group_id, BotRumProgress.progress_type == "GET_CONTENT")
+                    and_(
+                        BotRumProgress.group_id == group_id,
+                        BotRumProgress.progress_type == "GET_CONTENT",
+                    )
                 ).update({"trx_id": trx_id})
                 self.db.commit()
                 existd2 = self.db.session.query(BotTrxs).filter(BotTrxs.trx_id == _tid).first()
@@ -219,7 +248,12 @@ class RssBot:
             # 获取待发的 trxs
             trxs = (
                 self.db.session.query(BotTrxs)
-                .filter(and_(BotTrxs.group_id == group_id, BotTrxs.timestamp > nice_ts))
+                .filter(
+                    and_(
+                        BotTrxs.group_id == group_id,
+                        BotTrxs.timestamp > nice_ts,
+                    )
+                )
                 .all()
             )
             # 筛选出待发的人
@@ -233,7 +267,12 @@ class RssBot:
 
                 sent_users = (
                     self.db.session.query(BotTrxsSent.user_id)
-                    .filter(and_(BotTrxsSent.trx_id == trx.trx_id, BotTrxsSent.group_id == group_id))
+                    .filter(
+                        and_(
+                            BotTrxsSent.trx_id == trx.trx_id,
+                            BotTrxsSent.group_id == group_id,
+                        )
+                    )
                     .all()
                 )
                 _sent_users = [i[0] for i in sent_users]
@@ -379,7 +418,12 @@ class RssBot:
 
             existd = (
                 self.db.session.query(BotRumProfiles)
-                .filter(and_(BotRumProfiles.pubkey == pubkey, BotRumProfiles.wallet != None))
+                .filter(
+                    and_(
+                        BotRumProfiles.pubkey == pubkey,
+                        BotRumProfiles.wallet != None,
+                    )
+                )
                 .first()
             )
 
@@ -387,13 +431,23 @@ class RssBot:
                 name = existd.name
                 sent = (
                     self.db.session.query(BotAirDrops)
-                    .filter(and_(BotAirDrops.mixin_id == existd.wallet, BotAirDrops.memo == memo))
+                    .filter(
+                        and_(
+                            BotAirDrops.mixin_id == existd.wallet,
+                            BotAirDrops.memo == memo,
+                        )
+                    )
                     .first()
                 )
                 if sent:  # 用钱包排重，不重复空投
                     continue
 
-                _num = str(round(RUM_REWARD_BASE_NUM + random.randint(1, 300) / 1000000, 6))
+                _num = str(
+                    round(
+                        RUM_REWARD_BASE_NUM + random.randint(1, 300) / 1000000,
+                        6,
+                    )
+                )
                 _a = {
                     "mixin_id": existd.wallet,
                     "group_id": group_id,
@@ -435,7 +489,13 @@ class RssBot:
 
             _num = str(round(RUM_REWARD_BASE_NUM + random.randint(1, 300) / 1000000, 6))
             r = self.xin.api.transfer.send_to_user(user, RUM_ASSET_ID, _num, memo)
-            _a = {"mixin_id": user, "num": _num, "token": "RUM", "memo": memo, "is_sent": False}
+            _a = {
+                "mixin_id": user,
+                "num": _num,
+                "token": "RUM",
+                "memo": memo,
+                "is_sent": False,
+            }
             if "data" in r:
                 logger.info(
                     f"""airdrop_to_bot mixin_id: {user}, num: {_num}, balance: {r.get("data").get("closing_balance") or '???'}"""

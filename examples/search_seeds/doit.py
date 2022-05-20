@@ -1,8 +1,9 @@
 import datetime
 import os
 import sys
+
+from officy import Dir, JsonFile
 from search_seeds import SearchSeeds
-from officy import JsonFile, Dir
 
 
 def main():

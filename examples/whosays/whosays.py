@@ -1,7 +1,9 @@
 import json
 import os
-from typing import List, Dict
-from officy import JsonFile, Dir
+from typing import Dict, List
+
+from officy import Dir, JsonFile
+
 from rumpy import RumClient
 
 

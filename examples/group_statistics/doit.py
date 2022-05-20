@@ -1,7 +1,8 @@
-import os
 import datetime
-from officy import JsonFile
+import os
+
 from group_statistics import GroupStatistics
+from officy import JsonFile
 
 client = GroupStatistics()
 

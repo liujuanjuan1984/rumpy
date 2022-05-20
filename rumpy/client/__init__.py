@@ -1,16 +1,17 @@
+import inspect
+import logging
 import os
 import sys
-import logging
-import inspect
+from typing import Any, Dict, List
+
 import requests
-from typing import Dict, List, Any
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 from rumpy import api
 from rumpy.api.base import BaseAPI
-from rumpy.client.config import PORT, CRTFILE
+from rumpy.client.config import CRTFILE, PORT
 
 logger = logging.getLogger(__name__)
 
