@@ -78,13 +78,13 @@ class GroupConfig(BaseAPI):
         if not memo:
             raise ValueError("say something in param:memo")
 
-        relay = {
+        payload = {
             "group_id": self.group_id,
             "type": "set_trx_auth_mode",
             "config": json.dumps({"trx_type": trx_type, "trx_auth_mode": f"follow_{mode}_list"}),
             "Memo": memo,
         }
-        return self._post("/group/chainconfig", relay)
+        return self._post("/group/chainconfig", payload)
 
     def _update_list(
         self,
@@ -100,13 +100,13 @@ class GroupConfig(BaseAPI):
         for trx_type in trx_types:
             self._check_trx_type(trx_type)
 
-        relay = {
+        payload = {
             "group_id": self.group_id,
             "type": f"upd_{mode}_list",
             "config": json.dumps({"action": "add", "pubkey": pubkey, "trx_type": trx_types}),
             "Memo": memo,
         }
-        return self._post("/group/chainconfig", relay)
+        return self._post("/group/chainconfig", payload)
 
     def update_allow_list(
         self,
@@ -189,7 +189,7 @@ class GroupConfig(BaseAPI):
         """
         if image is not None:
             value = self.group_icon(image)
-        relay = {
+        payload = {
             "action": action,
             "group_id": self.group_id,
             "name": name,
@@ -199,7 +199,7 @@ class GroupConfig(BaseAPI):
         }
         self._check_owner()
 
-        return self._post("/group/appconfig", relay)
+        return self._post("/group/appconfig", payload)
 
     def keylist(self):
         """获取组的所有配置项"""
@@ -222,13 +222,13 @@ class GroupConfig(BaseAPI):
         memo: Memo
         """
         self._check_group_id()
-        relay = {
+        payload = {
             "group_id": self.group_id,
             "action": action,  # add or remove
             "type": type,  # user or producer
             "memo": memo,
         }
-        return self._post("/group/announce", relay)
+        return self._post("/group/announce", payload)
 
     def announce_as_user(self):
         """announce self as user
@@ -273,12 +273,12 @@ class GroupConfig(BaseAPI):
         """
         self._check_group_id()
         self._check_owner()
-        relay = {
+        payload = {
             "user_pubkey": user_pubkey,
             "group_id": self.group_id,
             "action": action,  # "add" or "remove"
         }
-        return self._post("/group/user", relay)
+        return self._post("/group/user", payload)
 
     def approve_as_user(self, pubkey=None):
         """添加私有组用户
@@ -298,12 +298,12 @@ class GroupConfig(BaseAPI):
         action = action.lower()
         if action not in ("add", "remove"):
             raise ValueError("action should be `add` or `remove`")
-        relay = {
+        payload = {
             "producer_pubkey": pubkey,
             "group_id": group_id or self.group_id,
             "action": action,
         }
-        return self._post("/group/producer", relay)
+        return self._post("/group/producer", payload)
 
     def update_profile(self, name, image=None, mixin_id=None):
         """更新组的用户配置, 以 rum-app 为例, 如昵称, 头像, 绑定钱包(以 mixin 钱包为例)
@@ -314,15 +314,15 @@ class GroupConfig(BaseAPI):
         """
         if image is not None:
             image = NewTrxImg(file_path=image).__dict__
-        relay = {
+        payload = {
             "type": "Update",
             "person": {"name": name, "image": image},
             "target": {"id": self.group_id, "type": "Group"},
         }
         if mixin_id is not None:
-            relay["person"]["wallet"] = {
+            payload["person"]["wallet"] = {
                 "id": mixin_id,
                 "type": "mixin",
                 "name": "mixin messenger",
             }
-        return self._post("/group/profile", relay)
+        return self._post("/group/profile", payload)

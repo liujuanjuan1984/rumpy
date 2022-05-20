@@ -56,14 +56,14 @@ class Group(BaseAPI):
         if consensus_type.lower() not in ("poa",):
             raise ValueError("consensus_type should be `poa` or `pos` or `pow`, but only `poa` is supported now.")
 
-        relay = {
+        payload = {
             "group_name": group_name,
             "consensus_type": consensus_type,
             "encryption_type": encryption_type,
             "app_key": app_key,
         }
 
-        return self._post("/group", relay)
+        return self._post("/group", payload)
 
     def seed(self) -> Dict:
         """get the seed of a group which you've joined in."""
@@ -178,8 +178,8 @@ class Group(BaseAPI):
         sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
         返回值 {"trx_id": "string"}
         """
-        relay = NewTrx(group_id=self.group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
-        return self._post("/group/content", relay)
+        payload = NewTrx(group_id=self.group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
+        return self._post("/group/content", payload)
 
     def like(self, trx_id: str) -> Dict:
         return self._send(trx_id=trx_id, sendtype="Like")

@@ -11,7 +11,6 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from rumpy import api
 from rumpy.api.base import BaseAPI
 from rumpy.client.config import PORT, CRTFILE
-from rumpy.types.errors import RequestError
 
 logger = logging.getLogger(__name__)
 
@@ -78,13 +77,13 @@ class RumClient:
         self.api_base_paid = "https://prs-bp2.press.one/api"
         os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.api_base, self.api_base_app])
 
-    def _request(self, method: str, path: str, relay: Dict = {}, api_base=None):
+    def _request(self, method: str, path: str, payload: Dict = {}, api_base=None):
         url = (api_base or self.api_base) + path
         try:
-            resp = self._session.request(method=method, url=url, json=relay)
+            resp = self._session.request(method=method, url=url, json=payload)
         except Exception as e:  # SSLCertVerificationError
             logger.warning(f"{e}")
-            resp = self._session.request(method=method, url=url, json=relay, verify=False)
+            resp = self._session.request(method=method, url=url, json=payload, verify=False)
 
         try:
             body_json = resp.json()
@@ -96,11 +95,11 @@ class RumClient:
             logger.warning(f"{resp.status_code}, {resp.json()}")
         return body_json
 
-    def get(self, path: str, relay: Dict = {}, api_base=None):
-        return self._request("get", path, relay, api_base)
+    def get(self, path: str, payload: Dict = {}, api_base=None):
+        return self._request("get", path, payload, api_base)
 
-    def post(self, path: str, relay: Dict = {}, api_base=None):
-        return self._request("post", path, relay, api_base)
+    def post(self, path: str, payload: Dict = {}, api_base=None):
+        return self._request("post", path, payload, api_base)
 
     @property
     def group_id(self):

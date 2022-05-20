@@ -2,11 +2,11 @@ class BaseAPI:
     def __init__(self, client=None):
         self._client = client
 
-    def _get(self, path: str, relay={}, api_base=None):
-        return self._client.get(path, relay, api_base)
+    def _get(self, path: str, payload={}, api_base=None):
+        return self._client.get(path, payload, api_base)
 
-    def _post(self, path: str, relay={}, api_base=None):
-        return self._client.post(path, relay, api_base)
+    def _post(self, path: str, payload={}, api_base=None):
+        return self._client.post(path, payload, api_base)
 
     @property
     def group_id(self):

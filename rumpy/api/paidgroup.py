@@ -33,13 +33,13 @@ class PaidGroup(BaseAPI):
         self._check_group_id()
         self._check_owner()
 
-        relay = {
+        payload = {
             "group": self.group_id,
             "owner": self.group.eth_addr,
             "amount": str(amount),
             "duration": duration,
         }
-        resp = self._post("/mvm/paidgroup/announce", relay, api_base=self._client.api_base_paid)
+        resp = self._post("/mvm/paidgroup/announce", payload, api_base=self._client.api_base_paid)
         if resp.get("success"):
             return resp.get("data")
         return resp
@@ -48,11 +48,11 @@ class PaidGroup(BaseAPI):
         """Pay for a Paidgroup"""
         self._check_group_id()
 
-        relay = {
+        payload = {
             "user": self.group.eth_addr,
             "group": self.group_id,
         }
-        resp = self._post("/mvm/paidgroup/pay", relay, api_base=self._client.api_base_paid)
+        resp = self._post("/mvm/paidgroup/pay", payload, api_base=self._client.api_base_paid)
         if resp.get("success"):
             return resp.get("data")
         return resp

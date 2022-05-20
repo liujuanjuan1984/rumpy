@@ -12,36 +12,36 @@ def main():
     client.group_id = seed["group_id"]
 
     # post to group
-    relay = {"content": f"{str(datetime.datetime.now())} hello rum"}
-    resp1 = client.group.send_note(**relay)
+    payload = {"content": f"{str(datetime.datetime.now())} hello rum"}
+    resp1 = client.group.send_note(**payload)
     print(resp1)
 
-    relay = {
+    payload = {
         "content": f"{str(datetime.datetime.now())} hello again.can  u see the picture i posted?",
         "images": [os.path.join(os.path.dirname(__file__), "girl.png")],
     }
-    resp2 = client.group.send_note(**relay)
+    resp2 = client.group.send_note(**payload)
     print(resp2)
 
-    relay = {
+    payload = {
         "content": f"{str(datetime.datetime.now())} reply to hello rum ",
         "inreplyto": resp1["trx_id"],
     }
-    resp3 = client.group.send_note(**relay)
+    resp3 = client.group.send_note(**payload)
     print(resp3)
 
-    relay = {
+    payload = {
         "content": f"{str(datetime.datetime.now())} reply to  post with picture",
         "inreplyto": resp2["trx_id"],
     }
-    resp4 = client.group.send_note(**relay)
+    resp4 = client.group.send_note(**payload)
     print(resp4)
 
-    relay = {
+    payload = {
         "content": f"{str(datetime.datetime.now())} this is reply to reply",
         "inreplyto": resp4["trx_id"],
     }
-    resp5 = client.group.send_note(**relay)
+    resp5 = client.group.send_note(**payload)
     print(resp5)
     # like
     client.group.like(resp1["trx_id"])

@@ -29,8 +29,8 @@ def main():
                 break
         content = "".join(ilines[n + 1 :])
 
-        relay = {"content": content, "name": title}
-        resp = client.group.send_note(**relay)
+        payload = {"content": content, "name": title}
+        resp = client.group.send_note(**payload)
 
         if "trx_id" not in resp:
             failed.append(ifile)
