@@ -291,21 +291,22 @@ class RssBot:
 
     def send_to_rum(self, group_id=MY_RUM_GROUP_ID):
         self.rum.group_id = group_id
-        logger.debug("send_to_rum start ...")
+        logger.info("send_to_rum start ...")
         data = (
             self.db.session.query(BotComments)
             .filter(
                 and_(
                     BotComments.user_id == MY_XIN_USER_ID,
                     BotComments.text.like("代发%"),
-                    BotComments.is_to_rum != True,
                 )
             )
             .all()
         )
         for r in data:
+            if r.is_to_rum:
+                continue
             resp = self.rum.group.send_note(content=r.text[3:])
-            logger.debug(f"rum.group.send_note, text: {r.text[3:10]}...")
+            logger.info(f"rum.group.send_note, message_id: {r.message_id}...")
             if "trx_id" not in resp:
                 logger.warning(f"rum.group.send_note, resp: {json.dumps(resp)}")
                 continue
@@ -313,10 +314,10 @@ class RssBot:
                 {"is_to_rum": True}
             )
             self.db.commit()
-        logger.debug("send_to_rum done")
+            logger.info(f"rum.group.send_note, success. message_id: {r.message_id}...")
+        logger.info("send_to_rum done")
 
     def do_rss(self):
-        # self.update_all_profiles("bot")
         self.send_to_rum()
         self.send_msg_to_xin_update()
         self.get_trxs_from_rum()
