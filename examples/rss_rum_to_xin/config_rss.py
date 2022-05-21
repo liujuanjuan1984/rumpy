@@ -3,9 +3,9 @@ import os
 DB_NAME = f"sqlite:///rss_bot_test.db"
 ################ Rum ################
 # quorum_client_port
-RUM_PORT = 51194  # 62663
+RUM_PORT = 62663
 
-basedir = r"D:\Jupyter"
+basedir = r"C:\Jupyter"
 # git clone https://github.com/liujuanjuan1984/mixin-sdk-python
 RUMPY_PATH = os.path.join(basedir, "rumpy")
 MIXIN_SDK_PATH = os.path.join(basedir, "mixin-sdk-python")
@@ -80,5 +80,5 @@ WELCOME_TEXT = "👋 hello 输入数字，订阅相应的种子网络" + (
     + "\n".join([key + " " + RSS_BOT_COMMANDS[key]["text"] for key in RSS_BOT_COMMANDS])
     + "\n"
     + ADDS_TEXT
-    + "\n有任何疑问或建议，请私聊刘娟娟\n\n最近更新：升级了订阅器的数据读写，从 file 改为 database，您之前的订阅数据已重置，请您重新订阅。\n为测试升级后的 bot 表现是否稳定，5月14日至21日，每天至少一波小额 RUM token 空投。"
+    + "\n如果您长时间未能收到任何动态，请反馈刘娟娟，或重新订阅。\n\n新增小工具：输入你的生日，比如“生日 1990 1 24”，将得到你这一辈子的数据（七年就是一辈子）。"
 )

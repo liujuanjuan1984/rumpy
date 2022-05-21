@@ -29,6 +29,7 @@ Format:
 
 ```bash
 isort .
+black -l 80 -t py37 -t py38 -t py39 -t py310 .
 black -l 120 -t py37 -t py38 -t py39 -t py310 .
 ```
 

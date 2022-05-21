@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import re
 import sys
 import time
 
@@ -15,6 +16,7 @@ from mixinsdk.clients.http_client import HttpClient_AppAuth
 from mixinsdk.clients.user_config import AppConfig
 from mixinsdk.types.message import MessageView, pack_message, pack_text_data
 from modules import *
+from seven_years_circle import SevenYearsCircle
 from sqlalchemy import Boolean, Column, Integer, String, and_, distinct
 
 now = datetime.datetime.now()
@@ -90,6 +92,19 @@ class BlazeBot:
     def get_reply_text(self, text):
         if type(text) == str and text.lower() in ["hi", "hello", "你好", "订阅"]:
             return WELCOME_TEXT, None
+
+        if type(text) == str and text.startswith("生日"):
+            reply_text = (
+                "请按如下格式输入，以“生日”开头，“年月日”的数字之间要用空格或其它标点符号分开。以下写法都是支持的：\n生日 1990 1 24\n生日，2001。12。24\n生日1972 7 12\n"
+            )
+            rlts = re.findall(r"^生日\D*?(\d{4})\D*?(\d{1,2})\D*?(\d{1,2})\D*?$", text)
+            if rlts:
+                try:
+                    reply_text = SevenYearsCircle(*rlts[0]).text_status()
+                except:
+                    pass
+            return reply_text, None
+
         try:
             _num = int(text)
             _abs = abs(_num)
