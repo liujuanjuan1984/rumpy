@@ -18,11 +18,11 @@ class SevenYearsCircle:
         today = datetime.date.today()
         passed = today - self.birthday
         n = passed.days // (365 * 7)
-        m = None
+        m = 0
 
         for i in range(n - 1, n + 2):
             if self.circle_begin(i) >= today:
-                m = i - 1
+                m = i
                 break
 
         this_circle = self.circle_begin(m)
