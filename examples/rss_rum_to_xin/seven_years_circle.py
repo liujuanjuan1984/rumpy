@@ -6,7 +6,7 @@ class SevenYearsCircle:
         self.born_year = int(born_year)
         self.born_month = int(born_month)
         self.born_day = int(born_day)
-        self.birthday = self.circle_begin(0)
+        self.birthday = self.circle_begin()
         self.this_circle = self.this_circle()
 
     def circle_begin(self, circle_number=0):
@@ -22,7 +22,7 @@ class SevenYearsCircle:
 
         for i in range(n - 1, n + 2):
             if self.circle_begin(i) >= today:
-                m = i
+                m = i - 1
                 break
 
         this_circle = self.circle_begin(m)
@@ -34,7 +34,7 @@ class SevenYearsCircle:
             "birthday": str(self.birthday),
             "age": 1 + passed.days // 365,
             "passed_days": passed.days,
-            "this_circle_number": m,
+            "this_circle_number": m + 1,
             "this_circle_begin": str(this_circle),
             "this_circle_passed_days": (today - this_circle).days,
             "this_circle_remain_days": (next_circle - today).days,
