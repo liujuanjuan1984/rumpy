@@ -38,7 +38,7 @@ class GroupConfig(BaseAPI):
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
         trx_type = self._check_trx_type(trx_type)
-        return self._get(f"/group/{self.group_id}/trx/auth/{trx_type}")
+        return self._client.get(f"/group/{self._client.group_id}/trx/auth/{trx_type}")
 
     @property
     def mode(self):
@@ -54,7 +54,7 @@ class GroupConfig(BaseAPI):
 
         mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
         """
-        self._check_owner()
+        self.check_owner_required()
         mode = self._check_mode(mode)
         for itype in TRX_TYPES:
             self.set_trx_mode(itype, mode, f"{itype} set mode to {mode}")
@@ -72,7 +72,7 @@ class GroupConfig(BaseAPI):
         mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
         memo: Memo
         """
-        self._check_owner()
+        self.check_owner_required()
         mode = self._check_mode(mode)
 
         trx_type = self._check_trx_type(trx_type)
@@ -80,12 +80,12 @@ class GroupConfig(BaseAPI):
             raise ValueError("say something in param:memo")
 
         payload = {
-            "group_id": self.group_id,
+            "group_id": self._client.group_id,
             "type": "set_trx_auth_mode",
             "config": json.dumps({"trx_type": trx_type, "trx_auth_mode": f"follow_{mode}_list"}),
             "Memo": memo,
         }
-        return self._post("/group/chainconfig", payload)
+        return self._client.post("/group/chainconfig", payload)
 
     def _update_list(
         self,
@@ -94,7 +94,7 @@ class GroupConfig(BaseAPI):
         memo: str = "update list",
         trx_types: List = None,
     ):
-        self._check_owner()
+        self.check_owner_required()
         mode = self._check_mode(mode)
 
         trx_types = trx_types or ["post"]
@@ -102,12 +102,12 @@ class GroupConfig(BaseAPI):
             self._check_trx_type(trx_type)
 
         payload = {
-            "group_id": self.group_id,
+            "group_id": self._client.group_id,
             "type": f"upd_{mode}_list",
             "config": json.dumps({"action": "add", "pubkey": pubkey, "trx_type": trx_types}),
             "Memo": memo,
         }
-        return self._post("/group/chainconfig", payload)
+        return self._client.post("/group/chainconfig", payload)
 
     def update_allow_list(
         self,
@@ -123,7 +123,7 @@ class GroupConfig(BaseAPI):
             "REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
-        self._check_owner()
+        self.check_owner_required()
         return self._update_list(pubkey, "alw", memo, trx_types)
 
     def update_deny_list(
@@ -140,14 +140,14 @@ class GroupConfig(BaseAPI):
             "REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
-        self._check_owner()
+        self.check_owner_required()
         return self._update_list(pubkey, "dny", memo, trx_types)
 
     def _list(self, mode: str) -> List:
         if mode not in ["allow", "deny"]:
             raise ValueError("mode must be one of these: allow,deny")
 
-        return self._get(f"/group/{self.group_id}/trx/{mode}list") or []
+        return self._client.get(f"/group/{self._client.group_id}/trx/{mode}list") or []
 
     @property
     def allow_list(self):
@@ -192,26 +192,26 @@ class GroupConfig(BaseAPI):
             value = self.group_icon(image)
         payload = {
             "action": action,
-            "group_id": self.group_id,
+            "group_id": self._client.group_id,
             "name": name,
             "type": the_type,
             "value": value,
             "memo": memo,
         }
-        self._check_owner()
+        self.check_owner_required()
 
-        return self._post("/group/appconfig", payload)
+        return self._client.post("/group/appconfig", payload)
 
     def keylist(self):
         """获取组的所有配置项"""
-        return self._get(f"/group/{self.group_id}/appconfig/keylist")
+        return self._client.get(f"/group/{self._client.group_id}/appconfig/keylist")
 
     def key(self, key: str):
         """获取组的某个配置项的信息
 
         key: 配置项名称
         """
-        return self._get(f"/group/{self.group_id}/appconfig/{key}")
+        return self._client.get(f"/group/{self._client.group_id}/appconfig/{key}")
 
     def announce(self, action="add", type="user", memo="rumpy.api"):
         """announce user or producer,add or remove
@@ -222,14 +222,14 @@ class GroupConfig(BaseAPI):
         type: "user" 或 "producer"
         memo: Memo
         """
-        self._check_group_id()
+        self.check_group_id_required()
         payload = {
-            "group_id": self.group_id,
+            "group_id": self._client.group_id,
             "action": action,  # add or remove
             "type": type,  # user or producer
             "memo": memo,
         }
-        return self._post("/group/announce", payload)
+        return self._client.post("/group/announce", payload)
 
     def announce_as_user(self):
         """announce self as user
@@ -238,7 +238,7 @@ class GroupConfig(BaseAPI):
 
         如果已经是用户, 返回申请状态
         """
-        status = self.announced_user(self.group.pubkey)
+        status = self.announced_user(self._client.group.pubkey)
         if status.get("Result") == "APPROVED":
             return status
         return self.announce("add", "user", "rumpy.api,announce self as user")
@@ -249,22 +249,22 @@ class GroupConfig(BaseAPI):
 
     def announced_producers(self):
         """获取申请 成为/退出 的 producers"""
-        return self._get(f"/group/{self.group_id}/announced/producers")
+        return self._client.get(f"/group/{self._client.group_id}/announced/producers")
 
     def announced_users(self):
         """获取申请 成为/退出 的 users"""
-        return self._get(f"/group/{self.group_id}/announced/users")
+        return self._client.get(f"/group/{self._client.group_id}/announced/users")
 
     def announced_user(self, pubkey):
         """获取申请 成为/退出 的 user 的申请状态
 
         pubkey: 用户公钥
         """
-        return self._get(f"/group/{self.group_id}/announced/user/{pubkey}")
+        return self._client.get(f"/group/{self._client.group_id}/announced/user/{pubkey}")
 
     def producers(self):
         """获取已经批准的 producers"""
-        return self._get(f"/group/{self.group_id}/producers")
+        return self._client.get(f"/group/{self._client.group_id}/producers")
 
     def update_user(self, user_pubkey, action="add"):
         """组创建者添加或移除私有组用户
@@ -272,21 +272,21 @@ class GroupConfig(BaseAPI):
         user_pubkey: 用户公钥
         action: "add" 或 "remove", 添加或移除
         """
-        self._check_group_id()
-        self._check_owner()
+        self.check_group_id_required()
+        self.check_owner_required()
         payload = {
             "user_pubkey": user_pubkey,
-            "group_id": self.group_id,
+            "group_id": self._client.group_id,
             "action": action,  # "add" or "remove"
         }
-        return self._post("/group/user", payload)
+        return self._client.post("/group/user", payload)
 
     def approve_as_user(self, pubkey=None):
         """添加私有组用户
 
         pubkey: 用户公钥, 如果不提供该参数, 默认将 owner 自己添加为私有组用户
         """
-        return self.update_user(user_pubkey=pubkey or self.group.pubkey)
+        return self.update_user(user_pubkey=pubkey or self._client.group.pubkey)
 
     def update_producer(self, pubkey=None, group_id=None, action="add"):
         """组创建者添加或移除 producer
@@ -295,16 +295,16 @@ class GroupConfig(BaseAPI):
         group_id: 组 ID
         action: "add" 或 "remove", 添加或移除
         """
-        self._check_owner()
+        self.check_owner_required()
         action = action.lower()
         if action not in ("add", "remove"):
             raise ValueError("action should be `add` or `remove`")
         payload = {
             "producer_pubkey": pubkey,
-            "group_id": group_id or self.group_id,
+            "group_id": group_id or self._client.group_id,
             "action": action,
         }
-        return self._post("/group/producer", payload)
+        return self._client.post("/group/producer", payload)
 
     def update_profile(self, name, image=None, mixin_id=None):
         """更新组的用户配置, 以 rum-app 为例, 如昵称, 头像, 绑定钱包(以 mixin 钱包为例)
@@ -318,7 +318,7 @@ class GroupConfig(BaseAPI):
         payload = {
             "type": "Update",
             "person": {"name": name, "image": image},
-            "target": {"id": self.group_id, "type": "Group"},
+            "target": {"id": self._client.group_id, "type": "Group"},
         }
         if mixin_id is not None:
             payload["person"]["wallet"] = {
@@ -326,4 +326,4 @@ class GroupConfig(BaseAPI):
                 "type": "mixin",
                 "name": "mixin messenger",
             }
-        return self._post("/group/profile", payload)
+        return self._client.post("/group/profile", payload)

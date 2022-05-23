@@ -1,7 +1,7 @@
 import os
 
-PORT = 58356
-CRTFILE = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum_bin\certs\server.crt"
+PORT = 51194
+CRTFILE = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
 if not os.path.exists(CRTFILE):
     try:
         import certifi

@@ -2,7 +2,7 @@ import json
 import os
 from typing import Dict, List
 
-from officy import Dir, JsonFile
+from officy import JsonFile
 
 from rumpy import RumClient
 
@@ -21,7 +21,9 @@ class WhoSays(RumClient):
 
         """
         datadir = os.path.join(os.path.dirname(__file__), "data", dirname)
-        Dir(datadir).check()
+        if not os.path.exists(datadir):
+            os.makedirs(datadir)
+
         namesinfofile = os.path.join(datadir, "names_info.json")
         self.datadir = datadir
         self.trxs_file = os.path.join(datadir, "whosays_trxs.json")
@@ -62,6 +64,20 @@ class WhoSays(RumClient):
             JsonFile(self.trxs_file).write(data)
             JsonFile(self.progressfile).write(progress)
 
+    def group_update_profiles(
+        self,
+        group_id,
+        datadir,
+        types=("name", "wallet", "image"),
+    ):
+        self.group_id = group_id
+        filename = f"users_profiles_group_{self.group_id}.json"
+        users_profiles_file = os.path.join(datadir, filename)
+        users_data = JsonFile(users_profiles_file).read({})
+        users_data = self.group.get_users_profiles(users_data, types)
+        JsonFile(users_profiles_file).write(users_data)
+        return users_data
+
     def send(self, name: str, toshare_group_id: str) -> Dict:
         """发布内容并更新发布状态"""
         data = JsonFile(self.trxs_file).read({})
@@ -70,7 +86,13 @@ class WhoSays(RumClient):
             self.group_id = group_id
             if not self.group.is_joined():
                 continue
-            nicknames = self.group.update_profiles(datadir=self.datadir, types=("name",)).get("data") or {}
+            _params = {
+                "group_id": group_id,
+                "datadir": self.datadir,
+                "types": ("name",),
+            }
+            _profiles = self.group_update_profiles(**_params)
+            nicknames = _profiles.get("data", {})
             for trx_id in gtrxs:
                 self.group_id = group_id
                 if "shared" not in gtrxs[trx_id]:

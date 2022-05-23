@@ -1,10 +1,10 @@
 import os
 
-from officy import Dir, JsonFile
+from officy import JsonFile
 
 from rumpy import RumClient
 
-bot = RumClient(port=58356)
+bot = RumClient(port=51194)
 
 
 def check_group():
@@ -36,7 +36,9 @@ if asku == "1":
 elif asku == "2":
     # download files
     file_dir = r"D:\test_download"
-    Dir(file_dir).check()
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+
     bot.group.download(file_dir)
 
 else:

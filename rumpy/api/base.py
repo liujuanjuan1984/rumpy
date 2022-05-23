@@ -2,28 +2,10 @@ class BaseAPI:
     def __init__(self, client=None):
         self._client = client
 
-    def _get(self, path: str, payload={}, api_base=None):
-        return self._client.get(path, payload, api_base)
+    def check_group_id_required(self):
+        if self._client.group_id == None:
+            raise ValueError("client.group_id is required, now it's None.")
 
-    def _post(self, path: str, payload={}, api_base=None):
-        return self._client.post(path, payload, api_base)
-
-    @property
-    def group_id(self):
-        return self._client.group_id
-
-    @property
-    def node(self):
-        return self._client.node
-
-    @property
-    def group(self):
-        return self._client.group
-
-    def _check_group_id(self):
-        if self.group_id == None:
-            raise ValueError("group_id is not set yet.")
-
-    def _check_owner(self):
-        if self.group.pubkey != self.group.owner:
-            raise ValueError("you are not owner.")
+    def check_owner_required(self):
+        if self._client.group.pubkey != self._client.group.owner:
+            raise ValueError("you are not the owner of the group.")

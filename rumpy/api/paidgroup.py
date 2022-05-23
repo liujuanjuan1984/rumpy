@@ -8,16 +8,16 @@ logger = logging.getLogger(__name__)
 class PaidGroup(BaseAPI):
     def dapp(self):
         """Get Info of Paidgroup DApp"""
-        resp = self._get("/dapps/PaidGroupMvm", api_base=self._client.api_base_paid)
+        resp = self._client.get("/dapps/PaidGroupMvm", api_base=self._client.api_base_paid)
         if resp.get("success"):
             return resp.get("data")
         return resp
 
     def paidgroup(self):
         """Get Detail of a Paidgroup"""
-        self._check_group_id()
-        resp = self._get(
-            f"/mvm/paidgroup/{self.group_id}",
+        self.check_group_id_required()
+        resp = self._client.get(
+            f"/mvm/paidgroup/{self._client.group_id}",
             api_base=self._client.api_base_paid,
         )
         if resp.get("success"):
@@ -26,9 +26,9 @@ class PaidGroup(BaseAPI):
 
     def payment(self):
         """Check Payment"""
-        self._check_group_id()
-        resp = self._get(
-            f"/mvm/paidgroup/{self.group_id}/{self.group.eth_addr}",
+        self.check_group_id_required()
+        resp = self._client.get(
+            f"/mvm/paidgroup/{self._client.group_id}/{self._client.group.eth_addr}",
             api_base=self._client.api_base_paid,
         )
         if resp.get("success"):
@@ -37,16 +37,16 @@ class PaidGroup(BaseAPI):
 
     def announce(self, amount, duration):
         """Announce a Paidgroup"""
-        self._check_group_id()
-        self._check_owner()
+        self.check_group_id_required()
+        self.check_owner_required()
 
         payload = {
-            "group": self.group_id,
-            "owner": self.group.eth_addr,
+            "group": self._client.group_id,
+            "owner": self._client.group.eth_addr,
             "amount": str(amount),
             "duration": duration,
         }
-        resp = self._post(
+        resp = self._client.post(
             "/mvm/paidgroup/announce",
             payload,
             api_base=self._client.api_base_paid,
@@ -57,13 +57,13 @@ class PaidGroup(BaseAPI):
 
     def pay(self):
         """Pay for a Paidgroup"""
-        self._check_group_id()
+        self.check_group_id_required()
 
         payload = {
-            "user": self.group.eth_addr,
-            "group": self.group_id,
+            "user": self._client.group.eth_addr,
+            "group": self._client.group_id,
         }
-        resp = self._post("/mvm/paidgroup/pay", payload, api_base=self._client.api_base_paid)
+        resp = self._client.post("/mvm/paidgroup/pay", payload, api_base=self._client.api_base_paid)
         if resp.get("success"):
             return resp.get("data")
         return resp

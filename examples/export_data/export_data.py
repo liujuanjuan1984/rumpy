@@ -205,6 +205,11 @@ def export_text_daily(daystr):
     print(datetime.datetime.now(), jfile)
 
 
+def check_dir(dirpath):
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+
 if __name__ == "__main__":
     # init
     client = RumClient()
@@ -213,8 +218,8 @@ if __name__ == "__main__":
     JSON_DIR = os.path.join(SAVE_DIR, nodeid, "json")
     MD_DIR = os.path.join(SAVE_DIR, nodeid, "markdown")
     IMG_DIR = os.path.join(SAVE_DIR, nodeid, "markdown", "images")
-    Dir(JSON_DIR).check()
-    Dir(IMG_DIR).check()
+    check_dir(JSON_DIR)
+    check_dir(IMG_DIR)
 
     # 登入账号，并导出数据
     export()

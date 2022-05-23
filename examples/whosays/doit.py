@@ -26,7 +26,7 @@ def trans():
 
 def main():
 
-    bot = WhoSays(port=58356)
+    bot = WhoSays(port=51194)
     bot.init("huoju")
     bot.search()
     group_id = bot.group.create("mytest_whosays")["group_id"]
