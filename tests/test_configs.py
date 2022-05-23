@@ -44,7 +44,7 @@ def test_configs_view(group_id=None):
     r = client.paid.payment()
     print("payment", r)
 
-    r = client.config.update_profile(name="juanjuan", image=r"D:\test-sample.png")
+    r = client.config.update_profile(name="juanjuan", image=r"D:\png_files\test-sample.png")
     print(r)
 
 

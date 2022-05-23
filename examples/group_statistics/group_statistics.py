@@ -11,7 +11,7 @@ from officy import JsonFile
 from pylab import *
 
 from rumpy import RumClient
-from rumpy.utils import ts2datetime
+from rumpy.utils import timestamp_to_datetime
 
 
 class GroupStatistics(RumClient):
@@ -38,7 +38,7 @@ class GroupStatistics(RumClient):
     def _count_daily_trxs(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = ts2datetime(i.get("TimeStamp")).date()
+            ix = timestamp_to_datetime(i.get("TimeStamp")).date()
             if ix not in rlt:
                 rlt[ix] = 1
             else:
@@ -48,7 +48,7 @@ class GroupStatistics(RumClient):
     def _count_daily_pubkeys(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = ts2datetime(i.get("TimeStamp")).date()
+            ix = timestamp_to_datetime(i.get("TimeStamp")).date()
             iy = i["Publisher"]
 
             if ix not in rlt:
@@ -59,14 +59,14 @@ class GroupStatistics(RumClient):
 
     def group_view(self, group_id):
         self.group_id = group_id
-        trxs = self.group.content()
+        trxs = self.group.all_content_trxs()
         info = self.group.info()
 
         if len(trxs) == 0:
             return {}, 0
 
-        create_at = ts2datetime(trxs[0].get("TimeStamp"))
-        update_at = ts2datetime(trxs[-1].get("TimeStamp"))
+        create_at = timestamp_to_datetime(trxs[0].get("TimeStamp"))
+        update_at = timestamp_to_datetime(trxs[-1].get("TimeStamp"))
         days = (update_at - create_at).days or 0
         viewdata = {
             "info": info.__dict__,

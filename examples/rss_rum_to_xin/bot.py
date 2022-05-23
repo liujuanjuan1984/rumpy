@@ -27,7 +27,7 @@ from sqlalchemy import Boolean, Column, Integer, String, and_, distinct
 sys.path.insert(0, RUMPY_PATH)
 import rumpy
 from rumpy import RumClient
-from rumpy.utils import ts2datetime
+from rumpy.utils import timestamp_to_datetime
 
 sys.path.insert(0, MIXIN_SDK_PATH)
 import mixinsdk
@@ -164,7 +164,7 @@ class RssBot:
                 _trxs = self.rum.group.content_trxs(is_reverse=True, num=10)
                 if len(_trxs) > 0:
                     trx_id = _trxs[-1]["TrxId"]
-                    _ts = str(ts2datetime(_trxs[-1]["TimeStamp"]))
+                    _ts = str(timestamp_to_datetime(_trxs[-1]["TimeStamp"]))
                 else:
                     trx_id = None
                     _ts = None
@@ -194,7 +194,7 @@ class RssBot:
                 if existd2:
                     continue
 
-                ts = str(ts2datetime(trx["TimeStamp"]))  # 只发距今xx小时的更新，间隔时间由配置文件控制
+                ts = str(timestamp_to_datetime(trx["TimeStamp"]))  # 只发距今xx小时的更新，间隔时间由配置文件控制
                 if ts <= str(datetime.datetime.now() + datetime.timedelta(minutes=minutes)):
                     continue
 
@@ -383,11 +383,11 @@ class RssBot:
                 return counts_result
             if num >= 1000:
                 return counts_result
-            lastest_day = ts2datetime(_trxs[-1]["TimeStamp"]).date()
+            lastest_day = timestamp_to_datetime(_trxs[-1]["TimeStamp"]).date()
             if lastest_day < thatday:
                 counts = {}
                 for _trx in _trxs:
-                    _day = ts2datetime(_trx["TimeStamp"]).date()
+                    _day = timestamp_to_datetime(_trx["TimeStamp"]).date()
                     if _day == thatday:
                         _pubkey = _trx["Publisher"]
                         if _pubkey not in counts:

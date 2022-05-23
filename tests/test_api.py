@@ -103,10 +103,10 @@ class TestCase:
         resp = client.group.send_note(content="你好")
         assert "trx_id" in resp
 
-        resp = client.group.send_note(content="nihao", images=["D:\\test-sample.png"])
+        resp = client.group.send_note(content="nihao", images=["D:\\png_files\\test-sample.png"])
         assert "trx_id" in resp
 
-        resp = client.group.send_note(images=["D:\\test-sample.png"])
+        resp = client.group.send_note(images=["D:\\png_files\\test-sample.png"])
         assert "trx_id" in resp
 
         # 回复
@@ -123,7 +123,7 @@ class TestCase:
         resp = client.group.dislike(trx_id)
         assert "trx_id" in resp
 
-        trxs = client.group.content()
+        trxs = client.group.all_content_trxs()
         try:
             trxtype = client.group.trx_type(trxs[-1])
             assert type(trxtype) == str

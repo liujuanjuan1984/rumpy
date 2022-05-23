@@ -1,6 +1,6 @@
 import datetime
 
-from rumpy.utils import ts2datetime
+from rumpy.utils import timestamp_to_datetime
 from tests import client
 
 seed = client.group.create("mytest_pubqueque")
@@ -20,9 +20,9 @@ def test_update():
     print(data)
 
     for idata in data:
-        s1 = ts2datetime(idata["UpdateAt"])
-        s2 = ts2datetime(idata["Trx"]["TimeStamp"])
-        s3 = ts2datetime(idata["Trx"]["Expired"])
+        s1 = timestamp_to_datetime(idata["UpdateAt"])
+        s2 = timestamp_to_datetime(idata["Trx"]["TimeStamp"])
+        s3 = timestamp_to_datetime(idata["Trx"]["Expired"])
         s4 = datetime.datetime.now()
         tid = idata["Trx"]["TrxId"]
         print(idata["State"], tid, s2, s1 - s2)

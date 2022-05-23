@@ -11,7 +11,7 @@ from typing import Any, Dict, List
 
 from rumpy.api.base import BaseAPI
 from rumpy.types.data import *
-from rumpy.utils import sha256, ts2datetime
+from rumpy.utils import sha256, timestamp_to_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,15 @@ def _nickname(pubkey, nicknames):
     except:
         name = pubkey[-10:-2] or "某人"
     return name
+
+
+def _trxs_unique(trxs: List):
+    """remove the duplicate trx from the trxs list"""
+    new = {}
+    for trx in trxs:
+        if trx["TrxId"] not in new:
+            new[trx["TrxId"]] = trx
+    return [new[i] for i in new]
 
 
 class Group(BaseAPI):
@@ -64,16 +73,16 @@ class Group(BaseAPI):
             "app_key": app_key,
         }
 
-        return self._client.post("/group", payload)
+        return self._post("/group", payload)
 
-    def seed(self) -> Dict:
+    def seed(self, group_id=None) -> Dict:
         """get the seed of a group which you've joined in."""
-        if self.is_joined():
-            seed = self._client.get(f"/group/{self._client.group_id}/seed")
-            if "error" not in seed:
-                return seed
-            logger.warning(f"{sys._getframe().f_code.co_name}, joined the group, but don't get seed.")
-        return {}
+        group_id = group_id or self.group_id
+        seed = self._get(f"/group/{group_id}/seed")
+        if "error" not in seed:
+            return seed
+        else:
+            raise ValueError(seed["error"])
 
     def is_seed(self, seed: Dict) -> bool:
         try:
@@ -85,12 +94,18 @@ class Group(BaseAPI):
 
     def info(self):
         """return group info,type: datacalss"""
-        if self.is_joined():
-            for info in self._client.node.groups():
-                if info["group_id"] == self._client.group_id:
-                    return GroupInfo(**info)
-        else:
-            raise ValueError(f"you are not in this group.{self._client.group_id}")
+        self.check_group_joined_as_required()
+
+        info = {}
+        for _info in self._client.node.groups():
+            if _info["group_id"] == self.group_id:
+                info = _info
+                break
+
+        if info.get("snapshot_info") is None:
+            info["snapshot_info"] = {}
+
+        return GroupInfo(**info)
 
     @property
     def pubkey(self):
@@ -104,42 +119,38 @@ class Group(BaseAPI):
     def eth_addr(self):
         return self.info().user_eth_addr
 
-    @property
-    def type(self):
-        self.check_group_id_required()
-        return self.seed().get("app_key")
-
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
         if not self.is_seed(seed):
             raise ValueError("not a seed or the seed could not be identified.")
-        return self._client.post("/group/join", seed)
+        resp = self._post("/group/join", seed)
+        if "error" in resp:
+            if resp["error"] == "Group with same GroupId existed":
+                resp = True
+            else:
+                raise ValueError(resp["error"])
+        return resp
 
-    def is_joined(self) -> bool:
-        self.check_group_id_required()
-        if self._client.group_id in self._client.node.groups_id:
+    def is_joined(self, group_id=None) -> bool:
+        group_id = group_id or self.group_id
+        if group_id in self._client.node.groups_id:
             return True
         return False
 
-    def leave(self):
+    def leave(self, group_id=None):
         """leave a group"""
-        if self.is_joined():
-            return self._client.post("/group/leave", {"group_id": self._client.group_id})
+        group_id = group_id or self.group_id
+        return self._post("/group/leave", {"group_id": group_id})
 
-    def clear(self):
+    def clear(self, group_id=None):
         """clear data of a group"""
-        self.check_group_id_required()
-        return self._client.post("/group/clear", {"group_id": self._client.group_id})
+        group_id = group_id or self.group_id
+        return self._post("/group/clear", {"group_id": group_id})
 
-    def startsync(self):
+    def startsync(self, group_id=None):
         """触发同步"""
-        if self.is_joined():
-            return self._client.post(f"/group/{self._client.group_id}/startsync")
-
-    def content(self) -> List:
-        """get the content trxs of a group,return the list of the trxs data."""
-        if self.is_joined():
-            return self._client.get(f"/group/{self._client.group_id}/content") or []
+        group_id = group_id or self.group_id
+        return self._post(f"/group/{group_id}/startsync")
 
     def content_trxs(
         self,
@@ -162,15 +173,12 @@ class Group(BaseAPI):
             return []
 
         if trx_id:
-            apiurl = (
-                f"/group/{self._client.group_id}/content?num={num}&starttrx={trx_id}"
-                f"&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
-            )
+            apiurl = f"/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
         else:
-            apiurl = f"/group/{self._client.group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
+            apiurl = f"/group/{self.group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
 
-        trxs = self._client.post(apiurl, api_base=self._client.api_base_app) or []
-        return self.trxs_unique(trxs)
+        trxs = self._post(apiurl, api_base=self._client.api_base_app) or []
+        return _trxs_unique(trxs)
 
     def _send(self, obj=None, sendtype=None, **kwargs) -> Dict:
         """return the {trx_id:trx_id} of this action if send successded
@@ -179,8 +187,8 @@ class Group(BaseAPI):
         sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
         返回值 {"trx_id": "string"}
         """
-        payload = NewTrx(group_id=self._client.group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
-        return self._client.post("/group/content", payload)
+        payload = NewTrx(group_id=self.group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
+        return self._post("/group/content", payload)
 
     def like(self, trx_id: str) -> Dict:
         return self._send(trx_id=trx_id, sendtype="Like")
@@ -323,8 +331,8 @@ class Group(BaseAPI):
 
     def block(self, block_id: str):
         """get the info of a block in a group"""
-        self.check_group_id_required()
-        return self._client.get(f"/block/{self._client.group_id}/{block_id}")
+        self.check_group_id_as_required()
+        return self._get(f"/block/{self.group_id}/{block_id}")
 
     def is_owner(self) -> bool:
         """return True if I create this group else False"""
@@ -382,40 +390,32 @@ class Group(BaseAPI):
             return "text_only"
         return trxtype.lower()  # "like","dislike","other"
 
-    def trx(self, trx_id: str = None):
-        try:
-            resp = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
-            if len(resp) > 1:
-                logger.error(f"{sys._getframe().f_code.co_name}, " + json.dumps(resp.json()))
-            elif len(resp) == 0:
-                logger.warning(
-                    f"{sys._getframe().f_code.co_name}, nothing got from group:{self._client.group_id} with trx:{trx_id}"
-                )
-            else:
-                return resp[0]
-        except Exception as e:
-            logger.error(f"{sys._getframe().f_code.co_name}, {e}")
-            return self._client.get(f"/trx/{self._client.group_id}/{trx_id}")
-        logger.error(f"{sys._getframe().f_code.co_name}, nothing got")
-
-    def trxs_unique(self, trxs: List):
-        """remove the duplicate trx from the trxs list"""
-        new = {}
-        for trx in trxs:
-            if trx["TrxId"] not in new:
-                new[trx["TrxId"]] = trx
-        return [new[i] for i in new]
+    def trx(self, trx_id: str):
+        """get trx data by trx_id"""
+        self.check_group_id_as_required()
+        data = {}
+        trxs = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
+        if len(trxs) > 1:
+            raise ValueError(f"{len(trxs)} trxs got from group: <{self.group_id}> with trx: <{trx_id}>.")
+        elif len(trxs) == 1:
+            data = trxs[0]
+        else:
+            data = self._get(f"/trx/{self.group_id}/{trx_id}")
+            logger.info(f"data is encrypted for trx: <{trx_id}> of group: <{self.group_id}>.")
+        if not data:
+            logger.warning(f"data is empty for trx: <{trx_id}> of group: <{self.group_id}>.")
+        return data
 
     def pubqueue(self):
-        self.check_group_id_required()
-        resp = self._client.get(f"/group/{self._client.group_id}/pubqueue")
+        self.check_group_id_as_required()
+        resp = self._get(f"/group/{self.group_id}/pubqueue")
         return resp.get("Data")
 
     def ack(self, trx_ids: List):
-        return self._client.post("/trx/ack", {"trx_ids": trx_ids})
+        return self._post("/trx/ack", {"trx_ids": trx_ids})
 
     def autoack(self):
-        self.check_group_id_required()
+        self.check_group_id_as_required()
         tids = [i["Trx"]["TrxId"] for i in self.pubqueue() if i["State"] == "FAIL"]
         return self.ack(tids)
 
@@ -436,10 +436,10 @@ class Group(BaseAPI):
         }
         """
         # check group_id
-        group_id = users_data.get("group_id", self._client.group_id)
-        if group_id != self._client.group_id:
+        group_id = users_data.get("group_id", self.group_id)
+        if group_id != self.group_id:
             logger.warning(
-                "get_users_profiles: group_id is different. client.group_id:{self._client.group_id}, data.group_id:{group_id}"
+                f"get_users_profiles: group_id is different. client.group_id:{self.group_id}, data.group_id:{group_id}"
             )
             return users_data
 
@@ -448,17 +448,17 @@ class Group(BaseAPI):
         trxs = self.all_content_trxs(trx_id=trx_id)
 
         if len(trxs) == 0:
-            logger.debug("get_users_profiles: got 0 new trxs. get content started from trx_id:{trx_id}.")
+            logger.debug(f"get_users_profiles: got 0 new trxs. get content started from trx_id:{trx_id}.")
             return users_data
 
         # update trx_id: to record the progress to get new trxs
 
         users_data.update(
             {
-                "group_id": self._client.group_id,
+                "group_id": self.group_id,
                 "group_name": self.seed().get("group_name"),
                 "trx_id": trxs[-1]["TrxId"],
-                "trx_timestamp": str(ts2datetime(trxs[-1].get("TimeStamp", ""))),
+                "trx_timestamp": str(timestamp_to_datetime(trxs[-1].get("TimeStamp", ""))),
             }
         )
 
@@ -548,7 +548,7 @@ class Group(BaseAPI):
         else:
             return None, False
 
-        obj["content"] = f'{ts2datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
+        obj["content"] = f'{timestamp_to_datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
         obj["image"] = obj["image"][:4]
         obj = {key: obj[key] for key in obj if obj[key]}
 

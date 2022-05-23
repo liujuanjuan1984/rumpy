@@ -7,7 +7,7 @@ from typing import Dict, List
 from officy import Dir, Img, JsonFile
 
 from rumpy import RumClient
-from rumpy.utils import ts2datetime
+from rumpy.utils import timestamp_to_datetime
 
 
 def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
@@ -29,14 +29,14 @@ def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
     name = ""
     for trxdata in rlt:
         name = trxdata["Content"].get("name") or ""
-        if ts2datetime(trxdata.get("TimeStamp")) <= since:
+        if timestamp_to_datetime(trxdata.get("TimeStamp")) <= since:
             return name
     return name
 
 
 def trx_export(trxdata: Dict, trxs: List) -> Dict:
     """export data with refer_to data"""
-    ts = ts2datetime(trxdata.get("TimeStamp"))
+    ts = timestamp_to_datetime(trxdata.get("TimeStamp"))
     info = {
         "trx_id": trxdata["TrxId"],
         "trx_time": str(ts),
@@ -79,7 +79,7 @@ def export():
         key = (group_id, gdata["group_name"])
         my_trxs[key] = []
         client.group_id = group_id
-        trxs = client.group.content()
+        trxs = client.group.all_content_trxs()
         for trxdata in trxs:
             if trxdata["Publisher"] == pubkey:
                 my_trxs[key].append(trxdata)
@@ -94,7 +94,7 @@ def export():
         gfile = f"{JSON_DIR}\\{group_name}_{group_id}_{datetime.date.today()}.json"
         gdata = []
         client.group_id = group_id
-        trxs = client.group.content()
+        trxs = client.group.all_content_trxs()
         for trxdata in gtrxs:
             gdata.append(trx_export(trxdata, trxs))
         JsonFile(gfile).write(gdata)

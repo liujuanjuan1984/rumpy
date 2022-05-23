@@ -83,13 +83,13 @@ class RumClient:
         try:
             resp = self._session.request(method=method, url=url, json=payload)
         except Exception as e:  # SSLCertVerificationError
-            logger.warning(f"{e}")
+            logger.warning(f"Exception {e}")
             resp = self._session.request(method=method, url=url, json=payload, verify=False)
 
         try:
             body_json = resp.json()
         except Exception as e:
-            logger.error(f"{e}")
+            logger.warning(f"Exception {e}")
             body_json = {}
 
         if resp.status_code != 200:
@@ -104,7 +104,6 @@ class RumClient:
 
     @property
     def group_id(self):
-        # logger.debug(f"group_id:{self._group_id}")
         return self._group_id
 
     @group_id.setter
