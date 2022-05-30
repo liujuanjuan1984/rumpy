@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 
 from rumpy.api.base import BaseAPI
 from rumpy.types.data import *
+from rumpy.types.data import is_seed
 from rumpy.utils import sha256, timestamp_to_datetime
 
 logger = logging.getLogger(__name__)
@@ -84,14 +85,6 @@ class Group(BaseAPI):
         else:
             raise ValueError(seed["error"])
 
-    def is_seed(self, seed: Dict) -> bool:
-        try:
-            Seed(**seed)
-            return True
-        except Exception as e:
-            logger.error(f"{sys._getframe().f_code.co_name}, {e}")
-            return False
-
     def info(self):
         """return group info,type: datacalss"""
         self.check_group_joined_as_required()
@@ -121,7 +114,7 @@ class Group(BaseAPI):
 
     def join(self, seed: Dict):
         """join a group with the seed of the group"""
-        if not self.is_seed(seed):
+        if not is_seed(seed):
             raise ValueError("not a seed or the seed could not be identified.")
         resp = self._post("/group/join", seed)
         if "error" in resp:

@@ -2,6 +2,7 @@ import dataclasses
 
 import pytest
 
+from rumpy.types.data import is_seed
 from tests import client, group_names_to_leave
 
 
@@ -53,7 +54,7 @@ class TestCase:
             "app_key": "group_timeline",
             "signature": "30450221009d00d86876d4e37b8408620dca823d0409afa03ae49c5c78526669f5d2a3c8fe022073cf3f3bbb19534614ae6d3eca65ac05d374909444825f59be44f1fe0fd1a0ca",
         }
-        r = client.group.is_seed(seed)
+        r = is_seed(seed)
         assert r == True
         r = client.group.join(seed)
         client.group_id = seed["group_id"]

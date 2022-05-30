@@ -6,6 +6,7 @@ from typing import Dict, List
 from officy import JsonFile
 
 from rumpy import RumClient
+from rumpy.types.data import is_seed
 from rumpy.utils import timestamp_to_datetime
 
 DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
@@ -28,7 +29,7 @@ class SearchSeeds(RumClient):
         for i in re.findall(pt, text or "", re.S):
             try:
                 iseed = json.loads(i)
-                if self.group.is_seed(iseed):
+                if is_seed(iseed):
                     seeds.append(iseed)
             except json.JSONDecodeError:
                 continue

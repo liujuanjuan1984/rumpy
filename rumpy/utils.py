@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import sys
+
 from PIL import Image
 
 IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200

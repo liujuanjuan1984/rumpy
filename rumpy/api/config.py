@@ -1,8 +1,9 @@
 import base64
 import json
 import logging
-import filetype
 from typing import Any, Dict, List
+
+import filetype
 
 from rumpy.api.base import BaseAPI
 from rumpy.api.group import Group

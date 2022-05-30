@@ -1,7 +1,7 @@
-import pytest
-import logging
 import datetime
 import logging
+
+import pytest
 
 now = datetime.datetime.now()
 
@@ -94,7 +94,14 @@ class TestChain:
                 _trx = self.client.group.trx(trx["TrxId"])
                 if "Content" not in _trx:
                     _trx_type = _trx.get("Type", "???")
-                    if _trx_type not in ["ASK_PEERID", "ANNOUNCE", "CHAIN_CONFIG", "APP_CONFIG", "USER", "PRODUCER"]:
+                    if _trx_type not in [
+                        "ASK_PEERID",
+                        "ANNOUNCE",
+                        "CHAIN_CONFIG",
+                        "APP_CONFIG",
+                        "USER",
+                        "PRODUCER",
+                    ]:
                         logger.warning(f"undecryption, height:{h},trx_id: {trx['TrxId']}, type: {_trx_type}")
                         rlt = False
             bid = block.get("PrevBlockId", "")

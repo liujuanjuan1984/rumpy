@@ -67,6 +67,15 @@ class Seed:
     owner_encryptpubkey: str = None  # 新版本似乎弃用该字段了
 
 
+def is_seed(seed: Dict) -> bool:
+    try:
+        Seed(**seed)
+        return True
+    except Exception as e:
+        logger.error(f"{sys._getframe().f_code.co_name}, {e}")
+        return False
+
+
 @dataclasses.dataclass
 class SnapShotInfo:
     TimeStamp: int
