@@ -16,6 +16,22 @@ Python SDK for [QuoRum](https://github.com/rumsystem/quorum).
 pip install rumpy
 ```
 
+### Env
+
+init or update:
+
+```sh
+pip install pipenv
+pipenv install
+```
+
+run:
+
+```sh
+pipenv shell
+pipenv run python do_sth.py
+```
+
 ### Examples
 
 [>> Examples](https://github.com/liujuanjuan1984/rumpy/tree/master/examples)

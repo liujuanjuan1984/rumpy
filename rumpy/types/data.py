@@ -5,6 +5,7 @@ import logging
 import os
 import time
 import uuid
+import sys 
 from typing import Any, Dict, List
 
 from rumpy.utils import zip_image_file
