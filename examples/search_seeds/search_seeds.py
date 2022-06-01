@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from officy import JsonFile
 
-from rumpy import RumClient
+from rumpy import FullNode
 from rumpy.types.data import is_seed
 from rumpy.utils import timestamp_to_datetime
 
@@ -13,7 +13,7 @@ DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
 DONT_JOIN_PIECES = ["mytest_", "测试", "test"]
 
 
-class SearchSeeds(RumClient):
+class SearchSeeds(FullNode):
     def init_app(self, seedsfile, progressfile, infofile):
         self.seedsfile = seedsfile
         self.progressfile = progressfile

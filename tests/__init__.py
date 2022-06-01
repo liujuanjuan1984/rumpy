@@ -1,6 +1,6 @@
-from rumpy import RumClient
+from rumpy import FullNode
 
 group_names_to_leave = []
 keys = {"port": 51194}
 
-client = RumClient(**keys)
+client = FullNode(**keys)

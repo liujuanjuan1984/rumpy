@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from rumpy.client import RumClient
+from rumpy.client import FullNode, LightNode
 
 __version__ = "0.4.1"
 __author__ = "liujuanjuan1984"

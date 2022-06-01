@@ -6,7 +6,7 @@ from typing import Dict, List
 
 from officy import Dir, Img, JsonFile
 
-from rumpy import RumClient
+from rumpy import FullNode
 from rumpy.utils import timestamp_to_datetime
 
 
@@ -212,7 +212,7 @@ def check_dir(dirpath):
 
 if __name__ == "__main__":
     # init
-    client = RumClient()
+    client = FullNode(port=51194)
     nodeid = client.node.id
     SAVE_DIR = os.path.join(os.path.dirname(__file__), "data")
     JSON_DIR = os.path.join(SAVE_DIR, nodeid, "json")

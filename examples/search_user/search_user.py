@@ -5,10 +5,10 @@ from typing import Dict, List
 
 from officy import JsonFile
 
-from rumpy import RumClient
+from rumpy import FullNode
 
 
-class SearchUser(RumClient):
+class SearchUser(FullNode):
     """bot:search pubkeys in all-history-nicknames for those containing with the piece: name_fragment"""
 
     def init(self, name_fragment, seedsfile=None):

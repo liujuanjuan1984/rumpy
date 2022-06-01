@@ -8,6 +8,7 @@ requests = "==2.24.0"
 filetype = "*"
 pytest = "*"
 Pillow = "*"
+python-dotenv = "*"
 
 [dev-packages]
 officy = "*"

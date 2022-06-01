@@ -4,12 +4,12 @@ import time
 
 from officy import Dir, File, JsonFile
 
-from rumpy import RumClient
+from rumpy import FullNode
 
 
 def main():
     # init
-    client = RumClient()
+    client = FullNode(port=51194)
 
     # create a group
     seed = client.group.create("mytest_postblog", app_key="group_post")

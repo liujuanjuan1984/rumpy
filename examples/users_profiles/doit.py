@@ -2,9 +2,9 @@ import os
 
 from officy import JsonFile
 
-from rumpy import RumClient
+from rumpy import FullNode
 
-client = RumClient(port=51194)
+client = FullNode(port=51194)
 group_id = "4e784292-6a65-471e-9f80-e91202e3358c"
 
 # give the file path or None to init it.

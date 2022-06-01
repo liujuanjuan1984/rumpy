@@ -2,9 +2,9 @@ import os
 
 from officy import JsonFile
 
-from rumpy import RumClient
+from rumpy import FullNode
 
-bot = RumClient(port=51194)
+bot = FullNode(port=51194)
 
 
 def check_group():

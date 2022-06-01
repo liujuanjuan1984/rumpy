@@ -7,11 +7,11 @@ def test_configs_view(group_id=None):
     seed = client.group.seed()
 
     print("==== appconfig ====")
-    r = client.config.keylist()
+    r = client.group.keylist()
     print("keylist", r)
 
     for key in r:
-        ik = client.config.key(key)
+        ik = client.group.key(key)
         print("key", key, ik)
 
     print("==== group info ====")
@@ -27,10 +27,10 @@ def test_configs_view(group_id=None):
 
     print("==== user info ====")
 
-    r = client.config.announced_users()
+    r = client.group.announced_users()
     print("announced_users", r)
 
-    r = client.config.announced_producers()
+    r = client.group.announced_producers()
     print("announced_producers", r)
 
     print("==== paid? ====")
@@ -44,7 +44,7 @@ def test_configs_view(group_id=None):
     r = client.paid.payment()
     print("payment", r)
 
-    r = client.config.update_profile(name="juanjuan", image=r"D:\png_files\test-sample.png")
+    r = client.group.update_profile(name="juanjuan", image=r"D:\png_files\test-sample.png")
     print(r)
 
 

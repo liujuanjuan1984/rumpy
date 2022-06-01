@@ -3,9 +3,9 @@ import dataclasses
 import json
 import logging
 import os
+import sys
 import time
 import uuid
-import sys 
 from typing import Any, Dict, List
 
 from rumpy.utils import zip_image_file

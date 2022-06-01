@@ -26,7 +26,7 @@ from sqlalchemy import Boolean, Column, Integer, String, and_, distinct
 
 sys.path.insert(0, RUMPY_PATH)
 import rumpy
-from rumpy import RumClient
+from rumpy import FullNode
 from rumpy.utils import timestamp_to_datetime
 
 sys.path.insert(0, MIXIN_SDK_PATH)
@@ -45,7 +45,7 @@ rss bot 是一个基于 mixin messenger 的 bot
 
 class RssBot:
     def __init__(self, db_name=None):
-        self.rum = RumClient(port=RUM_PORT)
+        self.rum = FullNode(port=RUM_PORT)
         self.config = AppConfig.from_file(MIXIN_KEYSTORE_FILE)
         self.xin = HttpClient_AppAuth(self.config)
         self.db = BaseDB(db_name or DB_NAME, echo=False, reset=False)

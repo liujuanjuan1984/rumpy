@@ -4,10 +4,10 @@ from typing import Dict, List
 
 from officy import JsonFile
 
-from rumpy import RumClient
+from rumpy import FullNode
 
 
-class WhoSays(RumClient):
+class WhoSays(FullNode):
     """
     bot: got what who says and retweet to the group.
     在多个组内筛选某人动态，并转发到指定组。

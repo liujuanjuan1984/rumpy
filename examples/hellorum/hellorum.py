@@ -1,12 +1,12 @@
 import datetime
 import os
 
-from rumpy import RumClient
+from rumpy import FullNode
 
 
 def main():
 
-    client = RumClient()
+    client = FullNode(port=51194)
 
     # create group for test
     seed = client.group.create("mytest_hellorum")

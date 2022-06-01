@@ -1,6 +1,6 @@
 import datetime
 
-from rumpy import RumClient
+from rumpy import FullNode
 
 TEST_GROUPS_TO_LEAVE = [
     "mytest_group",
@@ -9,7 +9,7 @@ TEST_GROUPS_TO_LEAVE = [
 
 def main(is_create_new=False):
     """is_create_new: create new group for test"""
-    client = RumClient()
+    client = FullNode(port=51194)
     my_test_groups = ["mytest_leave_groups"]
 
     print(datetime.datetime.now(), "groups num: ", len(client.node.groups_id))

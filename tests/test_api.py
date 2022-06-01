@@ -160,15 +160,15 @@ class TestCase:
 
         gid = client.group.create("mytest_config")["group_id"]
         client.group_id = gid
-        r = client.config.mode
+        r = client.group.mode
 
         r == {"TrxType": "POST", "AuthType": "FOLLOW_ALW_LIST"}
-        r = client.config.set_trx_mode("post", "deny", "testit")
-        r = client.config.set_trx_mode("post", "allow", "testit")
-        r = client.config.allow_list
-        r = client.config.deny_list
+        r = client.group.set_trx_mode("post", "deny", "testit")
+        r = client.group.set_trx_mode("post", "allow", "testit")
+        r = client.group.allow_list
+        r = client.group.deny_list
 
-        r = client.config._update_list(
+        r = client.group._update_list(
             "CAISIQIPfGufTgH4cQRGXUmZWbHshWdet0K5fMN1YR2NyKX33Q==",
             trx_types=[
                 "POST",
@@ -181,7 +181,7 @@ class TestCase:
             memo="both in allow_list and deny_list",
         )
 
-        r = client.config._update_list(
+        r = client.group._update_list(
             "CAISIQIPfGufTgH4cQRGXUmZWbHshWdet0K5fMN1YR2NyKX33Q==",
             trx_types=[
                 "POST",

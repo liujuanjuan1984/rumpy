@@ -10,11 +10,11 @@ from matplotlib.pyplot import MultipleLocator
 from officy import JsonFile
 from pylab import *
 
-from rumpy import RumClient
+from rumpy import FullNode
 from rumpy.utils import timestamp_to_datetime
 
 
-class GroupStatistics(RumClient):
+class GroupStatistics(FullNode):
     def _count_trxtype(self, trxs):
         rlt = {}
         for i in trxs:

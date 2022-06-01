@@ -7,7 +7,7 @@ import time
 
 from config_rss import *
 
-from rumpy import RumClient
+from rumpy import FullNode
 
 sys.path.insert(0, RUMPY_PATH)
 sys.path.insert(0, MIXIN_SDK_PATH)
@@ -36,7 +36,7 @@ class BlazeBot:
     def __init__(self, db_name=None):
         self.config = AppConfig.from_file(MIXIN_KEYSTORE_FILE)
         self.db = BaseDB(db_name or DB_NAME, echo=False, reset=False)
-        self.rum = RumClient(port=RUM_PORT)
+        self.rum = FullNode(port=RUM_PORT)
         self.groups = self.check_groups()
 
     def check_groups(self):
