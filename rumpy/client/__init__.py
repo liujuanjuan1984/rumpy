@@ -9,6 +9,9 @@ class LightNode:
         self.http = _requests.HttpRequest(api_base)
         self.api = LightAPI(self.http)
 
+    def init_app(self, app):
+        return _init_app(self, app)
+
 
 class FullNode:
     _group_id = None
@@ -31,3 +34,18 @@ class FullNode:
     def group_id(self, group_id):
         self._group_id = group_id
         self.http.group_id = group_id
+
+    def init_app(self, app):
+        return _init_app(self, app)
+
+
+def _init_app(_client, flask_app):
+    """for flask extensions"""
+    if not hasattr(flask_app, "extensions"):
+        flask_app.extensions = {}
+    flask_app.extensions["rum"] = _client
+
+    flask_app.config.setdefault("RUM_KSPASSWD", 123456)
+    flask_app.config.setdefault("RUM_PORT", 6002)
+    flask_app.rum = _client
+    return flask_app
