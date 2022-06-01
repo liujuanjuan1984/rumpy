@@ -36,10 +36,6 @@ pipenv run python do_sth.py
 
 [>> Examples](https://github.com/liujuanjuan1984/rumpy/tree/master/examples)
 
-```sh
-pip install -r requirements_examples.txt
-```
-
 ### Contributing
 
 - [>> Contributing](https://github.com/liujuanjuan1984/rumpy/tree/master/.github/CONTRIBUTING.md)
