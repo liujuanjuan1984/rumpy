@@ -1,13 +1,15 @@
 from rumpy.api import Group, Node, PaidGroup
-from rumpy.api.light_api import LightAPI
+from rumpy.api.light_node import LightNodeAPI
 from rumpy.client._requests import HttpRequest
+from rumpy.types.data import ApiBaseURLS
 
 
 class LightNode:
-    def __init__(self, port, api_base: str = None, crtfile=None):
-        api_base = api_base or f"https://127.0.0.1:{port}/nodesdk_api/v1"
+    def __init__(self, port, host="127.0.0.1", crtfile=None):
+
+        api_base = ApiBaseURLS(port=port, host=host).LIGHT_NODE
         self.http = _requests.HttpRequest(api_base)
-        self.api = LightAPI(self.http)
+        self.api = LightNodeAPI(self.http)
 
     def init_app(self, app):
         return _init_app(self, app)
@@ -16,11 +18,10 @@ class LightNode:
 class FullNode:
     _group_id = None
 
-    def __init__(self, port, crtfile=None, api_base: str = None):
-        api_base = api_base or f"https://127.0.0.1:{port}/api/v1"
-        self.http = _requests.HttpRequest(api_base)
-        self.http.api_base_app = f"https://127.0.0.1:{port}/app/api/v1"
-        self.http.api_base_paid = "https://prs-bp2.press.one/api"
+    def __init__(self, port, host="127.0.0.1", crtfile=None):
+        _apis = ApiBaseURLS(port=port, host=host)
+        self.http = _requests.HttpRequest(_apis.FULL_NODE)
+        self.http.api_base_app = _apis.FULL_NODE_APP
         self.http.group_id = self.group_id
         self.group = self.http.group = Group(self.http)
         self.node = self.http.node = Node(self.http)

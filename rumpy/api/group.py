@@ -106,7 +106,7 @@ class Group(BaseAPI):
         self.check_group_joined_as_required()
 
         info = {}
-        for _info in self._client.node.groups():
+        for _info in self._http.node.groups():
             if _info["group_id"] == self.group_id:
                 info = _info
                 break
@@ -142,7 +142,7 @@ class Group(BaseAPI):
 
     def is_joined(self, group_id=None) -> bool:
         group_id = group_id or self.group_id
-        if group_id in self._client.node.groups_id:
+        if group_id in self._http.node.groups_id:
             return True
         return False
 
@@ -186,7 +186,7 @@ class Group(BaseAPI):
         else:
             apiurl = f"/group/{self.group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
 
-        trxs = self._post(apiurl, api_base=self._client.api_base_app) or []
+        trxs = self._post(apiurl, api_base=self._http.api_base_app) or []
         return _trxs_unique(trxs)
 
     def _send(self, obj=None, sendtype=None, **kwargs) -> Dict:
@@ -206,8 +206,6 @@ class Group(BaseAPI):
         return self._send(trx_id=trx_id, sendtype="Dislike")
 
     def _file_to_objs(self, file_path):
-        import filetype
-
         file_total_size = os.path.getsize(file_path)
         file_name = os.path.basename(file_path).encode().decode("utf-8")
         file_obj = open(file_path, "rb")
@@ -778,7 +776,7 @@ class Group(BaseAPI):
 
         如果已经是用户, 返回申请状态
         """
-        status = self.announced_user(self._client.group.pubkey)
+        status = self.announced_user(self._http.group.pubkey)
         if status.get("Result") == "APPROVED":
             return status
         return self.announce("add", "user", "rumpy.api,announce self as user")
@@ -824,7 +822,7 @@ class Group(BaseAPI):
 
         pubkey: 用户公钥, 如果不提供该参数, 默认将 owner 自己添加为私有组用户
         """
-        return self.update_user(pubkey=pubkey or self._client.group.pubkey)
+        return self.update_user(pubkey=pubkey or self._http.group.pubkey)
 
     def update_producer(self, pubkey=None, group_id=None, action="add"):
         """Only group owner can update producers: add, or remove.

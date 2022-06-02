@@ -1,14 +1,17 @@
 import logging
 
 from rumpy.api.base import BaseAPI
+from rumpy.types.data import API_PAYMENT_GATEWAY
 
 logger = logging.getLogger(__name__)
 
 
 class PaidGroup(BaseAPI):
+    API_BASE = API_PAYMENT_GATEWAY
+
     def dapp(self):
         """Get Info of Paidgroup DApp"""
-        resp = self._get("/dapps/PaidGroupMvm", api_base=self._client.api_base_paid)
+        resp = self._get("/dapps/PaidGroupMvm")
         if resp.get("success"):
             return resp.get("data")
         return resp
@@ -16,10 +19,7 @@ class PaidGroup(BaseAPI):
     def paidgroup(self):
         """Get Detail of a Paidgroup"""
         self.check_group_id_as_required()
-        resp = self._get(
-            f"/mvm/paidgroup/{self.group_id}",
-            api_base=self._client.api_base_paid,
-        )
+        resp = self._get(f"/mvm/paidgroup/{self.group_id}")
         if resp.get("success"):
             return resp.get("data").get("group")
         return resp
@@ -27,10 +27,7 @@ class PaidGroup(BaseAPI):
     def payment(self):
         """Check Payment"""
         self.check_group_id_as_required()
-        resp = self._get(
-            f"/mvm/paidgroup/{self.group_id}/{self._client.group.eth_addr}",
-            api_base=self._client.api_base_paid,
-        )
+        resp = self._get(f"/mvm/paidgroup/{self.group_id}/{self._http.group.eth_addr}")
         if resp.get("success"):
             return resp.get("data").get("payment")
         return resp
@@ -42,15 +39,11 @@ class PaidGroup(BaseAPI):
 
         payload = {
             "group": self.group_id,
-            "owner": self._client.group.eth_addr,
+            "owner": self._http.group.eth_addr,
             "amount": str(amount),
             "duration": duration,
         }
-        resp = self._post(
-            "/mvm/paidgroup/announce",
-            payload,
-            api_base=self._client.api_base_paid,
-        )
+        resp = self._post("/mvm/paidgroup/announce", payload)
         if resp.get("success"):
             return resp.get("data")
         return resp
@@ -60,10 +53,10 @@ class PaidGroup(BaseAPI):
         self.check_group_id_as_required()
 
         payload = {
-            "user": self._client.group.eth_addr,
+            "user": self._http.group.eth_addr,
             "group": self.group_id,
         }
-        resp = self._post("/mvm/paidgroup/pay", payload, api_base=self._client.api_base_paid)
+        resp = self._post("/mvm/paidgroup/pay", payload)
         if resp.get("success"):
             return resp.get("data")
         return resp

@@ -10,7 +10,6 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 from rumpy import api
-from rumpy.api.base import BaseAPI
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +17,8 @@ logger = logging.getLogger(__name__)
 class HttpRequest:
     def __init__(
         self,
-        api_base,
-        port: int = None,
+        api_base: str = None,
         crtfile: str = None,
-        host: str = "127.0.0.1",
-        appid: str = "peer",
         jwt_token: str = None,
     ):
 
@@ -39,10 +35,12 @@ class HttpRequest:
         )
         if jwt_token:
             self._session.headers.update({"Authorization": f"Bearer {jwt_token}"})
-        os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.api_base])
+        if "127.0.0.1" in self.api_base:
+            os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.api_base])
 
-    def _request(self, method: str, path: str, payload: Dict = {}, api_base=None):
-        url = (api_base or self.api_base) + path
+    def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None):
+        api_base = api_base or self.api_base or ""
+        url = api_base + endpoint
         try:
             resp = self._session.request(method=method, url=url, json=payload)
         except Exception as e:  # SSLCertVerificationError
@@ -59,8 +57,8 @@ class HttpRequest:
             logger.warning(f"{resp.status_code}, {resp.json()}")
         return body_json
 
-    def get(self, path: str, payload: Dict = {}, api_base=None):
-        return self._request("get", path, payload, api_base)
+    def get(self, endpoint: str, payload: Dict = {}, api_base=None):
+        return self._request("get", endpoint, payload, api_base)
 
-    def post(self, path: str, payload: Dict = {}, api_base=None):
-        return self._request("post", path, payload, api_base)
+    def post(self, endpoint: str, payload: Dict = {}, api_base=None):
+        return self._request("post", endpoint, payload, api_base)

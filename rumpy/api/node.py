@@ -80,11 +80,11 @@ class Node(BaseAPI):
 
     def token(self):
         """Get a auth token for authorizing requests from remote"""
-        return self._post("/token/apply", api_base=self._client.api_base_app)
+        return self._post("/token/apply", api_base=self._http.api_base_app)
 
     def token_refresh(self):
         """Get a new auth token"""
-        return self._post("/token/refresh", api_base=self._client.api_base_app)
+        return self._post("/token/refresh", api_base=self._http.api_base_app)
 
     def stats(self, start: str = None, end: str = None):
         """Get network stats summary

@@ -22,6 +22,21 @@ TRX_TYPES = [
     "ASK_PEERID",
 ]
 
+API_PAYMENT_GATEWAY: str = "https://prs-bp2.press.one/api"
+
+
+@dataclasses.dataclass
+class ApiBaseURLS:
+    FULL_NODE: str
+    FULL_NODE_APP: str
+    LIGHT_NODE: str
+    PAYMENT_GATEWAY = API_PAYMENT_GATEWAY
+
+    def __init__(self, port=None, host="127.0.0.1"):
+        self.FULL_NODE = f"https://{host}:{port}/api/v1"
+        self.FULL_NODE_APP = f"https://{host}:{port}/app/api/v1"
+        self.LIGHT_NODE = f"https://{host}:{port}/nodesdk_api/v1"
+
 
 @dataclasses.dataclass
 class NodeInfo:

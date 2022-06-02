@@ -1,6 +1,10 @@
 from rumpy import LightNode
 
-bot = LightNode(port=6002, crtfile=r"D:\Jupyter\quorum\dist\windows_amd64\certs\server.crt")
+crtfile = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
+
+bot = LightNode(port=6003, crtfile=crtfile)
+
+full_node_urls = ["https://127.0.0.1:51194"]
 
 
 def test_keys():
@@ -13,11 +17,13 @@ def test_keys():
     resp = bot.api.get_keys()
     print(resp)
 
+
+def test_keys_v2():
     resp = bot.api.unbind_alias("my_signature")
     print(resp)  # done??
 
     # 无法改变 type 的值，是否不用传入??
-    resp = bot.api.rebind_alias("mengmengda2", "7c39996f-4f36-48c4-b854-b69cc89f82a0", "encrypt")
+    resp = bot.api.rebind_alias("mengmengda2", "7c39996f-4f36-48c4-b854-b69cc89f82a0", "sign")
     print(resp)
 
     resp = bot.api.get_keys()
@@ -45,7 +51,8 @@ def test_groups():
     }
     sign_alias = "my_sign"
     encrypt_alias = "my_encrypt"
-    urls = ["https://127.0.0.1:51194"]
+    urls = full_node_urls
+    print(urls)
     resp = bot.api.join_group(seed, sign_alias, encrypt_alias, urls)
     print(resp)
 
@@ -66,12 +73,26 @@ def test_groups():
 
     resp = bot.api.content("4e784292-6a65-471e-9f80-e91202e3358c")
     print(resp)
-    # {'error': 'Post "https://127.0.0.1:51194/api/v1/nodesdk/groupctn": x509: certificate signed by unknown authority (possibly because of "crypto/rsa: verification error" while trying to verify candidate authority certificate "*")'}
 
     resp = bot.api.send_note("4e784292-6a65-471e-9f80-e91202e3358c", content="大家好，这条来自轻节点")
     print(resp)
 
 
 if __name__ == "__main__":
-    test_keys()
-    test_groups()
+    """
+    #test_keys()
+    #test_groups()
+    #resp = bot.api.content("4e784292-6a65-471e-9f80-e91202e3358c",reverse=True,num=3,start_trx="22a910b2-caea-4f68-a405-8a21db46f2ad")
+    resp = bot.api.trx("4e784292-6a65-471e-9f80-e91202e3358c","4e672e38-1f74-4ba2-bc14-1c16e9a7f189")
+    print(resp)
+    #resp = bot.api.send_note("4e784292-6a65-471e-9f80-e91202e3358c", content="[debug]这条来自轻节点")
+    resp = bot.api.trx("4e784292-6a65-471e-9f80-e91202e3358c","b32edf8d-c7b1-4abb-b3d3-f7ffa1ebe22b")
+    resp = bot.api.list_groups()
+    resp = bot.api.block(group_id,block_id)
+    """
+
+    group_id = "4e784292-6a65-471e-9f80-e91202e3358c"
+    block_id = "7adf9dab-4730-4734-8570-40ed6e6e842a"
+    trx_id = "604dc47f-636b-4e5f-a70a-92dd55e148d5"
+    resp = bot.api.trx(group_id, trx_id)
+    print(resp)
