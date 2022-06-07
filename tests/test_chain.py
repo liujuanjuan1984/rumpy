@@ -26,15 +26,15 @@ class TestChain:
 
     def main_test(self):
         if self._group_id == None:
-            for group_id in self.client.node.groups_id:
+            for group_id in self.client.api.groups_id:
                 self.client.group_id = group_id
-                self.info = self.client.group.info().__dict__
+                self.info = self.client.api.group_info().__dict__
                 self.highest_block_id = self.info.get("highest_block_id")
                 self.highest_height = self.info.get("highest_height")
                 self._main_test()
         else:
             self.client.group_id = self._group_id
-            self.info = self.client.group.info().__dict__
+            self.info = self.client.api.group_info().__dict__
             self.highest_block_id = self.info.get("highest_block_id")
             self.highest_height = self.info.get("highest_height")
             self._main_test()
@@ -71,11 +71,11 @@ class TestChain:
         """检查 groupchain 是否能从最高 block_id 回溯到初始 block"""
 
         bid = self.highest_block_id
-        seed = self.client.group.seed()
+        seed = self.client.api.seed()
         gensis_bid = seed["genesis_block"]["BlockId"]
 
         while bid:
-            _pbid = self.client.group.block(bid).get("PrevBlockId", "")
+            _pbid = self.client.api.block(bid).get("PrevBlockId", "")
             if _pbid == "":
                 if bid != gensis_bid:
                     logger.warning(bid, "is not genesis block. and have no prev block")
@@ -89,9 +89,9 @@ class TestChain:
         h = self.highest_height
         rlt = True
         while h > 0 and bid:
-            block = self.client.group.block(bid)
+            block = self.client.api.block(bid)
             for trx in block.get("Trxs", {}):
-                _trx = self.client.group.trx(trx["TrxId"])
+                _trx = self.client.api.trx(trx["TrxId"])
                 if "Content" not in _trx:
                     _trx_type = _trx.get("Type", "???")
                     if _trx_type not in [
@@ -117,7 +117,7 @@ class TestChain:
 
         blocks = {}
         while bid:
-            block = self.client.group.block(bid)
+            block = self.client.api.block(bid)
             _pbid = block.get("PrevBlockId", "")
             if bid not in blocks:
                 blocks[bid] = _pbid
@@ -136,7 +136,7 @@ class TestChain:
         h = self.highest_height
         rlt = True
         while h > 0 and bid:
-            block = self.client.group.block(bid)
+            block = self.client.api.block(bid)
             trxs = block.get("Trxs", {})
             if len(trxs) == 0:
                 logger.warning(f"empty block, height:{h}, block_id: {bid}")
@@ -151,7 +151,7 @@ class TestChain:
 
         trxs = {}
         while bid:
-            block = self.client.group.block(bid)
+            block = self.client.api.block(bid)
             for trx in block.get("Trxs", {}):
                 tid = trx["TrxId"]
                 if tid not in trxs:

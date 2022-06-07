@@ -17,7 +17,7 @@ def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
         pubkey = trx_id_or_pubkey
     else:
         trx_id = trx_id_or_pubkey
-        trxdata = client.group.trx(trx_id)
+        trxdata = client.api.trx(trx_id)
         pubkey = trxdata.get("Publisher") or trxdata.get("SenderPubkey") or trx_id_or_pubkey
 
     rlt = []
@@ -40,7 +40,7 @@ def trx_export(trxdata: Dict, trxs: List) -> Dict:
     info = {
         "trx_id": trxdata["TrxId"],
         "trx_time": str(ts),
-        "trx_type": client.group.trx_type(trxdata),
+        "trx_type": client.api.trx_type(trxdata),
     }
 
     _content = trxdata["Content"]
@@ -73,13 +73,13 @@ def export():
     my_trxs = {}
 
     # 获取本人发布的所有数据
-    for gdata in client.node.groups():
+    for gdata in client.api.groups():
         pubkey = gdata["user_pubkey"]
         group_id = gdata["group_id"]
         key = (group_id, gdata["group_name"])
         my_trxs[key] = []
         client.group_id = group_id
-        trxs = client.group.all_content_trxs()
+        trxs = client.api.all_content_trxs()
         for trxdata in trxs:
             if trxdata["Publisher"] == pubkey:
                 my_trxs[key].append(trxdata)
@@ -94,7 +94,7 @@ def export():
         gfile = f"{JSON_DIR}\\{group_name}_{group_id}_{datetime.date.today()}.json"
         gdata = []
         client.group_id = group_id
-        trxs = client.group.all_content_trxs()
+        trxs = client.api.all_content_trxs()
         for trxdata in gtrxs:
             gdata.append(trx_export(trxdata, trxs))
         JsonFile(gfile).write(gdata)
@@ -212,8 +212,8 @@ def check_dir(dirpath):
 
 if __name__ == "__main__":
     # init
-    client = FullNode(port=51194)
-    nodeid = client.node.id
+    client = FullNode(port=62663)
+    nodeid = client.api.node_id
     SAVE_DIR = os.path.join(os.path.dirname(__file__), "data")
     JSON_DIR = os.path.join(SAVE_DIR, nodeid, "json")
     MD_DIR = os.path.join(SAVE_DIR, nodeid, "markdown")

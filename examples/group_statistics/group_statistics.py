@@ -18,7 +18,7 @@ class GroupStatistics(FullNode):
     def _count_trxtype(self, trxs):
         rlt = {}
         for i in trxs:
-            ix = self.group.trx_type(i)
+            ix = self.api.trx_type(i)
             if ix not in rlt:
                 rlt[ix] = 1
             else:
@@ -59,8 +59,8 @@ class GroupStatistics(FullNode):
 
     def group_view(self, group_id):
         self.group_id = group_id
-        trxs = self.group.all_content_trxs()
-        info = self.group.info()
+        trxs = self.api.all_content_trxs()
+        info = self.api.group_info()
 
         if len(trxs) == 0:
             return {}, 0
@@ -130,4 +130,4 @@ class GroupStatistics(FullNode):
         kwargs = {"content": note, "images": [imgbytes]}
         toshare_group_id = toshare_group_id or toview_group_id
         self.group_id = toshare_group_id
-        return self.group.send_note(**kwargs)
+        return self.api.send_note(**kwargs)

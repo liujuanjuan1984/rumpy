@@ -9,7 +9,7 @@ app = LightNode(port=6003).init_app(app)
 
 @app.route("/")
 def get_groups():
-    gids = app.rum.api.list_groups()
+    gids = app.rum.api.groups()
     return f"<p> Node in these groups: {gids}</p>"
 
 

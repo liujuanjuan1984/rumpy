@@ -2,31 +2,27 @@ from rumpy import LightNode
 
 crtfile = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
 
-bot = LightNode(port=6003, crtfile=crtfile)
+bot = LightNode(port=6002, crtfile=crtfile)
 
-full_node_urls = ["https://127.0.0.1:51194"]
+full_node_urls = ["https://127.0.0.1:62663"]
 
 
 def test_keys():
-    resp = bot.api.create_sign("my_sign")
+    resp = bot.api.create_keypair("my")
     print(resp)
 
-    resp = bot.api.create_encrypt("my_encrypt")
-    print(resp)
-
-    resp = bot.api.get_keys()
+    resp = bot.api.keys()
     print(resp)
 
 
 def test_keys_v2():
-    resp = bot.api.unbind_alias("my_signature")
+    resp = bot.api.remove_alias("my_signature")
     print(resp)  # done??
 
-    # 无法改变 type 的值，是否不用传入??
-    resp = bot.api.rebind_alias("mengmengda2", "7c39996f-4f36-48c4-b854-b69cc89f82a0", "sign")
+    resp = bot.api.remove_alias("mengmengda2")
     print(resp)
 
-    resp = bot.api.get_keys()
+    resp = bot.api.keys()
     print(resp)
 
 
@@ -56,22 +52,22 @@ def test_groups():
     resp = bot.api.join_group(seed, sign_alias, encrypt_alias, urls)
     print(resp)
 
-    resp = bot.api.get_keys()
+    resp = bot.api.keys()
     print(resp)
 
-    resp = bot.api.list_groups()
+    resp = bot.api.groups()
     print(resp)
 
     resp = bot.api.group_info("4e784292-6a65-471e-9f80-e91202e3358c")
     print(resp)
 
-    resp = bot.api.list_group("4e784292-6a65-471e-9f80-e91202e3358c")
+    resp = bot.api.group("4e784292-6a65-471e-9f80-e91202e3358c")
     print(resp)
 
     resp = bot.api.seed("4e784292-6a65-471e-9f80-e91202e3358c")
     print(resp)
 
-    resp = bot.api.content("4e784292-6a65-471e-9f80-e91202e3358c")
+    resp = bot.api.get_group_content("4e784292-6a65-471e-9f80-e91202e3358c")
     print(resp)
 
     resp = bot.api.send_note("4e784292-6a65-471e-9f80-e91202e3358c", content="大家好，这条来自轻节点")
@@ -87,7 +83,7 @@ if __name__ == "__main__":
     print(resp)
     #resp = bot.api.send_note("4e784292-6a65-471e-9f80-e91202e3358c", content="[debug]这条来自轻节点")
     resp = bot.api.trx("4e784292-6a65-471e-9f80-e91202e3358c","b32edf8d-c7b1-4abb-b3d3-f7ffa1ebe22b")
-    resp = bot.api.list_groups()
+    resp = bot.api.groups()
     resp = bot.api.block(group_id,block_id)
     """
 

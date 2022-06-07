@@ -9,63 +9,95 @@ logger = logging.getLogger(__name__)
 
 
 class LightNodeAPI(BaseAPI):
-    def create_sign(self, alias="my_signature"):
-        payload = {"alias": alias, "type": "sign"}
-        return self._post("/keystore/create", payload)
+    def quit(self):
+        return self._get("/quit")
 
-    def create_encrypt(self, alias="my_encrypt"):
-        """需要环境变量 RUM_KSPASSWD"""
-        payload = {"alias": alias, "type": "encrypt"}
-        return self._post("/keystore/create", payload)
+    def __create_alias_of_key(self, alias: str, key_type: str):
+        if key_type not in ("sign", "encrypt"):
+            raise ValueError("key_type must be one of `sign`, `encrypt`.")
+        payload = {"alias": alias, "type": key_type}
+        return self._post("/v1/keystore/create", payload)
 
-    def get_keys(self):
-        return self._get("/keystore/listall")
+    def create_alias_of_sign_key(self, alias="my_signe"):
+        return self.__create_alias_of_key(alias, "sign")
 
-    def unbind_alias(self, alias):
+    def create_alias_of_encrypt_key(self, alias="my_encrypt"):
+        # """需要环境变量 RUM_KSPASSWD"""
+        # if not os.getenv("RUM_KSPASSWD"):
+        #    raise ValueError("need RUM_KSPASSWD")
+        return self.__create_alias_of_key(alias, "encrypt")
+
+    def create_keypair(self, alias_piece="my"):
+        self.create_alias_of_sign_key(alias_piece + "_sign")
+        self.create_alias_of_encrypt_key(alias_piece + "_encrypt")
+
+    def keys(self):
+        return self._get("/v1/keystore/listall")
+
+    def remove_alias(self, alias):
         payload = {"alias": alias}
-        return self._post("/keystore/remove", payload)
+        return self._post("/v1/keystore/remove", payload)
 
-    def rebind_alias(self, alias, keyname, type_str):
+    def bind_alias(self, alias, keyname, type_str):
         payload = {"alias": alias, "keyname": keyname, "type": type_str}
-        return self._post("/keystore/bindalias", payload)
+        return self._post("/v1/keystore/bindalias", payload)
 
-    def join_group(self, seed, sign_alias, encrypt_alias, urls):
+    def join_group(self, seed: Dict, sign_alias: str, encrypt_alias: str, urls: List):
         payload = {
             "seed": seed,
             "sign_alias": sign_alias,
             "encrypt_alias": encrypt_alias,
             "urls": urls,
         }
-        return self._post("/group/join", payload)
+        return self._post("/v1/group/join", payload)
 
-    def list_groups(self):
-        return self._get("/group/listall")
+    def update_apihosts(self, group_id, urls):
+        payload = {
+            "group_id": group_id,
+            "urls": urls,
+        }
+        return self._post("/v1/group/apihosts", payload)
 
-    def list_group(self, group_id):
-        return self._get("/group/list", {"group_id": group_id})
+    def leave_group(self, group_id):
+        payload = {
+            "group_id": group_id,
+        }
+        return self._post("/v1/group/leave", payload)
+
+    def groups(self):
+        return self._get("/v1/group/listall")
+
+    def group(self, group_id):
+        return self._get(f"/v1/group/{group_id}/list")
 
     def group_info(self, group_id):
-        return self._get(f"/group/{group_id}/info")
+        return self._get(f"/v1/group/{group_id}/info")
 
     def seed(self, group_id):
-        return self._get(f"/group/seed", {"group_id": group_id})
+        return self._get(f"/v1/group/{group_id}/seed")
 
     def trx(self, group_id, trx_id):
-        return self._get(f"/trx/{group_id}/{trx_id}")
+        return self._get(f"/v1/trx/{group_id}/{trx_id}")
 
     def block(self, group_id, block_id):
-        return self._get(f"/block/{group_id}/{block_id}")
+        return self._get(f"/v1/block/{group_id}/{block_id}")
 
     def producers(self, group_id):
-        return self._get(f"/group/{group_id}/producers")
+        return self._get(f"/v1/group/{group_id}/producers")
 
-    def keylist(self, group_id):
-        return self._get(f"/group/{group_id}/appconfig/keylist")
+    def users(self, group_id):
+        return self._get(f"/v1/group/{group_id}/announced/users")
 
-    def key(self, group_id, key):
-        return self._get(f"/group/{group_id}/appconfig/{key}")
+    def user(self, group_id, pubkey):
+        return self._get(f"/v1/group/{group_id}/announced/user/{pubkey}")
 
-    def content(
+    def appconfig_keylist(self, group_id):
+        return self._get(f"/v1/group/{group_id}/appconfig/keylist")
+
+    def appconfig_key(self, group_id, key):
+        return self._get(f"/v1/group/{group_id}/appconfig/{key}")
+
+    def get_group_content(
         self,
         group_id: str,
         reverse: bool = False,
@@ -77,16 +109,16 @@ class LightNodeAPI(BaseAPI):
         payload = {
             "group_id": group_id,
             "num": num,
-            "start_trx": json.dumps(start_trx),
+            "start_trx": start_trx,
             "reverse": json.dumps(reverse),
             "include_start_trx": json.dumps(include_start_trx),
         }
 
-        return self._post(f"/group/getctn", payload)
+        return self._post(f"/v1/group/getctn", payload)
 
     def _send(self, group_id: str, obj=None, sendtype=None, **kwargs) -> Dict:
         payload = NewTrx(group_id=group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
-        return self._post("/group/content", payload)
+        return self._post("/v1/group/content", payload)
 
     def like(self, group_id: str, trx_id: str) -> Dict:
         return self._send(group_id=group_id, trx_id=trx_id, sendtype="Like")
@@ -107,3 +139,7 @@ class LightNodeAPI(BaseAPI):
         if type(images) != list:
             images = [images]
         return self.send_note(group_id, images=images)
+
+    def update_profile(self, group_id, name=None, wallet=None, image=None):
+        payload = {}  # todo
+        return self._post(f"/v1/group/profile", payload)

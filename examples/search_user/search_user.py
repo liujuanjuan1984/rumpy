@@ -51,7 +51,7 @@ class SearchUser(FullNode):
         group_rlt = group_rlt or {}
 
         print(datetime.datetime.now(), self.name_fragment, trx_id, "...")
-        trxs = self.group.all_content_trxs(trx_id=trx_id)
+        trxs = self.api.all_content_trxs(trx_id=trx_id)
 
         for trx in trxs:
             pubkey, name = self._intrx(trx)
@@ -62,7 +62,7 @@ class SearchUser(FullNode):
             if name not in group_rlt[pubkey]:
                 group_rlt[pubkey].append(name)
 
-        trx_id = self.group.last_trx_id(trx_id, trxs)
+        trx_id = self.api.last_trx_id(trx_id, trxs)
 
         return trx_id, group_rlt
 
@@ -77,7 +77,7 @@ class SearchUser(FullNode):
         seeds = JsonFile(self.seedsfile).read({})
         progress = JsonFile(self.progressfile).read({})
 
-        for group_id in self.node.groups_id:
+        for group_id in self.api.groups_id:
             self.group_id = group_id
             print(
                 datetime.datetime.now(),
@@ -89,7 +89,7 @@ class SearchUser(FullNode):
             if group_id not in rlt:
                 rlt[group_id] = {}
             if group_id not in seeds:
-                seed = self.group.seed()
+                seed = self.api.seed()
                 if seed:
                     seeds[group_id] = seed
             if group_id not in progress:

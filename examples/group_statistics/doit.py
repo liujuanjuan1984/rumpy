@@ -9,11 +9,11 @@ client = GroupStatistics()
 progressfile = os.path.join(os.path.dirname(__file__), "data", "progress.json")
 progress = JsonFile(progressfile).read({})
 
-toshare = client.group.create("mytest_groupview")["group_id"]
+toshare = client.api.create_group("mytest_groupview")["group_id"]
 
-for gid in client.node.groups_id:
+for gid in client.api.groups_id:
     client.group_id = gid
-    if client.group.info().highest_height > 50:
+    if client.api.group_info().highest_height > 50:
         today = str(datetime.date.today())
         if progress.get(gid) != today:
             progress[gid] = today

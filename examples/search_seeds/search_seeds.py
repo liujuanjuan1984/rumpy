@@ -54,13 +54,13 @@ class SearchSeeds(FullNode):
         trx_id = logs[self.group_id]
 
         if self.group_id not in seeds:
-            seed = self.group.seed()
+            seed = self.api.seed()
             if seed:
                 seeds[self.group_id] = seed
 
-        trxs = self.group.all_content_trxs(trx_id=trx_id)
+        trxs = self.api.all_content_trxs(trx_id=trx_id)
         print(datetime.datetime.now(), trx_id, len(trxs))
-        logs[self.group_id] = self.group.last_trx_id(trx_id, trxs)
+        logs[self.group_id] = self.api.last_trx_id(trx_id, trxs)
 
         for trx in trxs:
             for seed in self.intrx(trx):
@@ -72,7 +72,7 @@ class SearchSeeds(FullNode):
 
     def innode(self) -> Dict:
         """Search seeds in node."""
-        for group_id in self.node.groups_id:
+        for group_id in self.api.groups_id:
             self.group_id = group_id
             self.ingroup()
 
@@ -81,7 +81,7 @@ class SearchSeeds(FullNode):
 
         seeds = JsonFile(self.seedsfile).read({})  # all the seeds
         info = JsonFile(self.infofile).read({})  # status data
-        joined = self.node.groups_id
+        joined = self.api.groups_id
 
         for group_id in seeds:
             if group_id not in info:
@@ -96,8 +96,8 @@ class SearchSeeds(FullNode):
 
         for group_id in joined:
             self.group_id = group_id
-            ginfo = self.group.info()
-            gts = self.group.block(ginfo.highest_block_id).get("TimeStamp")
+            ginfo = self.api.group_info()
+            gts = self.api.block(ginfo.highest_block_id).get("TimeStamp")
             if ginfo.highest_height > info[group_id]["highest_height"]:
                 info[group_id]["highest_height"] = ginfo.highest_height
                 info[group_id]["last_update"] = f"{timestamp_to_datetime(gts)}"
@@ -112,7 +112,7 @@ class SearchSeeds(FullNode):
         info = JsonFile(self.infofile).read({})  # status data
 
         for group_id in seeds:
-            if group_id in self.node.groups_id:
+            if group_id in self.api.groups_id:
                 continue
             if (info[group_id].get("scores") or 0) < 0:
                 continue
@@ -127,14 +127,14 @@ class SearchSeeds(FullNode):
                     break
             if not is_join:
                 continue
-            resp = self.group.join(seeds[group_id])
+            resp = self.api.join_group(seeds[group_id])
 
         self.update_status()
 
     def leave_groups(self):
         info = self.update_status()
         seeds = JsonFile(self.seedsfile).read({})  # all the seeds
-        joined = self.node.groups_id
+        joined = self.api.groups_id
 
         for group_id in joined:
             self.group_id = group_id
@@ -144,12 +144,12 @@ class SearchSeeds(FullNode):
             gname = seeds[group_id]["group_name"]
             if gname not in DONT_JOIN:
                 continue
-            ginfo = self.group.info()
+            ginfo = self.api.group_info()
             if info[group_id][ginfo.user_pubkey] <= "2022-01-01" and (
                 info[group_id]["last_update"] <= "2022-01-01" or info[group_id]["highest_height"] == 0
             ):
 
-                self.group.leave()
+                self.api.leave_group()
                 continue
 
             for piece in DONT_JOIN_PIECES:
@@ -159,12 +159,12 @@ class SearchSeeds(FullNode):
 
             if is_leave:
                 print(self.group_id, "leave the group.")
-                self.group.leave()
+                self.api.leave_group()
         self.update_status()
 
     def worth_toshare(self, group_id):
         self.group_id = group_id
-        info = self.group.info()
+        info = self.api.group_info()
 
         # 区块高度 小于等于 3
         if info.highest_height <= 3:
@@ -184,8 +184,8 @@ class SearchSeeds(FullNode):
         self.group_id = group_id
 
         # 如果没有指定 group_id 或未加入，就新建种子网络
-        if self.group_id == None or not self.group.is_joined():
-            self.group_id = group_id = self.group.create("mytest_share_seeds")["group_id"]
+        if self.group_id == None or not self.api.is_joined():
+            self.group_id = group_id = self.api.create_group("mytest_share_seeds")["group_id"]
 
         shared = self.ingroup(group_id)
 
@@ -206,7 +206,7 @@ class SearchSeeds(FullNode):
                 continue
             # 分享到指定组
             text = f'{json.dumps(data[gid]["seed"])}{text}'
-            resp = self.group.send_note(content=text)
+            resp = self.api.send_note(content=text)
 
             # 跳过没有推送成功的
             if "trx_id" not in resp:

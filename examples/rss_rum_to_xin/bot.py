@@ -71,7 +71,7 @@ class RssBot:
 
         p_tid = None if progress == None else progress.trx_id
 
-        data = self.rum.group.get_users_profiles({"trx_id": p_tid}, ("name", "wallet"))
+        data = self.rum.api.get_users_profiles({"trx_id": p_tid}, ("name", "wallet"))
         if data is None:
             return
         tid = data.get("trx_id")
@@ -115,7 +115,7 @@ class RssBot:
             for group_id in self.groups:
                 self.update_profiles(group_id)
         elif where == "node":
-            for group_id in self.rum.node.groups_id:
+            for group_id in self.rum.api.groups_id:
                 self.update_profiles(group_id)
 
     def check_groups(self):
@@ -126,7 +126,7 @@ class RssBot:
                 self.rum.group_id = _gid
                 groups[_gid] = {
                     "group_id": _gid,
-                    "group_name": self.rum.group.seed().get("group_name"),
+                    "group_name": self.rum.api.seed().get("group_name"),
                     "minutes": RSS_BOT_COMMANDS[k].get("minutes") or DEFAULT_MINUTES,
                 }
         return groups
@@ -142,7 +142,7 @@ class RssBot:
         # logger.debug("get_trxs_from_rum start ...")
         for group_id in self.groups:
             self.rum.group_id = group_id
-            if not self.rum.group.is_joined():
+            if not self.rum.api.is_joined():
                 logger.warning(f"group_id: {group_id}, you are not in this group. you need to join it.")
                 continue
 
@@ -161,7 +161,7 @@ class RssBot:
             gname = self.groups[group_id]["group_name"]
             minutes = self.groups[group_id]["minutes"]
             if not existd:
-                _trxs = self.rum.group.content_trxs(is_reverse=True, num=10)
+                _trxs = self.rum.api.content_trxs(is_reverse=True, num=10)
                 if len(_trxs) > 0:
                     trx_id = _trxs[-1]["TrxId"]
                     _ts = str(timestamp_to_datetime(_trxs[-1]["TimeStamp"]))
@@ -179,7 +179,7 @@ class RssBot:
             else:
                 trx_id = existd.trx_id
 
-            trxs = self.rum.group.content_trxs(trx_id=trx_id, num=10)
+            trxs = self.rum.api.content_trxs(trx_id=trx_id, num=10)
             for trx in trxs:
                 _tid = trx["TrxId"]
                 trx_id = _tid
@@ -198,7 +198,7 @@ class RssBot:
                 if ts <= str(datetime.datetime.now() + datetime.timedelta(minutes=minutes)):
                     continue
 
-                obj, can_post = self.rum.group.trx_to_newobj(trx, nicknames)
+                obj, can_post = self.rum.api.trx_to_newobj(trx, nicknames)
                 if not can_post:
                     continue
 
@@ -344,16 +344,16 @@ class RssBot:
         for r in data:
             if r.is_to_rum:
                 continue
-            resp = self.rum.group.send_note(content=r.text[3:])
-            logger.info(f"rum.group.send_note, message_id: {r.message_id}...")
+            resp = self.rum.api.send_note(content=r.text[3:])
+            logger.info(f"rum.api.send_note, message_id: {r.message_id}...")
             if "trx_id" not in resp:
-                logger.warning(f"rum.group.send_note, resp: {json.dumps(resp)}")
+                logger.warning(f"rum.api.send_note, resp: {json.dumps(resp)}")
                 continue
             self.db.session.query(BotComments).filter(BotComments.message_id == r.message_id).update(
                 {"is_to_rum": True}
             )
             self.db.commit()
-            logger.info(f"rum.group.send_note, success. message_id: {r.message_id}...")
+            logger.info(f"rum.api.send_note, success. message_id: {r.message_id}...")
         logger.info("send_to_rum done")
 
     def do_rss(self):
@@ -378,7 +378,7 @@ class RssBot:
         thatday = datetime.datetime.now().date() + datetime.timedelta(days=days)
         counts_result = {"data": {}, "date": str(thatday)}
         while True:
-            _trxs = self.rum.group.content_trxs(is_reverse=True, num=num)
+            _trxs = self.rum.api.content_trxs(is_reverse=True, num=num)
             if len(_trxs) == 0:
                 return counts_result
             if num >= 1000:
@@ -405,7 +405,7 @@ class RssBot:
 
     def airdrop_to_group(self, group_id, num_trxs=1, days=-1, memo=None):
         self.rum.group_id = group_id
-        group_name = self.rum.group.seed().get("group_name")
+        group_name = self.rum.api.seed().get("group_name")
         logger.debug(f"airdrop_to_group {group_id}, {group_name}, ...")
 
         counts_result = self.counts_trxs(days=days)
@@ -468,7 +468,7 @@ class RssBot:
                 self.db.add(BotAirDrops(_a))
 
     def airdrop_to_node(self, num_trxs=1, days=-1, memo=None):
-        for group_id in self.rum.node.groups_id:
+        for group_id in self.rum.api.groups_id:
             self.airdrop_to_group(group_id, num_trxs, days)
 
     def airdrop_to_bot(self, memo=None):

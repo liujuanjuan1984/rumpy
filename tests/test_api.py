@@ -8,31 +8,31 @@ from tests import client, group_names_to_leave
 
 class TestCase:
     def test_node(self):
-        r = client.node.info
+        r = client.api.node_info
         assert dataclasses.is_dataclass(r)
 
-        r0 = client.node.status
+        r0 = client.api.node_status
         assert r0.lower().find("online") >= 0
 
-        r1 = client.group.create("mytest_pytest")
+        r1 = client.api.create_group("mytest_pytest")
         assert "genesis_block" in r1
-        client.group.join(r1)
+        client.api.join_group(r1)
 
         group_id = r1["group_id"]
         client.group_id = group_id
-        r2 = client.group.is_joined()
+        r2 = client.api.is_joined()
         assert r2 == True
 
         client.group_id = group_id.replace(group_id[:5], "b" * 5)
-        r3 = client.group.is_joined()
+        r3 = client.api.is_joined()
         assert r3 == False
 
         client.group_id = group_id
-        r4 = client.node.groups_id
+        r4 = client.api.groups_id
         assert client.group_id in r4
 
-        client.group.leave()
-        r5 = client.group.is_joined()
+        client.api.leave_group()
+        r5 = client.api.is_joined()
         assert r5 == False
 
         seed = {
@@ -56,119 +56,119 @@ class TestCase:
         }
         r = is_seed(seed)
         assert r == True
-        r = client.group.join(seed)
+        r = client.api.join_group(seed)
         client.group_id = seed["group_id"]
-        r = client.group.is_joined()
+        r = client.api.is_joined()
         assert r == True
 
     def test_leave_test_groups(self):
 
-        r = client.group.create("mytest_test2")
+        r = client.api.create_group("mytest_test2")
         assert "group_id" in r
 
         data = {"group_name": "mytest_nihao3", "app_key": "group_note"}
-        r = client.group.create(**data)
+        r = client.api.create_group(**data)
         assert "group_id" in r
 
-        r = client.group.create(**{"group_name": "mytest_nihao3", "app_key": "group_note"})
+        r = client.api.create_group(**{"group_name": "mytest_nihao3", "app_key": "group_note"})
         assert "group_id" in r
 
-        for group_id in client.node.groups_id:
+        for group_id in client.api.groups_id:
             client.group_id = group_id
-            name = client.group.info().group_name
+            name = client.api.group_info().group_name
 
             if name.find("mytest_") >= 0 or name in group_names_to_leave:
-                client.group.leave()
+                client.api.leave_group()
 
     def test_group(self):
-        seed = client.group.create("mytest_pytest_group")
+        seed = client.api.create_group("mytest_pytest_group")
         assert "genesis_block" in seed
 
-        client.group.join(seed)
+        client.api.join_group(seed)
         client.group_id = seed["group_id"]
 
-        seed = client.group.seed()
+        seed = client.api.seed()
         assert "genesis_block" in seed
 
         for i in range(10):
             kwargs = {"content": f"你好 {i}"}
-            r5 = client.group.send_note(**kwargs)
+            r5 = client.api.send_note(**kwargs)
             assert "trx_id" in r5
 
         trx_id = r5["trx_id"]
         kwargs = {"content": "回复一下", "inreplyto": trx_id}
-        r6 = client.group.send_note(**kwargs)
+        r6 = client.api.send_note(**kwargs)
         assert "trx_id" in r6
 
         # 发文
-        resp = client.group.send_note(content="你好")
+        resp = client.api.send_note(content="你好")
         assert "trx_id" in resp
 
-        resp = client.group.send_note(content="nihao", images=["D:\\png_files\\test-sample.png"])
+        resp = client.api.send_note(content="nihao", images=["D:\\png_files\\test-sample.png"])
         assert "trx_id" in resp
 
-        resp = client.group.send_note(images=["D:\\png_files\\test-sample.png"])
+        resp = client.api.send_note(images=["D:\\png_files\\test-sample.png"])
         assert "trx_id" in resp
 
         # 回复
         trx_id = resp["trx_id"]
-        resp = client.group.reply("我回复你了", trx_id)
+        resp = client.api.reply("我回复你了", trx_id)
         assert "trx_id" in resp
 
-        resp = client.group.send_note(content="nihao", images=[], inreplyto=trx_id)
+        resp = client.api.send_note(content="nihao", images=[], inreplyto=trx_id)
         assert "trx_id" in resp
 
-        resp = client.group.like(trx_id)
+        resp = client.api.like(trx_id)
         assert "trx_id" in resp
 
-        resp = client.group.dislike(trx_id)
+        resp = client.api.dislike(trx_id)
         assert "trx_id" in resp
 
-        trxs = client.group.all_content_trxs()
+        trxs = client.api.all_content_trxs()
         try:
-            trxtype = client.group.trx_type(trxs[-1])
+            trxtype = client.api.trx_type(trxs[-1])
             assert type(trxtype) == str
         except IndexError as e:
             print(e)
             pass
 
-        trxs = client.group.all_content_trxs()
+        trxs = client.api.all_content_trxs()
 
-        resp = client.group.leave()
-        r2 = client.group.is_joined()
+        resp = client.api.leave_group()
+        r2 = client.api.is_joined()
         assert r2 == False
 
     def test_trx(self):
 
         gid = "4e784292-6a65-471e-9f80-e91202e3358c"
         client.group_id = gid
-        bid = client.group.info().highest_block_id
+        bid = client.api.group_info().highest_block_id
 
-        block = client.group.block(bid)
+        block = client.api.block(bid)
         assert "BlockId" in block
 
         trxs = block.get("Trxs", [])
         if len(trxs) > 0:
             tid = trxs[0]["TrxId"]
-            x = client.group.trx(tid)
+            x = client.api.trx(tid)
             assert "TrxId" in x
 
-        trxs = client.group.content_trxs()
+        trxs = client.api.content_trxs()
         assert len(trxs) >= 0
 
     def test_config(self):
 
-        gid = client.group.create("mytest_config")["group_id"]
+        gid = client.api.create_group("mytest_config")["group_id"]
         client.group_id = gid
-        r = client.group.mode
+        r = client.api.mode
 
         r == {"TrxType": "POST", "AuthType": "FOLLOW_ALW_LIST"}
-        r = client.group.set_trx_mode("post", "deny", "testit")
-        r = client.group.set_trx_mode("post", "allow", "testit")
-        r = client.group.allow_list
-        r = client.group.deny_list
+        r = client.api.set_trx_mode("post", "deny", "testit")
+        r = client.api.set_trx_mode("post", "allow", "testit")
+        r = client.api.allow_list
+        r = client.api.deny_list
 
-        r = client.group._update_list(
+        r = client.api._update_list(
             "CAISIQIPfGufTgH4cQRGXUmZWbHshWdet0K5fMN1YR2NyKX33Q==",
             trx_types=[
                 "POST",
@@ -181,7 +181,7 @@ class TestCase:
             memo="both in allow_list and deny_list",
         )
 
-        r = client.group._update_list(
+        r = client.api._update_list(
             "CAISIQIPfGufTgH4cQRGXUmZWbHshWdet0K5fMN1YR2NyKX33Q==",
             trx_types=[
                 "POST",
@@ -196,11 +196,10 @@ class TestCase:
 
     def test_init(self):
 
-        type(client.group)
-        type(client.node)
+        type(client.api)
         type(client.group_id)
 
 
 if __name__ == "__main__":
-    print(client.node.id)
+    print(client.api.node_id)
     print(client.paid.dapp())

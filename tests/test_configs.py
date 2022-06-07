@@ -3,15 +3,15 @@ from tests import client
 
 def test_configs_view(group_id=None):
 
-    client.group_id = group_id or client.group.create("mytest_configs")["group_id"]
-    seed = client.group.seed()
+    client.group_id = group_id or client.api.create_group("mytest_configs")["group_id"]
+    seed = client.api.seed()
 
     print("==== appconfig ====")
-    r = client.group.keylist()
+    r = client.api.keylist()
     print("keylist", r)
 
     for key in r:
-        ik = client.group.key(key)
+        ik = client.api.key(key)
         print("key", key, ik)
 
     print("==== group info ====")
@@ -27,10 +27,10 @@ def test_configs_view(group_id=None):
 
     print("==== user info ====")
 
-    r = client.group.announced_users()
+    r = client.api.announced_users()
     print("announced_users", r)
 
-    r = client.group.announced_producers()
+    r = client.api.announced_producers()
     print("announced_producers", r)
 
     print("==== paid? ====")
@@ -44,7 +44,7 @@ def test_configs_view(group_id=None):
     r = client.paid.payment()
     print("payment", r)
 
-    r = client.group.update_profile(name="juanjuan", image=r"D:\png_files\test-sample.png")
+    r = client.api.update_profile(name="juanjuan", image=r"D:\png_files\test-sample.png")
     print(r)
 
 

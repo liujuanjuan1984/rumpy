@@ -1,6 +1,6 @@
 from tests import client
 
-seed = client.group.create("mytest_paidgroup")
+seed = client.api.create_group("mytest_paidgroup")
 client.group_id = seed["group_id"]
 
 
@@ -42,7 +42,7 @@ def test_update():
 
 
 def test_end():
-    client.group.leave()
+    client.api.leave_group()
 
 
 if __name__ == "__main__":

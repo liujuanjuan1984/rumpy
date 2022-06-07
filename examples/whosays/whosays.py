@@ -51,7 +51,7 @@ class WhoSays(FullNode):
             if group_id not in progress:
                 progress[group_id] = None
 
-            trxs = self.group.all_content_trxs(senders=pubkeys, trx_id=progress[group_id])
+            trxs = self.api.all_content_trxs(senders=pubkeys, trx_id=progress[group_id])
             for trx in trxs:
                 if trx["Publisher"] not in pubkeys:
                     print("ERROR: all_content_trxs senders params must be wrong.")
@@ -60,7 +60,7 @@ class WhoSays(FullNode):
                 if trx["TrxId"] not in data[group_id]:
                     data[group_id][trx["TrxId"]] = trx
 
-            progress[group_id] = self.group.last_trx_id(progress[group_id], trxs)
+            progress[group_id] = self.api.last_trx_id(progress[group_id], trxs)
             JsonFile(self.trxs_file).write(data)
             JsonFile(self.progressfile).write(progress)
 
@@ -74,7 +74,7 @@ class WhoSays(FullNode):
         filename = f"users_profiles_group_{self.group_id}.json"
         users_profiles_file = os.path.join(datadir, filename)
         users_data = JsonFile(users_profiles_file).read({})
-        users_data = self.group.get_users_profiles(users_data, types)
+        users_data = self.api.get_users_profiles(users_data, types)
         JsonFile(users_profiles_file).write(users_data)
         return users_data
 
@@ -84,7 +84,7 @@ class WhoSays(FullNode):
         for group_id in data:
             gtrxs = data[group_id]
             self.group_id = group_id
-            if not self.group.is_joined():
+            if not self.api.is_joined():
                 continue
             _params = {
                 "group_id": group_id,
@@ -99,14 +99,14 @@ class WhoSays(FullNode):
                     data[group_id][trx_id]["shared"] = []
                 if toshare_group_id in data[group_id][trx_id]["shared"]:
                     continue
-                obj, can_post = self.group.trx_to_newobj(gtrxs[trx_id], nicknames)
+                obj, can_post = self.api.trx_to_newobj(gtrxs[trx_id], nicknames)
                 if not can_post:
                     continue
-                _seed = json.dumps(self.group.seed())
+                _seed = json.dumps(self.api.seed())
                 _origin = f"origin: {_seed}" if _seed else f"origin: Group {group_id}"
                 obj["content"] = f"{name} {obj['content']}\n{_origin}"
                 self.group_id = toshare_group_id
-                resp = self.group.send_note(obj=obj)
+                resp = self.api.send_note(obj=obj)
 
                 if "trx_id" in resp:
                     data[group_id][trx_id]["shared"].append(toshare_group_id)

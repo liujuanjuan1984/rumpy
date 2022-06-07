@@ -9,10 +9,10 @@ from rumpy import FullNode
 
 def main():
     # init
-    client = FullNode(port=51194)
+    client = FullNode(port=62663)
 
     # create a group
-    seed = client.group.create("mytest_postblog", app_key="group_post")
+    seed = client.api.create_group("mytest_postblog", app_key="group_post")
     client.group_id = seed["group_id"]
 
     # get the articles file for test
@@ -32,7 +32,7 @@ def main():
         content = "".join(ilines[n + 1 :])
 
         payload = {"content": content, "name": title}
-        resp = client.group.send_note(**payload)
+        resp = client.api.send_note(**payload)
 
         if "trx_id" not in resp:
             failed.append(ifile)

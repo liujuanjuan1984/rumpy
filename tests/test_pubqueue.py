@@ -3,20 +3,20 @@ import datetime
 from rumpy.utils import timestamp_to_datetime
 from tests import client
 
-seed = client.group.create("mytest_pubqueque")
+seed = client.api.create_group("mytest_pubqueque")
 client.group_id = seed["group_id"]
 
 
 def test_basic():
-    r = client.group.pubqueue()
+    r = client.api.pubqueue()
     print(r)
 
 
 def test_update():
     for i in range(10):
-        client.group.send_note(content=f"{str(i)*10}")
+        client.api.send_note(content=f"{str(i)*10}", group_id=seed["group_id"])
 
-    data = client.group.pubqueue()
+    data = client.api.pubqueue()
     print(data)
 
     for idata in data:
@@ -29,7 +29,7 @@ def test_update():
 
 
 def test_end():
-    client.group.leave()
+    client.api.leave_group()
 
 
 if __name__ == "__main__":

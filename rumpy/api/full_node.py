@@ -7,6 +7,7 @@ import math
 import os
 import sys
 import time
+import urllib
 from typing import Any, Dict, List
 
 import filetype
@@ -56,8 +57,101 @@ def _trxs_unique(trxs: List):
     return [new[i] for i in new]
 
 
-class Group(BaseAPI):
-    def create(
+class FullNodeAPI(BaseAPI):
+    @property
+    def node_info(self):
+        """return node info, dataclasses.dataclass type"""
+        resp = self._get("/api/v1/node")
+        return NodeInfo(**resp)
+
+    @property
+    def node_id(self) -> str:
+        """return node_id of this node"""
+        return self.node_info.node_id
+
+    @property
+    def node_pubkey(self) -> str:
+        """return pubkey of this node; be attention: node will get different pubkey in groups"""
+        return self.node_info.node_publickey
+
+    @property
+    def node_status(self) -> str:
+        """return status of this node; unknown, online or offline"""
+        return self.node_info.node_status
+
+    @property
+    def peers(self) -> Dict:
+        """return dict of different peers which this node has connected"""
+        return self.node_info.peers
+
+    def connect(self, peers: List):
+        """直连指定节点
+
+        peers = [
+            "/ip4/94.23.17.189/tcp/10666/p2p/16Uiu2HAmGTcDnhj3KVQUwVx8SGLyKBXQwfAxNayJdEwfsnUYKK4u"
+            ]
+        """
+        return self._post("/api/v1/network/peers", peers)
+
+    def get_peers(self):
+        """获取能 ping 通的节点"""
+        return self._get("/api/v1/network/peers/ping")
+
+    def psping(self, peer_id: str):
+        """ping 一个节点
+
+        peer_id: 节点 ID, 例如 "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
+        """
+        return self._post("/api/v1/psping", {"peer_id": peer_id})
+
+    @property
+    def network(self) -> Dict:
+        """return network info of this node"""
+        return self._get("/api/v1/network")
+
+    @property
+    def node_eth_addr(self):
+        return self.network.get("eth_addr")
+
+    def groups(self) -> List:
+        """return list of group info which node has joined"""
+        return self._get("/api/v1/groups")["groups"]
+
+    @property
+    def groups_id(self) -> List:
+        """return list of group_id which node has joined"""
+        return [i["group_id"] for i in self.groups()]
+
+    def backup(self):
+        """Backup my group seed/keystore/config"""
+        return self._get("/api/v1/backup")
+
+    def token(self):
+        """Get a auth token for authorizing requests from remote"""
+        return self._post("/app/api/v1/token/apply")
+
+    def token_refresh(self):
+        """Get a new auth token"""
+        return self._post("/app/api/v1/token/refresh")
+
+    def network_stats(self, start: str = None, end: str = None):
+        """Get network stats summary
+
+        param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
+        """
+        api = "/api/v1/network/stats"
+
+        if start or end:
+            query = "?"
+            if start:
+                query += f"&start={start}"
+            if end:
+                query += f"&end={end}"
+            api += urllib.parse.quote(query, safe="?&/")
+
+        return self._get(api)
+
+    def create_group(
         self,
         group_name: str,
         app_key: str = "group_timeline",
@@ -90,24 +184,25 @@ class Group(BaseAPI):
             "app_key": app_key,
         }
 
-        return self._post("/group", payload)
+        return self._post("/api/v1/group", payload)
 
     def seed(self, group_id=None) -> Dict:
         """get the seed of a group which you've joined in."""
-        group_id = group_id or self.group_id
-        seed = self._get(f"/group/{group_id}/seed")
+        group_id = self.check_group_id_as_required(group_id)
+        seed = self._get(f"/api/v1/group/{group_id}/seed")
         if "error" not in seed:
             return seed
         else:
             raise ValueError(seed["error"])
 
-    def info(self):
+    def group_info(self, group_id=None):
         """return group info,type: datacalss"""
-        self.check_group_joined_as_required()
+
+        group_id = self.check_group_joined_as_required(group_id)
 
         info = {}
-        for _info in self._http.node.groups():
-            if _info["group_id"] == self.group_id:
+        for _info in self.groups():
+            if _info["group_id"] == group_id:
                 info = _info
                 break
 
@@ -118,21 +213,21 @@ class Group(BaseAPI):
 
     @property
     def pubkey(self):
-        return self.info().user_pubkey
+        return self.group_info().user_pubkey
 
     @property
     def owner(self):
-        return self.info().owner_pubkey
+        return self.group_info().owner_pubkey
 
     @property
     def eth_addr(self):
-        return self.info().user_eth_addr
+        return self.group_info().user_eth_addr
 
-    def join(self, seed: Dict):
+    def join_group(self, seed: Dict):
         """join a group with the seed of the group"""
         if not is_seed(seed):
             raise ValueError("not a seed or the seed could not be identified.")
-        resp = self._post("/group/join", seed)
+        resp = self._post("/api/v1/group/join", seed)
         if "error" in resp:
             if resp["error"] == "Group with same GroupId existed":
                 resp = True
@@ -141,28 +236,29 @@ class Group(BaseAPI):
         return resp
 
     def is_joined(self, group_id=None) -> bool:
-        group_id = group_id or self.group_id
-        if group_id in self._http.node.groups_id:
+        group_id = self.check_group_id_as_required(group_id)
+        if group_id in self.groups_id:
             return True
         return False
 
-    def leave(self, group_id=None):
+    def leave_group(self, group_id=None):
         """leave a group"""
-        group_id = group_id or self.group_id
-        return self._post("/group/leave", {"group_id": group_id})
+        group_id = self.check_group_id_as_required(group_id)
+        return self._post("/api/v1/group/leave", {"group_id": group_id})
 
-    def clear(self, group_id=None):
+    def clear_group(self, group_id=None):
         """clear data of a group"""
-        group_id = group_id or self.group_id
-        return self._post("/group/clear", {"group_id": group_id})
+        group_id = self.check_group_id_as_required(group_id)
+        return self._post("/api/v1/group/clear", {"group_id": group_id})
 
     def startsync(self, group_id=None):
         """触发同步"""
-        group_id = group_id or self.group_id
-        return self._post(f"/group/{group_id}/startsync")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._post(f"/api/v1/group/{group_id}/startsync")
 
     def content_trxs(
         self,
+        group_id=None,
         is_reverse: bool = False,
         trx_id: str = None,
         num: int = 20,
@@ -178,32 +274,34 @@ class Group(BaseAPI):
         num: 要获取内容条数, 默认获取最前面的 20 条内容
         is_include_starttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
         """
-        if not self.is_joined():
+        group_id = self.check_group_joined_as_required(group_id, quiet=True)
+        if not group_id:
             return []
 
         if trx_id:
-            apiurl = f"/group/{self.group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
         else:
-            apiurl = f"/group/{self.group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
+            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
 
-        trxs = self._post(apiurl, api_base=self._http.api_base_app) or []
+        trxs = self._post(apiurl) or []
         return _trxs_unique(trxs)
 
-    def _send(self, obj=None, sendtype=None, **kwargs) -> Dict:
+    def _send(self, obj=None, sendtype=None, group_id=None, **kwargs) -> Dict:
         """return the {trx_id:trx_id} of this action if send successded
 
         obj: 要发送的对象
         sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
         返回值 {"trx_id": "string"}
         """
-        payload = NewTrx(group_id=self.group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
-        return self._post("/group/content", payload)
+        group_id = self.check_group_joined_as_required(group_id)
+        payload = NewTrx(group_id=group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
+        return self._post("/api/v1/group/content", payload)
 
-    def like(self, trx_id: str) -> Dict:
-        return self._send(trx_id=trx_id, sendtype="Like")
+    def like(self, trx_id: str, group_id=None) -> Dict:
+        return self._send(trx_id=trx_id, sendtype="Like", group_id=group_id)
 
-    def dislike(self, trx_id: str) -> Dict:
-        return self._send(trx_id=trx_id, sendtype="Dislike")
+    def dislike(self, trx_id: str, group_id=None) -> Dict:
+        return self._send(trx_id=trx_id, sendtype="Dislike", group_id=group_id)
 
     def _file_to_objs(self, file_path):
         file_total_size = os.path.getsize(file_path)
@@ -242,7 +340,7 @@ class Group(BaseAPI):
         file_obj.close()
         return objs
 
-    def upload(self, file_path):
+    def upload_file(self, file_path):
         if not os.path.isfile(file_path):
             logger.info(f"{sys._getframe().f_code.co_name}, {file_path} is not a file.")
             return
@@ -299,17 +397,17 @@ class Group(BaseAPI):
             ifile.close()
             logger.info(f"{sys._getframe().f_code.co_name}, {ifilepath}, downloaded!")
 
-    def download(self, file_dir):
+    def download_file(self, file_dir):
         logger.debug(f"download file to dir {file_dir} start...")
         infos, trxs = self._file_infos()
         for info in infos:
             self._down_load(file_dir, info, trxs)
         logger.debug(f"download file to dir {file_dir} done")
 
-    def send_note(self, **kwargs):
-        return self._send(sendtype="Add", objtype="Note", **kwargs)
+    def send_note(self, group_id=None, **kwargs):
+        return self._send(sendtype="Add", group_id=group_id, objtype="Note", **kwargs)
 
-    def reply(self, content: str, trx_id: str, images=None):
+    def reply(self, content: str, trx_id: str, group_id=None, images=None):
         """回复某条内容(仅图片, 仅文本, 或两者都有)
 
         trx_id: 要回复的内容的 Trx ID
@@ -317,39 +415,41 @@ class Group(BaseAPI):
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
             content 和 images 必须至少一个不是 None
         """
-        return self.send_note(content=content, images=images, inreplyto=trx_id)
+        return self.send_note(content=content, images=images, group_id=group_id, inreplyto=trx_id)
 
-    def send_text(self, content: str, name: str = None):
+    def send_text(self, content: str, name: str = None, group_id=None):
         """post text cotnent to group
 
         content: 要发送的文本内容
         name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
         """
-        return self.send_note(content=content, name=name)
+        return self.send_note(content=content, name=name, group_id=group_id)
 
-    def send_img(self, images):
+    def send_img(self, images, group_id=None):
         """post images to group
 
         images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
         """
         if type(images) != list:
             images = [images]
-        return self.send_note(images=images)
+        return self.send_note(images=images, group_id=group_id)
 
-    def block(self, block_id: str):
+    def block(self, block_id: str, group_id=None):
         """get the info of a block in a group"""
-        self.check_group_id_as_required()
-        return self._get(f"/block/{self.group_id}/{block_id}")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/block/{group_id}/{block_id}")
 
-    def is_owner(self) -> bool:
+    def is_owner(self, group_id=None) -> bool:
         """return True if I create this group else False"""
-        ginfo = self.info()
-        if isinstance(ginfo, GroupInfo) and ginfo.owner_pubkey == ginfo.user_pubkey:
+        group_id = self.check_group_id_as_required(group_id)
+        info = self.group_info(group_id)
+        if info.owner_pubkey == info.user_pubkey:
             return True
         return False
 
-    def all_content_trxs(self, trx_id: str = None, senders=None):
+    def all_content_trxs(self, trx_id: str = None, group_id=None, senders=None):
         """get all the trxs of content started from trx_id"""
+        group_id = self.check_group_id_as_required(group_id)
         trxs = []
         checked_trxids = []
         senders = senders or []
@@ -358,7 +458,7 @@ class Group(BaseAPI):
                 break
             else:
                 checked_trxids.append(trx_id)
-            newtrxs = self.content_trxs(trx_id=trx_id, num=100)
+            newtrxs = self.content_trxs(trx_id=trx_id, num=100, group_id=group_id)
             if len(newtrxs) == 0:
                 break
             if senders:
@@ -397,36 +497,41 @@ class Group(BaseAPI):
             return "text_only"
         return trxtype.lower()  # "like","dislike","other"
 
-    def trx(self, trx_id: str):
+    def trx(self, trx_id: str, group_id=None):
         """get trx data by trx_id"""
-        self.check_group_id_as_required()
+        group_id = self.check_group_id_as_required(group_id)
         data = {}
-        trxs = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True)
+        trxs = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True, group_id=group_id)
         if len(trxs) > 1:
-            raise ValueError(f"{len(trxs)} trxs got from group: <{self.group_id}> with trx: <{trx_id}>.")
+            raise ValueError(f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.")
         elif len(trxs) == 1:
             data = trxs[0]
         else:
-            data = self._get(f"/trx/{self.group_id}/{trx_id}")
-            logger.info(f"data is encrypted for trx: <{trx_id}> of group: <{self.group_id}>.")
+            data = self._get(f"/api/v1/trx/{group_id}/{trx_id}")
+            logger.info(f"data is encrypted for trx: <{trx_id}> of group: <{group_id}>.")
         if not data:
-            logger.warning(f"data is empty for trx: <{trx_id}> of group: <{self.group_id}>.")
+            logger.warning(f"data is empty for trx: <{trx_id}> of group: <{group_id}>.")
         return data
 
-    def pubqueue(self):
-        self.check_group_id_as_required()
-        resp = self._get(f"/group/{self.group_id}/pubqueue")
+    def pubqueue(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
+        resp = self._get(f"/api/v1/group/{group_id}/pubqueue")
         return resp.get("Data")
 
     def ack(self, trx_ids: List):
-        return self._post("/trx/ack", {"trx_ids": trx_ids})
+        return self._post("/api/v1/trx/ack", {"trx_ids": trx_ids})
 
-    def autoack(self):
-        self.check_group_id_as_required()
-        tids = [i["Trx"]["TrxId"] for i in self.pubqueue() if i["State"] == "FAIL"]
+    def autoack(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
+        tids = [i["Trx"]["TrxId"] for i in self.pubqueue(group_id) if i["State"] == "FAIL"]
         return self.ack(tids)
 
-    def get_users_profiles(self, users_data: Dict = {}, types=("name", "image", "wallet")) -> Dict:
+    def get_users_profiles(
+        self,
+        users_data: Dict = {},
+        types=("name", "image", "wallet"),
+        group_id=None,
+    ) -> Dict:
         """update users_data and returns it.
         {
             group_id:  "", # the group_id
@@ -443,16 +548,12 @@ class Group(BaseAPI):
         }
         """
         # check group_id
-        group_id = users_data.get("group_id", self.group_id)
-        if group_id != self.group_id:
-            logger.warning(
-                f"get_users_profiles: group_id is different. client.group_id:{self.group_id}, data.group_id:{group_id}"
-            )
-            return users_data
+
+        group_id = users_data.get("group_id") or self.check_group_id_as_required(group_id)
 
         # get new trxs from the trx_id
         trx_id = users_data.get("trx_id", None)
-        trxs = self.all_content_trxs(trx_id=trx_id)
+        trxs = self.all_content_trxs(trx_id=trx_id, group_id=group_id)
 
         if len(trxs) == 0:
             logger.debug(f"get_users_profiles: got 0 new trxs. get content started from trx_id:{trx_id}.")
@@ -462,8 +563,8 @@ class Group(BaseAPI):
 
         users_data.update(
             {
-                "group_id": self.group_id,
-                "group_name": self.seed().get("group_name"),
+                "group_id": group_id,
+                "group_name": self.seed(group_id).get("group_name"),
                 "trx_id": trxs[-1]["TrxId"],
                 "trx_timestamp": str(timestamp_to_datetime(trxs[-1].get("TimeStamp", ""))),
             }
@@ -484,7 +585,7 @@ class Group(BaseAPI):
         users_data.update({"data": users, "update_at": str(datetime.datetime.now())})
         return users_data
 
-    def trx_to_newobj(self, trx, nicknames, refer_trx=None):
+    def trx_to_newobj(self, trx, nicknames, refer_trx=None, group_id=None):
         """trans from trx to an object of new trx to send to chain.
 
         Args:
@@ -496,6 +597,7 @@ class Group(BaseAPI):
             result: True,or False, if True, the obj can be send to chain.
         """
 
+        group_id = self.check_group_id_as_required(group_id)
         if "Content" not in trx:
             return None, False
 
@@ -526,7 +628,7 @@ class Group(BaseAPI):
                     lines.insert(0, f"处理了链上请求。")
                 elif t in _info:
                     refer_tid = trx["Content"]["id"]
-                    refer_pubkey = self.trx(refer_tid).get("Publisher", "")
+                    refer_pubkey = self.trx(refer_tid, group_id).get("Publisher", "")
                     lines.insert(
                         0,
                         f"点{_info[t]}给 `{_nickname( refer_pubkey,nicknames)}` 所发布的内容：",
@@ -534,7 +636,7 @@ class Group(BaseAPI):
                 elif t == "reply":
                     lines.insert(0, f"回复说：")
                     refer_tid = trx["Content"]["inreplyto"]["trxid"]
-                    refer_pubkey = self.trx(refer_tid).get("Publisher", "")
+                    refer_pubkey = self.trx(refer_tid, group_id).get("Publisher", "")
                     lines.append(f"\n回复给 `{_nickname(refer_pubkey,nicknames)}` 所发布的内容：")
                 else:
                     if text and img:
@@ -546,7 +648,7 @@ class Group(BaseAPI):
 
                 if refer_tid:
 
-                    refer_trx = refer_trx or self.trx(refer_tid)
+                    refer_trx = refer_trx or self.trx(refer_tid, group_id)
                     if "Content" in refer_trx:
                         refer_text = refer_trx["Content"].get("content", "")
                         refer_img = refer_trx["Content"].get("image", [])
@@ -561,14 +663,15 @@ class Group(BaseAPI):
 
         return obj, True
 
-    def trx_mode(self, trx_type: str = "POST"):
+    def trx_mode(self, trx_type: str = "POST", group_id=None):
         """获取某个 trx 类型的授权方式
 
         trx_type: "POST","ANNOUNCE","REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
+        group_id = self.check_group_id_as_required(group_id)
         trx_type = _check_trx_type(trx_type)
-        return self._get(f"/group/{self.group_id}/trx/auth/{trx_type}")
+        return self._get(f"/api/v1/group/{group_id}/trx/auth/{trx_type}")
 
     @property
     def mode(self):
@@ -579,21 +682,22 @@ class Group(BaseAPI):
             rlt[resp["TrxType"]] = resp["AuthType"]
         return rlt
 
-    def set_mode(self, mode):
+    def set_mode(self, mode, group_id=None):
         """将所有 trx 类型设置为一种授权方式
 
         mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
         """
-        self.check_group_owner_as_required()
+        group_id = self.check_group_owner_as_required(group_id)
         mode = _check_mode(mode)
         for itype in TRX_TYPES:
-            self.set_trx_mode(itype, mode, f"{itype} set mode to {mode}")
+            self.set_trx_mode(itype, mode, f"{itype} set mode to {mode}", group_id=group_id)
 
     def set_trx_mode(
         self,
         trx_type: str,
         mode: str,
         memo: str = "set trx auth type",
+        group_id=None,
     ):
         """设置某个 trx 类型的授权方式
 
@@ -602,7 +706,7 @@ class Group(BaseAPI):
         mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
         memo: Memo
         """
-        self.check_group_owner_as_required()
+        group_id = self.check_group_owner_as_required(group_id)
         mode = _check_mode(mode)
 
         trx_type = _check_trx_type(trx_type)
@@ -610,12 +714,12 @@ class Group(BaseAPI):
             raise ValueError("say something in param:memo")
 
         payload = {
-            "group_id": self.group_id,
+            "group_id": group_id,
             "type": "set_trx_auth_mode",
             "config": json.dumps({"trx_type": trx_type, "trx_auth_mode": f"follow_{mode}_list"}),
             "Memo": memo,
         }
-        return self._post("/group/chainconfig", payload)
+        return self._post("/api/v1/group/chainconfig", payload)
 
     def _update_list(
         self,
@@ -623,8 +727,9 @@ class Group(BaseAPI):
         mode: str,
         memo: str = "update list",
         trx_types: List = None,
+        group_id=None,
     ):
-        self.check_group_owner_as_required()
+        group_id = self.check_group_owner_as_required(group_id)
         mode = _check_mode(mode)
 
         trx_types = trx_types or ["post"]
@@ -633,18 +738,19 @@ class Group(BaseAPI):
 
         _params = {"action": "add", "pubkey": pubkey, "trx_type": trx_types}
         payload = {
-            "group_id": self.group_id,
+            "group_id": group_id,
             "type": f"upd_{mode}_list",
             "config": json.dumps(_params),
             "Memo": memo,
         }
-        return self._post("/group/chainconfig", payload)
+        return self._post("/api/v1/group/chainconfig", payload)
 
     def update_allow_list(
         self,
         pubkey: str,
         memo: str = "update allow list",
         trx_types: List = None,
+        group_id=None,
     ):
         """将某个用户加入某个/某些 trx 类型的白名单中
 
@@ -654,14 +760,15 @@ class Group(BaseAPI):
             "REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
-        self.check_group_owner_as_required()
-        return self._update_list(pubkey, "alw", memo, trx_types)
+        group_id = self.check_group_owner_as_required(group_id)
+        return self._update_list(pubkey, "alw", memo, trx_types, group_id)
 
     def update_deny_list(
         self,
         pubkey: str,
         memo: str = "update deny list",
         trx_types: List = None,
+        group_id=None,
     ):
         """将某个用户加入某个/某些 trx 类型的黑名单中
 
@@ -671,14 +778,14 @@ class Group(BaseAPI):
             "REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
-        self.check_group_owner_as_required()
-        return self._update_list(pubkey, "dny", memo, trx_types)
+        group_id = self.check_group_owner_as_required(group_id)
+        return self._update_list(pubkey, "dny", memo, trx_types, group_id)
 
-    def _list(self, mode: str) -> List:
+    def _list(self, mode: str, group_id=None) -> List:
         if mode not in ["allow", "deny"]:
             raise ValueError("mode must be one of these: allow,deny")
-
-        return self._get(f"/group/{self.group_id}/trx/{mode}list") or []
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/trx/{mode}list") or []
 
     @property
     def allow_list(self):
@@ -690,13 +797,13 @@ class Group(BaseAPI):
         """获取某个组的黑名单"""
         return self._list("deny")
 
-    def get_allow_list(self):
+    def get_allow_list(self, group_id=None):
         """获取某个组的白名单"""
-        return self._list("allow")
+        return self._list("allow", group_id)
 
-    def get_deny_list(self):
+    def get_deny_list(self, group_id=None):
         """获取某个组的黑名单"""
-        return self._list("deny")
+        return self._list("deny", group_id)
 
     def group_icon(self, file_path: str):
         """将一张图片处理成组配置项 value 字段的值, 例如组的图标对象"""
@@ -714,6 +821,7 @@ class Group(BaseAPI):
         action="add",
         image=None,
         memo="add",
+        group_id=None,
     ):
         """组创建者更新组的某个配置项
 
@@ -726,32 +834,34 @@ class Group(BaseAPI):
             例如 rum-app 用作组的图标(需要 name 是 'group_icon')
         memo: Memo
         """
+        group_id = self.check_group_owner_as_required(group_id)
         if image is not None:
             value = self.group_icon(image)
         payload = {
             "action": action,
-            "group_id": self.group_id,
+            "group_id": group_id,
             "name": name,
             "type": the_type,
             "value": value,
             "memo": memo,
         }
-        self.check_group_owner_as_required()
 
-        return self._post("/group/appconfig", payload)
+        return self._post("/api/v1/group/appconfig", payload)
 
-    def keylist(self):
+    def keylist(self, group_id=None):
         """获取组的所有配置项"""
-        return self._get(f"/group/{self.group_id}/appconfig/keylist")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/appconfig/keylist")
 
-    def key(self, key: str):
+    def key(self, key: str, group_id=None):
         """获取组的某个配置项的信息
 
         key: 配置项名称
         """
-        return self._get(f"/group/{self.group_id}/appconfig/{key}")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/appconfig/{key}")
 
-    def announce(self, action="add", type="user", memo="rumpy.api"):
+    def announce(self, action="add", type="user", memo="rumpy.api", group_id=None):
         """announce user or producer,add or remove
 
         申请 成为/退出 producer/user
@@ -760,69 +870,73 @@ class Group(BaseAPI):
         type: "user" 或 "producer"
         memo: Memo
         """
-        self.check_group_id_as_required()
+        group_id = self.check_group_id_as_required(group_id)
         payload = {
-            "group_id": self.group_id,
+            "group_id": group_id,
             "action": action,  # add or remove
             "type": type,  # user or producer
             "memo": memo,
         }
-        return self._post("/group/announce", payload)
+        return self._post("/api/v1/group/announce", payload)
 
-    def announce_as_user(self):
+    def announce_as_user(self, group_id=None):
         """announce self as user
 
         申请成为私有组用户
 
         如果已经是用户, 返回申请状态
         """
-        status = self.announced_user(self._http.group.pubkey)
+        status = self.announced_user(self.pubkey)
         if status.get("Result") == "APPROVED":
             return status
-        return self.announce("add", "user", "rumpy.api,announce self as user")
+        return self.announce("add", "user", "rumpy.api,announce self as user", group_id)
 
-    def announce_as_producer(self):
+    def announce_as_producer(self, group_id=None):
         """announce self as producer"""
-        return self.announce("add", "producer", "rumpy.api,announce self as producer")
+        return self.announce("add", "producer", "rumpy.api,announce self as producer", group_id)
 
-    def announced_producers(self):
+    def announced_producers(self, group_id=None):
         """获取申请 成为/退出 的 producers"""
-        return self._get(f"/group/{self.group_id}/announced/producers")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/announced/producers")
 
-    def announced_users(self):
+    def announced_users(self, group_id=None):
         """获取申请 成为/退出 的 users"""
-        return self._get(f"/group/{self.group_id}/announced/users")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/announced/users")
 
-    def announced_user(self, pubkey):
+    def announced_user(self, pubkey, group_id=None):
         """获取申请 成为/退出 的 user 的申请状态
 
         pubkey: 用户公钥
         """
-        return self._get(f"/group/{self.group_id}/announced/user/{pubkey}")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/announced/user/{pubkey}")
 
-    def producers(self):
+    def producers(self, group_id=None):
         """获取已经批准的 producers"""
-        return self._get(f"/group/{self.group_id}/producers")
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/producers")
 
-    def update_user(self, pubkey, action="add"):
+    def update_user(self, pubkey, action="add", group_id=None):
         """组创建者添加或移除私有组用户
 
         action: "add" or "remove"
         """
-        self.check_group_owner_as_required()
+        group_id = self.check_group_owner_as_required(group_id)
         payload = {
             "user_pubkey": pubkey,
-            "group_id": self.group_id,
+            "group_id": group_id,
             "action": action,  # "add" or "remove"
         }
-        return self._post("/group/user", payload)
+        return self._post("/api/v1/group/user", payload)
 
-    def approve_as_user(self, pubkey=None):
+    def approve_as_user(self, pubkey=None, group_id=None):
         """approve pubkey as a user of group.
 
         pubkey: 用户公钥, 如果不提供该参数, 默认将 owner 自己添加为私有组用户
         """
-        return self.update_user(pubkey=pubkey or self._http.group.pubkey)
+        return self.update_user(pubkey=pubkey or self.pubkey, group_id=group_id)
 
     def update_producer(self, pubkey=None, group_id=None, action="add"):
         """Only group owner can update producers: add, or remove.
@@ -830,31 +944,31 @@ class Group(BaseAPI):
         pubkey: the producer's pubkey
         action: "add" or "remove"
         """
-        self.check_group_owner_as_required()
+        group_id = self.check_group_owner_as_required(group_id)
         action = action.lower()
         if action not in ("add", "remove"):
             raise ValueError("action should be `add` or `remove`")
         payload = {
             "producer_pubkey": pubkey,
-            "group_id": group_id or self.group_id,
+            "group_id": group_id,
             "action": action,
         }
-        return self._post("/group/producer", payload)
+        return self._post("/api/v1/group/producer", payload)
 
-    def update_profile(self, name, image=None, mixin_id=None):
+    def update_profile(self, name, image=None, mixin_id=None, group_id=None):
         """user update the profile: name, image, or wallet.
 
         name: nickname of user
         image: image file_path
         mixin_id: one kind of wallet
         """
-
+        group_id = self.check_group_joined_as_required(group_id)
         if image is not None:
             image = NewTrxImg(file_path=image).__dict__
         payload = {
             "type": "Update",
             "person": {"name": name, "image": image},
-            "target": {"id": self.group_id, "type": "Group"},
+            "target": {"id": group_id, "type": "Group"},
         }
         if mixin_id is not None:
             payload["person"]["wallet"] = {
@@ -862,4 +976,4 @@ class Group(BaseAPI):
                 "type": "mixin",
                 "name": "mixin messenger",
             }
-        return self._post("/group/profile", payload)
+        return self._post("/api/v1/group/profile", payload)
