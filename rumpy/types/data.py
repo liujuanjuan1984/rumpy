@@ -3,12 +3,11 @@ import dataclasses
 import json
 import logging
 import os
-import sys
 import time
 import uuid
 from typing import Any, Dict, List
 
-from rumpy.utils import zip_image_file
+import filetype
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +22,8 @@ TRX_TYPES = [
 ]
 
 API_PAYMENT_GATEWAY: str = "https://prs-bp2.press.one/api"
+IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
+CHUNK_SIZE = 150 * 1024  # 150kb
 
 
 @dataclasses.dataclass
@@ -86,7 +87,7 @@ def is_seed(seed: Dict) -> bool:
         Seed(**seed)
         return True
     except Exception as e:
-        logger.error(f"{sys._getframe().f_code.co_name}, {e}")
+        logger.error(f"{e}")
         return False
 
 
@@ -140,9 +141,6 @@ class ProfileParams:
         self.__dict__ = d
 
 
-IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
-
-
 @dataclasses.dataclass
 class NewTrxImg:
     """将一张图片处理成 RUM 支持的图片对象, 例如用户头像, 要求大小小于 200kb
@@ -151,7 +149,8 @@ class NewTrxImg:
     """
 
     def __init__(self, file_path=None, file_bytes=None, kb=None):
-        import filetype
+
+        from rumpy.utils import zip_image_file
 
         kb = kb or IMAGE_MAX_SIZE_KB
 

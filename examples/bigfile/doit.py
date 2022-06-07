@@ -20,26 +20,28 @@ def check_group():
         check_group()
 
 
+def test_upload():
+    # upload files
+    file_path = r"D:\epub_files\73198_171789_他者的消失.epub"
+    bot.api.upload_file(file_path)
+
+    file_path = r"D:\jpg_files\002e7WLugy1gu9dy8xdwxj612v0u07bh02.jpg"
+    bot.api.upload_file(file_path)
+
+    file_path = r"D:\mp3_files\441444b9ab3896f3ebcd78297920693a.mp4"
+    bot.api.upload_file(file_path)
+
+
 asku = input("0 byebye\n1 upload\n2 download\n>>")
 check_group()
 if asku == "1":
-    # upload files
-    file_path = r"D:\books\73198_171789_他者的消失.epub"
-    bot.api.upload_file(file_path)
-
-    file_path = r"D:\002e7WLugy1gu9dy8xdwxj612v0u07bh02.jpg"
-    bot.api.upload_file(file_path)
-
-    file_path = r"D:\telegram download\441444b9ab3896f3ebcd78297920693a.mp4"
-    bot.api.upload_file(file_path)
+    test_upload()
 
 elif asku == "2":
     # download files
     file_dir = r"D:\test_download"
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
-
     bot.api.download_file(file_dir)
-
 else:
     print("byebye.")

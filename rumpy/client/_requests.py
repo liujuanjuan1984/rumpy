@@ -1,16 +1,13 @@
-import inspect
 import logging
 import os
-import sys
 from typing import Any, Dict, List
 
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+import rumpy.utils as utils
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-from rumpy import api
-
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +22,7 @@ class HttpRequest:
         requests.adapters.DEFAULT_RETRIES = 5
         self.api_base = api_base
         self._session = requests.Session()
-        self._session.verify = crtfile or False
+        self._session.verify = utils.check_crtfile(crtfile)
         self._session.keep_alive = False
         self._session.headers.update(
             {

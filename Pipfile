@@ -9,6 +9,7 @@ filetype = "*"
 pytest = "*"
 Pillow = "*"
 python-dotenv = "*"
+pip = "==22.1.1"
 
 [dev-packages]
 officy = "*"

@@ -1,60 +1,19 @@
 import base64
 import datetime
-import hashlib
 import json
 import logging
-import math
 import os
-import sys
 import time
 import urllib
 from typing import Any, Dict, List
 
 import filetype
 
+import rumpy.utils as utils
 from rumpy.api.base import BaseAPI
 from rumpy.types.data import *
-from rumpy.utils import sha256, timestamp_to_datetime, zip_image_file
 
 logger = logging.getLogger(__name__)
-
-CHUNK_SIZE = 150 * 1024  # 150kb
-
-
-def _check_mode(mode: str):
-    if mode.lower() not in ["dny", "deny", "allow", "alw"]:
-        raise ValueError(f"{mode} mode must be one of ['deny','allow']")
-    if mode.lower() in ["dny", "deny"]:
-        return "dny"
-    if mode.lower() in ["alw", "allow"]:
-        return "alw"
-
-
-def _check_trx_type(trx_type: str):
-    if trx_type.upper() not in TRX_TYPES:
-        raise ValueError(f"{trx_type} must be one of {TRX_TYPES}")
-    return trx_type.lower()
-
-
-def _quote(text):
-    return "".join(["> ", "\n> ".join(text.split("\n")), "\n"]) if text else ""
-
-
-def _nickname(pubkey, nicknames):
-    try:
-        name = nicknames[pubkey]["name"] + f"({pubkey[-10:-2]})"
-    except:
-        name = pubkey[-10:-2] or "某人"
-    return name
-
-
-def _trxs_unique(trxs: List):
-    """remove the duplicate trx from the trxs list"""
-    new = {}
-    for trx in trxs:
-        if trx["TrxId"] not in new:
-            new[trx["TrxId"]] = trx
-    return [new[i] for i in new]
 
 
 class FullNodeAPI(BaseAPI):
@@ -284,7 +243,7 @@ class FullNodeAPI(BaseAPI):
             apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
 
         trxs = self._post(apiurl) or []
-        return _trxs_unique(trxs)
+        return utils.unique_trxs(trxs)
 
     def _send(self, obj=None, sendtype=None, group_id=None, **kwargs) -> Dict:
         """return the {trx_id:trx_id} of this action if send successded
@@ -303,105 +262,31 @@ class FullNodeAPI(BaseAPI):
     def dislike(self, trx_id: str, group_id=None) -> Dict:
         return self._send(trx_id=trx_id, sendtype="Dislike", group_id=group_id)
 
-    def _file_to_objs(self, file_path):
-        file_total_size = os.path.getsize(file_path)
-        file_name = os.path.basename(file_path).encode().decode("utf-8")
-        file_obj = open(file_path, "rb")
-        fileinfo = {
-            "mediaType": filetype.guess(file_path).mime,
-            "name": file_name,
-            "title": file_name.split(".")[0],
-            "sha256": sha256(file_obj.read()),
-            "segments": [],
-        }
-
-        chunks = math.ceil(file_total_size / CHUNK_SIZE)
-        objs = []
-
-        for i in range(chunks):
-            if i + 1 == chunks:
-                current_size = file_total_size % CHUNK_SIZE
-            else:
-                current_size = CHUNK_SIZE
-            file_obj.seek(i * CHUNK_SIZE)
-            ibytes = file_obj.read(current_size)
-            fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": sha256(ibytes)})
-            obj = FileObj(
-                name=f"seg-{i + 1}",
-                content=ibytes,
-                mediaType="application/octet-stream",
-            )
-            objs.append(obj)
-
-        content = json.dumps(fileinfo).encode()
-        obj = FileObj(content=content, name="fileinfo", mediaType="application/json")
-
-        objs.insert(0, obj)
-        file_obj.close()
-        return objs
-
-    def upload_file(self, file_path):
-        if not os.path.isfile(file_path):
-            logger.info(f"{sys._getframe().f_code.co_name}, {file_path} is not a file.")
-            return
-        for obj in self._file_to_objs(file_path):
-            self._send(obj=obj, sendtype="Add")
-
-    def _file_infos(self, trx_id=None):
-        trxs = self.all_content_trxs(trx_id)
+    def search_file_trxs(self, trx_id=None, group_id=None):
+        trxs = self.all_content_trxs(trx_id, group_id=group_id)
         infos = []
         filetrxs = []
         for trx in trxs:
             if trx["Content"].get("name") == "fileinfo":
                 info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
-                logger.debug(f"{sys._getframe().f_code.co_name}, {info}")
+                logger.debug(f"{info}")
                 infos.append(info)
             if trx["Content"].get("type") == "File":
                 filetrxs.append(trx)
         return infos, filetrxs
 
-    def _down_load(self, file_dir, info, trxs):
-
-        ifilepath = os.path.join(file_dir, info["name"])
-        if os.path.exists(ifilepath):
-            logger.info(f"{sys._getframe().f_code.co_name}, file exists {ifilepath}")
+    def upload_file(self, file_path, group_id=None):
+        if not os.path.isfile(file_path):
+            logger.warning(f"{file_path} is not a file.")
             return
+        for obj in utils.split_file_to_trx_objs(file_path):
+            self._send(obj=obj, sendtype="Add", group_id=group_id)
 
-        # _check_trxs
-        right_shas = [i["sha256"] for i in info["segments"]]
-        contents = {}
-
-        for trx in trxs:
-            content = base64.b64decode(trx["Content"]["file"]["content"])
-            csha = hashlib.sha256(content).hexdigest()
-            if csha in right_shas:
-                contents[csha] = trx
-
-        flag = True
-
-        for seg in info["segments"]:
-            if seg["sha256"] not in contents:
-                logger.info(f"{sys._getframe().f_code.co_name}, " + json.dumps(seg) + ", trx is not exists...")
-                flag = False
-                break
-            if contents[seg["sha256"]]["Content"].get("name") != seg["id"]:
-                logger.info(f"{sys._getframe().f_code.co_name}, " + json.dumps(seg) + ", name is different...")
-                flag = False
-                break
-
-        if flag:
-            ifile = open(ifilepath, "wb+")
-            for seg in info["segments"]:
-                content = base64.b64decode(contents[seg["sha256"]]["Content"]["file"]["content"])
-                ifile.write(content)
-            ifile.close()
-            logger.info(f"{sys._getframe().f_code.co_name}, {ifilepath}, downloaded!")
-
-    def download_file(self, file_dir):
+    def download_file(self, file_dir, group_id=None):
         logger.debug(f"download file to dir {file_dir} start...")
-        infos, trxs = self._file_infos()
+        infos, trxs = self.search_file_trxs(group_id)
         for info in infos:
-            self._down_load(file_dir, info, trxs)
+            utils.merge_trxs_to_file(file_dir, info, trxs)
         logger.debug(f"download file to dir {file_dir} done")
 
     def send_note(self, group_id=None, **kwargs):
@@ -566,7 +451,7 @@ class FullNodeAPI(BaseAPI):
                 "group_id": group_id,
                 "group_name": self.seed(group_id).get("group_name"),
                 "trx_id": trxs[-1]["TrxId"],
-                "trx_timestamp": str(timestamp_to_datetime(trxs[-1].get("TimeStamp", ""))),
+                "trx_timestamp": str(utils.timestamp_to_datetime(trxs[-1].get("TimeStamp", ""))),
             }
         )
 
@@ -631,13 +516,13 @@ class FullNodeAPI(BaseAPI):
                     refer_pubkey = self.trx(refer_tid, group_id).get("Publisher", "")
                     lines.insert(
                         0,
-                        f"点{_info[t]}给 `{_nickname( refer_pubkey,nicknames)}` 所发布的内容：",
+                        f"点{_info[t]}给 `{utils.get_nickname( refer_pubkey,nicknames)}` 所发布的内容：",
                     )
                 elif t == "reply":
                     lines.insert(0, f"回复说：")
                     refer_tid = trx["Content"]["inreplyto"]["trxid"]
                     refer_pubkey = self.trx(refer_tid, group_id).get("Publisher", "")
-                    lines.append(f"\n回复给 `{_nickname(refer_pubkey,nicknames)}` 所发布的内容：")
+                    lines.append(f"\n回复给 `{utils.get_nickname(refer_pubkey,nicknames)}` 所发布的内容：")
                 else:
                     if text and img:
                         lines.insert(0, f"发布了图片，并且说：")
@@ -652,12 +537,12 @@ class FullNodeAPI(BaseAPI):
                     if "Content" in refer_trx:
                         refer_text = refer_trx["Content"].get("content", "")
                         refer_img = refer_trx["Content"].get("image", [])
-                        lines.append(_quote(refer_text))
+                        lines.append(utils.quote_str(refer_text))
                         obj["image"].extend(refer_img)
         else:
             return None, False
 
-        obj["content"] = f'{timestamp_to_datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
+        obj["content"] = f'{utils.timestamp_to_datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
         obj["image"] = obj["image"][:4]
         obj = {key: obj[key] for key in obj if obj[key]}
 
@@ -670,7 +555,7 @@ class FullNodeAPI(BaseAPI):
             "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
         """
         group_id = self.check_group_id_as_required(group_id)
-        trx_type = _check_trx_type(trx_type)
+        trx_type = utils.check_trx_type(trx_type)
         return self._get(f"/api/v1/group/{group_id}/trx/auth/{trx_type}")
 
     @property
@@ -688,7 +573,7 @@ class FullNodeAPI(BaseAPI):
         mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
         """
         group_id = self.check_group_owner_as_required(group_id)
-        mode = _check_mode(mode)
+        mode = utils.check_trx_mode(mode)
         for itype in TRX_TYPES:
             self.set_trx_mode(itype, mode, f"{itype} set mode to {mode}", group_id=group_id)
 
@@ -707,9 +592,9 @@ class FullNodeAPI(BaseAPI):
         memo: Memo
         """
         group_id = self.check_group_owner_as_required(group_id)
-        mode = _check_mode(mode)
+        mode = utils.check_trx_mode(mode)
 
-        trx_type = _check_trx_type(trx_type)
+        trx_type = utils.check_trx_type(trx_type)
         if not memo:
             raise ValueError("say something in param:memo")
 
@@ -730,11 +615,11 @@ class FullNodeAPI(BaseAPI):
         group_id=None,
     ):
         group_id = self.check_group_owner_as_required(group_id)
-        mode = _check_mode(mode)
+        mode = utils.check_trx_mode(mode)
 
         trx_types = trx_types or ["post"]
         for trx_type in trx_types:
-            _check_trx_type(trx_type)
+            utils.check_trx_type(trx_type)
 
         _params = {"action": "add", "pubkey": pubkey, "trx_type": trx_types}
         payload = {
@@ -805,14 +690,6 @@ class FullNodeAPI(BaseAPI):
         """获取某个组的黑名单"""
         return self._list("deny", group_id)
 
-    def group_icon(self, file_path: str):
-        """将一张图片处理成组配置项 value 字段的值, 例如组的图标对象"""
-
-        img_bytes = zip_image_file(file_path)
-        icon = f'data:{filetype.guess(img_bytes).mime}base64,{base64.b64encode(img_bytes).decode("utf-8")}'
-
-        return icon
-
     def set_appconfig(
         self,
         name="group_desc",
@@ -835,8 +712,8 @@ class FullNodeAPI(BaseAPI):
         memo: Memo
         """
         group_id = self.check_group_owner_as_required(group_id)
-        if image is not None:
-            value = self.group_icon(image)
+        if image:
+            value = utils.group_icon(image)
         payload = {
             "action": action,
             "group_id": group_id,
@@ -963,14 +840,14 @@ class FullNodeAPI(BaseAPI):
         mixin_id: one kind of wallet
         """
         group_id = self.check_group_joined_as_required(group_id)
-        if image is not None:
+        if image:
             image = NewTrxImg(file_path=image).__dict__
         payload = {
             "type": "Update",
             "person": {"name": name, "image": image},
             "target": {"id": group_id, "type": "Group"},
         }
-        if mixin_id is not None:
+        if mixin_id:
             payload["person"]["wallet"] = {
                 "id": mixin_id,
                 "type": "mixin",

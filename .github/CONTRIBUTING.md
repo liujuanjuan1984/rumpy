@@ -69,3 +69,8 @@ Thanks.
 ```bash
 git push origin master --tags
 ```
+
+```bash
+python -m build
+twine upload dist/*0.5.0*
+```
