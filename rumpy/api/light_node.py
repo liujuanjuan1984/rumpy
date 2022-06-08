@@ -118,7 +118,7 @@ class LightNodeAPI(BaseAPI):
 
     def _send(self, activity_type=None, group_id=None, obj=None, **kwargs) -> Dict:
         payload = NewTrx(group_id=group_id, obj=obj, activity_type=activity_type, **kwargs).__dict__
-        return self._post("/api/v1/group/content", payload)
+        return self._post("/v1/group/content", payload)
 
     def like(self, trx_id: str, group_id=None) -> Dict:
         return self._send(like_trx_id=trx_id, activity_type="Like", group_id=group_id)

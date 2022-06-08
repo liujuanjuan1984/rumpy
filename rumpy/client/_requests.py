@@ -51,7 +51,8 @@ class HttpRequest:
             body_json = {}
 
         if resp.status_code != 200:
-            logger.warning(f"{resp.status_code}, {resp.json()}")
+            logger.warning(f"payload:{payload}")
+            logger.debug(f"url:{url}")
         return body_json
 
     def get(self, endpoint: str, payload: Dict = {}, api_base=None):
