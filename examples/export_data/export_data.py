@@ -212,7 +212,7 @@ def check_dir(dirpath):
 
 if __name__ == "__main__":
     # init
-    client = FullNode(port=62663)
+    client = FullNode()
     nodeid = client.api.node_id
     SAVE_DIR = os.path.join(os.path.dirname(__file__), "data")
     JSON_DIR = os.path.join(SAVE_DIR, nodeid, "json")

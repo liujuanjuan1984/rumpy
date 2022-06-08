@@ -172,57 +172,76 @@ class NewTrxImg:
 
 @dataclasses.dataclass
 class NewTrxObject:
-    """send note to a group. can be used to send: text only, image only,
-    text with image, reply...etc
-
-    content: str,text
-    name:str, title for group_post if needed
-    images: list of images, such as imgpath, or imgbytes, or rum-trx-img-objs
-
-    发送/回复内容到一个组(仅图片, 仅文本, 或两者都有)
-
-    content: 要发送的文本内容
-    name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
-    images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
-        content 和 images 必须至少一个不是 None
-    update_id: 自己已经发送成功的某条 Trx 的 ID, rum-app 用来标记, 如果提供该参数,
-        再次发送一条消息, 前端将只显示新发送的这条, 从而实现更新(实际两条内容都在链上)
-    inreplyto: 要回复的内容的 Trx ID, 如果提供, 内容将回复给这条指定内容
-
-    返回值 {"trx_id": "string"}
-
-    """
-
     def __init__(
         self,
-        objtype=None,
-        trx_id=None,
-        content=None,
-        images=None,
-        name=None,
-        inreplyto=None,
+        object_type: str = None,
+        content: str = None,
+        name: str = None,
+        images: List = None,
+        edit_trx_id: str = None,
+        del_trx_id: str = None,
+        like_trx_id: str = None,
+        reply_trx_id: str = None,  # inreplyto
     ):
-        self.type = objtype  # Note,File
-        self.id = trx_id
-        self.content = content
+        """the object of activity (NewTrx params)
 
-        if images:
+        Args:
+            object_type (str, optional): one of Note,File,and None (with activity_type: Like or Dislike). Defaults to None.
+            edit_trx_id (str, optional): trx_id to edit or delete (just client show it). Defaults to None.
+            like_trx_id (str, optional): like or dislike to trx_id. Defaults to None.
+            images (List, optional): list of NewTrxImg . Defaults to None.
+            name (str, optional): used as title in bbs post. Defaults to None.
+            reply_trx_id(str, optional): trx_id to reply. Defaults to None.
+        """
+        if object_type in ["Note", "File"]:
+            self.type = object_type
+        elif object_type:
+            raise ValueError(f"new object_type: {object_type}. check the param or update rumpy code.")
+
+        if content:
+            if type(content) == str:
+                self.content = content
+            elif type(content) in (dict, list):
+                self.content = json.dumps(content)
+            else:
+                raise ValueError(f"new content type: {type(content)}. check the param or update rumpy code.")
+
+        if name and type(name) == str:
+            self.name = name
+
+        if images:  # 待优化 TODO
             # 将一张或多张图片处理成 RUM 支持的图片对象列表, 要求总大小小于 200kb
             # 客户端限定：单条 trx 最多4 张图片
             kb = int(200 // min(len(images), 4))
             self.image = [NewTrxImg(file_path=file_path, kb=kb).__dict__ for file_path in images[:4]]
 
-        self.name = name
-        self.inreplyto = {"trxid": inreplyto} if inreplyto else None
+        if edit_trx_id and type(edit_trx_id) == str:
+            self.id = edit_trx_id
+            # check other params:
+            if self.type != "Note":
+                raise ValueError(f"only Note type can be edited. type now: {self.type} ")
+            if not (self.content or self.images):
+                raise ValueError("content or images is needed.")
 
-        if self.type not in ["Note", "File"]:
-            self.type = "Note"
+        if del_trx_id and type(del_trx_id) == str:
+            self.id = del_trx_id
+            # check other params
+            self.content = "OBJECT_STATUS_DELETED"
+            for key in self.__dict__:
+                if key not in ["type", "id", "content"]:
+                    raise ValueError(f"del object got a no-need param {key}")
 
-        d = {}
-        for key in self.__dict__:
-            if self.__dict__[key]:
-                d[key] = self.__dict__[key]
-        self.__dict__ = d
+        if reply_trx_id and type(reply_trx_id) == str:
+            self.inreplyto = {"trxid": reply_trx_id}
+            if not (self.content or self.images):
+                raise ValueError("content or images is needed.")
+
+        if like_trx_id and type(like_trx_id) == str:
+            self.id = like_trx_id
+            # check other params: only id param is needed.
+            for key in self.__dict__:
+                if key != "id":
+                    raise ValueError(f"like or dislike object can only have id param. but param {key} is found.")
 
 
 @dataclasses.dataclass
@@ -239,17 +258,23 @@ class FileObj(NewTrxObject):
 
 @dataclasses.dataclass
 class NewTrx:
-    def __init__(self, sendtype=None, group_id=None, obj=None, **kwargs):
-        self.type = sendtype
+    def __init__(self, activity_type, group_id, obj=None, **kwargs):
+        self.type = activity_type
+        if self.type not in [4, "Add", "Like", "Dislike"]:
+            raise ValueError(
+                f"{self.type} is not one of 4,Add,Like,Dislike... check the input params or update the rumpy code. "
+            )
+
+        if group_id:
+            self.target = {"id": group_id, "type": "Group"}
+        else:
+            raise ValueError("group_id param is need.")
+
         if isinstance(obj, NewTrxObject):
-            self.object = obj.__dict__
+            self.object = NewTrxObject(**obj.__dict__).__dict__
         elif isinstance(obj, dict):
-            if "type" not in obj:
+            if self.type == "Add" and "type" not in obj:
                 raise ValueError("obj need a `type` such as: `Note` or `File`")
-            self.object = obj
+            self.object = NewTrxObject(**obj).__dict__
         else:
             self.object = NewTrxObject(**kwargs).__dict__
-        self.target = {"id": group_id, "type": "Group"}
-
-        if self.type not in [4, "Add", "Like", "Dislike"]:
-            self.type = "Add"

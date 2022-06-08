@@ -4,7 +4,7 @@ from officy import JsonFile
 
 from rumpy import FullNode
 
-client = FullNode(port=62663)
+client = FullNode()
 group_id = "4e784292-6a65-471e-9f80-e91202e3358c"
 
 # give the file path or None to init it.

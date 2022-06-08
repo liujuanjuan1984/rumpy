@@ -9,7 +9,7 @@ from search_seeds import SearchSeeds
 def main():
     # init client
     print(datetime.datetime.now(), "client init...")
-    client = SearchSeeds(port=62663)
+    client = SearchSeeds()
 
     # datafiles
     print(datetime.datetime.now(), "datafiles...")

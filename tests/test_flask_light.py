@@ -4,7 +4,7 @@ from rumpy import LightNode
 
 app = Flask(__name__)
 
-app = LightNode(port=6003).init_app(app)
+app = LightNode().init_app(app)
 
 
 @app.route("/")

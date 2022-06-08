@@ -9,7 +9,7 @@ TEST_GROUPS_TO_LEAVE = [
 
 def main(is_create_new=False):
     """is_create_new: create new group for test"""
-    client = FullNode(port=62663)
+    client = FullNode()
     my_test_groups = ["mytest_leave_groups"]
 
     print(datetime.datetime.now(), "groups num: ", len(client.api.groups_id))

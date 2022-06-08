@@ -9,7 +9,7 @@ from rumpy import FullNode
 
 def main():
     # init
-    client = FullNode(port=62663)
+    client = FullNode()
 
     # create a group
     seed = client.api.create_group("mytest_postblog", app_key="group_post")

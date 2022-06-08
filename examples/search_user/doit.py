@@ -3,7 +3,7 @@ import os
 from officy import JsonFile
 from search_user import SearchUser
 
-searchuser = SearchUser(port=62663)
+searchuser = SearchUser()
 seedsfile = r"D:\Jupyter\seeds\data\seeds.json"
 # example: one
 

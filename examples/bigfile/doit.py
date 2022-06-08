@@ -4,7 +4,7 @@ from officy import JsonFile
 
 from rumpy import FullNode
 
-bot = FullNode(port=62663)
+bot = FullNode()
 
 
 def check_group():

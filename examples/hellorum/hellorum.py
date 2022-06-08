@@ -6,7 +6,7 @@ from rumpy import FullNode
 
 def main():
 
-    client = FullNode(port=62663)
+    client = FullNode()
 
     # create group for test
     seed = client.api.create_group("mytest_hellorum")
@@ -26,23 +26,23 @@ def main():
 
     payload = {
         "content": f"{str(datetime.datetime.now())} reply to hello rum ",
-        "inreplyto": resp1["trx_id"],
+        "trx_id": resp1["trx_id"],
     }
-    resp3 = client.api.send_note(**payload)
+    resp3 = client.api.reply(**payload)
     print(resp3)
 
     payload = {
         "content": f"{str(datetime.datetime.now())} reply to  post with picture",
-        "inreplyto": resp2["trx_id"],
+        "trx_id": resp2["trx_id"],
     }
-    resp4 = client.api.send_note(**payload)
+    resp4 = client.api.reply(**payload)
     print(resp4)
 
     payload = {
         "content": f"{str(datetime.datetime.now())} this is reply to reply",
-        "inreplyto": resp4["trx_id"],
+        "trx_id": resp4["trx_id"],
     }
-    resp5 = client.api.send_note(**payload)
+    resp5 = client.api.reply(**payload)
     print(resp5)
     # like
     client.api.like(resp1["trx_id"])

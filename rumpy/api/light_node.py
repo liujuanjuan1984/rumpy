@@ -116,29 +116,40 @@ class LightNodeAPI(BaseAPI):
 
         return self._post(f"/v1/group/getctn", payload)
 
-    def _send(self, group_id: str, obj=None, sendtype=None, **kwargs) -> Dict:
-        payload = NewTrx(group_id=group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
-        return self._post("/v1/group/content", payload)
+    def _send(self, activity_type=None, group_id=None, obj=None, **kwargs) -> Dict:
+        payload = NewTrx(group_id=group_id, obj=obj, activity_type=activity_type, **kwargs).__dict__
+        return self._post("/api/v1/group/content", payload)
 
-    def like(self, group_id: str, trx_id: str) -> Dict:
-        return self._send(group_id=group_id, trx_id=trx_id, sendtype="Like")
+    def like(self, trx_id: str, group_id=None) -> Dict:
+        return self._send(like_trx_id=trx_id, activity_type="Like", group_id=group_id)
 
-    def dislike(self, group_id: str, trx_id: str) -> Dict:
-        return self._send(group_id=group_id, trx_id=trx_id, sendtype="Dislike")
+    def dislike(self, trx_id: str, group_id=None) -> Dict:
+        return self._send(like_trx_id=trx_id, activity_type="Dislike", group_id=group_id)
 
-    def send_note(self, group_id: str, **kwargs):
-        return self._send(group_id, sendtype="Add", objtype="Note", **kwargs)
+    def __send_note(self, group_id=None, **kwargs):
+        return self._send(group_id=group_id, activity_type="Add", object_type="Note", **kwargs)
 
-    def reply(self, group_id: str, content: str, trx_id: str, images=None):
-        return self.send_note(group_id, content=content, images=images, inreplyto=trx_id)
+    def send_note(self, content: str = None, images: List = None, name=None, group_id=None):
+        return self.__send_note(content=content, images=images, name=None, group_id=group_id)
 
-    def send_text(self, group_id: str, content: str, name: str = None):
-        return self.send_note(group_id, content=content, name=name)
+    def del_note(self, trx_id, group_id=None):
+        return self.__send_note(del_trx_id=trx_id, group_id=group_id)
 
-    def send_img(self, group_id: str, images):
-        if type(images) != list:
-            images = [images]
-        return self.send_note(group_id, images=images)
+    def edit_note(self, trx_id, content: str = None, images: List = None, group_id=None):
+        return self.__send_note(
+            edit_trx_id=trx_id,
+            content=content,
+            images=images,
+            group_id=group_id,
+        )
+
+    def reply(self, trx_id: str, content: str = None, images=None, group_id=None):
+        return self.__send_note(
+            reply_trx_id=trx_id,
+            content=content,
+            images=images,
+            group_id=group_id,
+        )
 
     def update_profile(self, group_id, name=None, wallet=None, image=None):
         payload = {}  # todo

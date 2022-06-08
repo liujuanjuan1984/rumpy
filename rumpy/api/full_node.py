@@ -245,22 +245,41 @@ class FullNodeAPI(BaseAPI):
         trxs = self._post(apiurl) or []
         return utils.unique_trxs(trxs)
 
-    def _send(self, obj=None, sendtype=None, group_id=None, **kwargs) -> Dict:
-        """return the {trx_id:trx_id} of this action if send successded
-
-        obj: 要发送的对象
-        sendtype: 发送类型, "Add"(发送内容), "Like"(点赞), "Dislike"(点踩)
-        返回值 {"trx_id": "string"}
-        """
+    def _send(self, activity_type=None, group_id=None, obj=None, **kwargs) -> Dict:
         group_id = self.check_group_joined_as_required(group_id)
-        payload = NewTrx(group_id=group_id, obj=obj, sendtype=sendtype, **kwargs).__dict__
+        payload = NewTrx(group_id=group_id, obj=obj, activity_type=activity_type, **kwargs).__dict__
         return self._post("/api/v1/group/content", payload)
 
     def like(self, trx_id: str, group_id=None) -> Dict:
-        return self._send(trx_id=trx_id, sendtype="Like", group_id=group_id)
+        return self._send(like_trx_id=trx_id, activity_type="Like", group_id=group_id)
 
     def dislike(self, trx_id: str, group_id=None) -> Dict:
-        return self._send(trx_id=trx_id, sendtype="Dislike", group_id=group_id)
+        return self._send(like_trx_id=trx_id, activity_type="Dislike", group_id=group_id)
+
+    def __send_note(self, group_id=None, **kwargs):
+        return self._send(group_id=group_id, activity_type="Add", object_type="Note", **kwargs)
+
+    def send_note(self, content: str = None, images: List = None, name=None, group_id=None):
+        return self.__send_note(content=content, images=images, name=None, group_id=group_id)
+
+    def del_note(self, trx_id, group_id=None):
+        return self.__send_note(del_trx_id=trx_id, group_id=group_id)
+
+    def edit_note(self, trx_id, content: str = None, images: List = None, group_id=None):
+        return self.__send_note(
+            edit_trx_id=trx_id,
+            content=content,
+            images=images,
+            group_id=group_id,
+        )
+
+    def reply(self, trx_id: str, content: str = None, images=None, group_id=None):
+        return self.__send_note(
+            reply_trx_id=trx_id,
+            content=content,
+            images=images,
+            group_id=group_id,
+        )
 
     def search_file_trxs(self, trx_id=None, group_id=None):
         trxs = self.all_content_trxs(trx_id, group_id=group_id)
@@ -280,7 +299,7 @@ class FullNodeAPI(BaseAPI):
             logger.warning(f"{file_path} is not a file.")
             return
         for obj in utils.split_file_to_trx_objs(file_path):
-            self._send(obj=obj, sendtype="Add", group_id=group_id)
+            self._send(obj=obj, activity_type="Add", group_id=group_id)
 
     def download_file(self, file_dir, group_id=None):
         logger.debug(f"download file to dir {file_dir} start...")
@@ -288,36 +307,6 @@ class FullNodeAPI(BaseAPI):
         for info in infos:
             utils.merge_trxs_to_file(file_dir, info, trxs)
         logger.debug(f"download file to dir {file_dir} done")
-
-    def send_note(self, group_id=None, **kwargs):
-        return self._send(sendtype="Add", group_id=group_id, objtype="Note", **kwargs)
-
-    def reply(self, content: str, trx_id: str, group_id=None, images=None):
-        """回复某条内容(仅图片, 仅文本, 或两者都有)
-
-        trx_id: 要回复的内容的 Trx ID
-        content: 用于回复的文本内容
-        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
-            content 和 images 必须至少一个不是 None
-        """
-        return self.send_note(content=content, images=images, group_id=group_id, inreplyto=trx_id)
-
-    def send_text(self, content: str, name: str = None, group_id=None):
-        """post text cotnent to group
-
-        content: 要发送的文本内容
-        name: 内容标题, 例如 rum-app 论坛模板必须提供的文章标题
-        """
-        return self.send_note(content=content, name=name, group_id=group_id)
-
-    def send_img(self, images, group_id=None):
-        """post images to group
-
-        images: 一张或多张(最多4张)图片的路径, 一张是字符串, 多张则是它们组成的列表
-        """
-        if type(images) != list:
-            images = [images]
-        return self.send_note(images=images, group_id=group_id)
 
     def block(self, block_id: str, group_id=None):
         """get the info of a block in a group"""

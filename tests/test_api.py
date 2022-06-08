@@ -96,8 +96,8 @@ class TestCase:
             assert "trx_id" in r5
 
         trx_id = r5["trx_id"]
-        kwargs = {"content": "回复一下", "inreplyto": trx_id}
-        r6 = client.api.send_note(**kwargs)
+        kwargs = {"content": "回复一下", "trx_id": trx_id}
+        r6 = client.api.reply(**kwargs)
         assert "trx_id" in r6
 
         # 发文
@@ -115,7 +115,7 @@ class TestCase:
         resp = client.api.reply("我回复你了", trx_id)
         assert "trx_id" in resp
 
-        resp = client.api.send_note(content="nihao", images=[], inreplyto=trx_id)
+        resp = client.api.reply(content="nihao", images=[], trx_id=trx_id)
         assert "trx_id" in resp
 
         resp = client.api.like(trx_id)

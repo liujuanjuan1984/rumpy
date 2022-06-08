@@ -4,7 +4,7 @@ from rumpy import FullNode
 
 app = Flask(__name__)
 
-app = FullNode(port=62663).init_app(app)
+app = FullNode().init_app(app)
 
 
 @app.route("/")
