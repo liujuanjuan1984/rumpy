@@ -143,31 +143,24 @@ class FullNodeAPI(BaseAPI):
             "app_key": app_key,
         }
 
-        return self._post("/api/v1/group", payload)
+        seed = self._post("/api/v1/group", payload)
+        return utils.check_seed(seed)
 
     def seed(self, group_id=None) -> Dict:
         """get the seed of a group which you've joined in."""
         group_id = self.check_group_id_as_required(group_id)
         seed = self._get(f"/api/v1/group/{group_id}/seed")
-        if "error" not in seed:
-            return seed
-        else:
-            raise ValueError(seed["error"])
+        return utils.check_seed(seed)
 
     def group_info(self, group_id=None):
         """return group info,type: datacalss"""
-
         group_id = self.check_group_joined_as_required(group_id)
-
         info = {}
         for _info in self.groups():
             if _info["group_id"] == group_id:
                 info = _info
                 break
-
-        if info.get("snapshot_info") is None:
-            info["snapshot_info"] = {}
-
+        info["snapshot_info"] = info.get("snapshot_info", {})
         return GroupInfo(**info)
 
     @property
@@ -184,21 +177,9 @@ class FullNodeAPI(BaseAPI):
 
     def join_group(self, seed: Dict):
         """join a group with the seed of the group"""
-        if not is_seed(seed):
-            raise ValueError("not a seed or the seed could not be identified.")
+        seed = utils.check_seed(seed)
         resp = self._post("/api/v1/group/join", seed)
-        if "error" in resp:
-            if resp["error"] == "Group with same GroupId existed":
-                resp = True
-            else:
-                raise ValueError(resp["error"])
-        return resp
-
-    def is_joined(self, group_id=None) -> bool:
-        group_id = self.check_group_id_as_required(group_id)
-        if group_id in self.groups_id:
-            return True
-        return False
+        return self.raise_error(resp, "Group with same GroupId existed")
 
     def leave_group(self, group_id=None):
         """leave a group"""
@@ -215,10 +196,10 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_id_as_required(group_id)
         return self._post(f"/api/v1/group/{group_id}/startsync")
 
-    def content_trxs(
+    def get_group_content(
         self,
         group_id=None,
-        is_reverse: bool = False,
+        reverse: bool = False,
         trx_id: str = None,
         num: int = 20,
         is_include_starttrx: bool = False,
@@ -228,7 +209,7 @@ class FullNodeAPI(BaseAPI):
 
         按条件获取某个组的内容并去重返回
 
-        is_reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
+        reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
         trx_id: 某条内容的 Trx ID, 如果提供, 从该条之后(不包含)获取
         num: 要获取内容条数, 默认获取最前面的 20 条内容
         is_include_starttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
@@ -239,9 +220,9 @@ class FullNodeAPI(BaseAPI):
             return []
 
         if trx_id:
-            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&starttrx={trx_id}&reverse={str(is_reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
+            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&starttrx={trx_id}&reverse={str(reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
         else:
-            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&reverse={str(is_reverse).lower()}"
+            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&reverse={str(reverse).lower()}"
 
         trxs = self._post(apiurl) or []
         return utils.unique_trxs(trxs)
@@ -282,6 +263,16 @@ class FullNodeAPI(BaseAPI):
             group_id=group_id,
         )
 
+    def trx_to_newobj(self, trx, group_id=None):
+        """trans from trx to an object of new trx to send to chain.
+        Returns:
+            obj: object of NewTrx,can be used as: self.send_note(obj=obj).
+        """
+
+        refer_trx = self.trx(utils.get_refer_trxid(trx), group_id)
+        params = utils.rx_retweet_params_init(trx, refer_trx)
+        return params
+
     def search_file_trxs(self, trx_id=None, group_id=None):
         trxs = self.all_content_trxs(trx_id, group_id=group_id)
         infos = []
@@ -303,24 +294,13 @@ class FullNodeAPI(BaseAPI):
             self._send(obj=obj, activity_type="Add", group_id=group_id)
 
     def download_file(self, file_dir, group_id=None):
-        logger.debug(f"download file to dir {file_dir} start...")
         infos, trxs = self.search_file_trxs(group_id)
-        for info in infos:
-            utils.merge_trxs_to_file(file_dir, info, trxs)
-        logger.debug(f"download file to dir {file_dir} done")
+        utils.merge_trxs_to_files(infos, trxs)
 
     def block(self, block_id: str, group_id=None):
         """get the info of a block in a group"""
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/block/{group_id}/{block_id}")
-
-    def is_owner(self, group_id=None) -> bool:
-        """return True if I create this group else False"""
-        group_id = self.check_group_id_as_required(group_id)
-        info = self.group_info(group_id)
-        if info.owner_pubkey == info.user_pubkey:
-            return True
-        return False
 
     def all_content_trxs(self, trx_id: str = None, group_id=None, senders=None):
         """get all the trxs of content started from trx_id"""
@@ -333,7 +313,7 @@ class FullNodeAPI(BaseAPI):
                 break
             else:
                 checked_trxids.append(trx_id)
-            newtrxs = self.content_trxs(trx_id=trx_id, num=100, group_id=group_id)
+            newtrxs = self.get_group_content(trx_id=trx_id, num=100, group_id=group_id)
             if len(newtrxs) == 0:
                 break
             if senders:
@@ -351,32 +331,11 @@ class FullNodeAPI(BaseAPI):
                 return tid
         return trx_id
 
-    def trx_type(self, trxdata: Dict):
-        """get type of trx, trx is one of group content list"""
-        if "TypeUrl" not in trxdata:
-            return "encrypted"
-        if trxdata["TypeUrl"] == "quorum.pb.Person":
-            return "person"
-        content = trxdata["Content"]
-        trxtype = content.get("type", "other")
-        if type(trxtype) == int:
-            return "announce"
-        if trxtype == "Note":
-            if "inreplyto" in content:
-                return "reply"
-            if "image" in content:
-                if "content" not in content:
-                    return "image_only"
-                else:
-                    return "image_text"
-            return "text_only"
-        return trxtype.lower()  # "like","dislike","other"
-
     def trx(self, trx_id: str, group_id=None):
         """get trx data by trx_id"""
         group_id = self.check_group_id_as_required(group_id)
         data = {}
-        trxs = self.content_trxs(trx_id=trx_id, num=1, is_include_starttrx=True, group_id=group_id)
+        trxs = self.get_group_content(trx_id=trx_id, num=1, is_include_starttrx=True, group_id=group_id)
         if len(trxs) > 1:
             raise ValueError(f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.")
         elif len(trxs) == 1:
@@ -459,84 +418,6 @@ class FullNodeAPI(BaseAPI):
                     users[pubkey].update({key: trx["Content"][key]})
         users_data.update({"data": users, "update_at": str(datetime.datetime.now())})
         return users_data
-
-    def trx_to_newobj(self, trx, nicknames, refer_trx=None, group_id=None):
-        """trans from trx to an object of new trx to send to chain.
-
-        Args:
-            trx (dict): the trx data
-            nicknames (dict): the nicknames data of the group
-
-        Returns:
-            obj: object of NewTrx,can be used as: self.send_note(obj=obj).
-            result: True,or False, if True, the obj can be send to chain.
-        """
-
-        group_id = self.check_group_id_as_required(group_id)
-        if "Content" not in trx:
-            return None, False
-
-        obj = {"type": "Note", "image": []}
-        ttype = trx["TypeUrl"]
-        tcontent = trx["Content"]
-        lines = []
-
-        if ttype == "quorum.pb.Person":
-            _name = "昵称" if "name" in tcontent else ""
-            _wallet = "钱包" if "wallet" in tcontent else ""
-            _image = "头像" if "image" in tcontent else ""
-            _profile = "、".join([i for i in [_name, _image, _wallet] if i])
-            lines.append(f"修改了个人信息：{_profile}。")
-        elif ttype == "quorum.pb.Object":
-            if tcontent.get("type") == "File":
-                lines.append(f"上传了文件。")
-            else:
-                text = trx["Content"].get("content", "")
-                img = trx["Content"].get("image", [])
-                lines.append(text)
-                obj["image"].extend(img)
-
-                t = self.trx_type(trx)
-                refer_tid = None
-                _info = {"like": "赞", "dislike": "踩"}
-                if t == "announce":
-                    lines.insert(0, f"处理了链上请求。")
-                elif t in _info:
-                    refer_tid = trx["Content"]["id"]
-                    refer_pubkey = self.trx(refer_tid, group_id).get("Publisher", "")
-                    lines.insert(
-                        0,
-                        f"点{_info[t]}给 `{utils.get_nickname( refer_pubkey,nicknames)}` 所发布的内容：",
-                    )
-                elif t == "reply":
-                    lines.insert(0, f"回复说：")
-                    refer_tid = trx["Content"]["inreplyto"]["trxid"]
-                    refer_pubkey = self.trx(refer_tid, group_id).get("Publisher", "")
-                    lines.append(f"\n回复给 `{utils.get_nickname(refer_pubkey,nicknames)}` 所发布的内容：")
-                else:
-                    if text and img:
-                        lines.insert(0, f"发布了图片，并且说：")
-                    elif img:
-                        lines.insert(0, f"发布了图片。")
-                    else:
-                        lines.insert(0, f"说：")
-
-                if refer_tid:
-
-                    refer_trx = refer_trx or self.trx(refer_tid, group_id)
-                    if "Content" in refer_trx:
-                        refer_text = refer_trx["Content"].get("content", "")
-                        refer_img = refer_trx["Content"].get("image", [])
-                        lines.append(utils.quote_str(refer_text))
-                        obj["image"].extend(refer_img)
-        else:
-            return None, False
-
-        obj["content"] = f'{utils.timestamp_to_datetime(trx.get("TimeStamp"))}' + " " + "\n".join(lines)
-        obj["image"] = obj["image"][:4]
-        obj = {key: obj[key] for key in obj if obj[key]}
-
-        return obj, True
 
     def trx_mode(self, trx_type: str = "POST", group_id=None):
         """获取某个 trx 类型的授权方式

@@ -99,8 +99,8 @@ class WhoSays(FullNode):
                     data[group_id][trx_id]["shared"] = []
                 if toshare_group_id in data[group_id][trx_id]["shared"]:
                     continue
-                obj, can_post = self.api.trx_to_newobj(gtrxs[trx_id], nicknames)
-                if not can_post:
+                obj = self.api.trx_to_newobj(gtrxs[trx_id], nicknames)
+                if not obj:
                     continue
                 _seed = json.dumps(self.api.seed())
                 _origin = f"origin: {_seed}" if _seed else f"origin: Group {group_id}"

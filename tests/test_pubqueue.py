@@ -1,7 +1,7 @@
 import datetime
 
+import rumpy.utils as utils
 from rumpy import FullNode
-from rumpy.utils import timestamp_to_datetime
 
 client = FullNode()
 
@@ -22,9 +22,9 @@ def test_update():
     print(data)
 
     for idata in data:
-        s1 = timestamp_to_datetime(idata["UpdateAt"])
-        s2 = timestamp_to_datetime(idata["Trx"]["TimeStamp"])
-        s3 = timestamp_to_datetime(idata["Trx"]["Expired"])
+        s1 = utils.timestamp_to_datetime(idata["UpdateAt"])
+        s2 = utils.timestamp_to_datetime(idata["Trx"]["TimeStamp"])
+        s3 = utils.timestamp_to_datetime(idata["Trx"]["Expired"])
         s4 = datetime.datetime.now()
         tid = idata["Trx"]["TrxId"]
         print(idata["State"], tid, s2, s1 - s2)

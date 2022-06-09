@@ -6,8 +6,8 @@ from typing import Dict, List
 
 from officy import Dir, Img, JsonFile
 
+import rumpy.utils as utils
 from rumpy import FullNode
-from rumpy.utils import timestamp_to_datetime
 
 
 def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
@@ -29,18 +29,18 @@ def _person_name(trx_id_or_pubkey, trxs, since=None, client=None):
     name = ""
     for trxdata in rlt:
         name = trxdata["Content"].get("name") or ""
-        if timestamp_to_datetime(trxdata.get("TimeStamp")) <= since:
+        if utils.timestamp_to_datetime(trxdata.get("TimeStamp")) <= since:
             return name
     return name
 
 
 def trx_export(trxdata: Dict, trxs: List) -> Dict:
     """export data with refer_to data"""
-    ts = timestamp_to_datetime(trxdata.get("TimeStamp"))
+    ts = utils.timestamp_to_datetime(trxdata.get("TimeStamp"))
     info = {
         "trx_id": trxdata["TrxId"],
         "trx_time": str(ts),
-        "trx_type": client.api.trx_type(trxdata),
+        "trx_type": utils.trx_type(trxdata),
     }
 
     _content = trxdata["Content"]

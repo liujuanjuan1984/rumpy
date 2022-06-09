@@ -26,8 +26,8 @@ from sqlalchemy import Boolean, Column, Integer, String, and_, distinct
 
 sys.path.insert(0, RUMPY_PATH)
 import rumpy
+import rumpy.utils as utils
 from rumpy import FullNode
-from rumpy.utils import timestamp_to_datetime
 
 sys.path.insert(0, MIXIN_SDK_PATH)
 import mixinsdk
@@ -161,10 +161,10 @@ class RssBot:
             gname = self.groups[group_id]["group_name"]
             minutes = self.groups[group_id]["minutes"]
             if not existd:
-                _trxs = self.rum.api.content_trxs(is_reverse=True, num=10)
+                _trxs = self.rum.api.get_group_content(reverse=True, num=10)
                 if len(_trxs) > 0:
                     trx_id = _trxs[-1]["TrxId"]
-                    _ts = str(timestamp_to_datetime(_trxs[-1]["TimeStamp"]))
+                    _ts = str(utils.timestamp_to_datetime(_trxs[-1]["TimeStamp"]))
                 else:
                     trx_id = None
                     _ts = None
@@ -179,7 +179,7 @@ class RssBot:
             else:
                 trx_id = existd.trx_id
 
-            trxs = self.rum.api.content_trxs(trx_id=trx_id, num=10)
+            trxs = self.rum.api.get_group_content(trx_id=trx_id, num=10)
             for trx in trxs:
                 _tid = trx["TrxId"]
                 trx_id = _tid
@@ -194,12 +194,12 @@ class RssBot:
                 if existd2:
                     continue
 
-                ts = str(timestamp_to_datetime(trx["TimeStamp"]))  # 只发距今xx小时的更新，间隔时间由配置文件控制
+                ts = str(utils.timestamp_to_datetime(trx["TimeStamp"]))  # 只发距今xx小时的更新，间隔时间由配置文件控制
                 if ts <= str(datetime.datetime.now() + datetime.timedelta(minutes=minutes)):
                     continue
 
-                obj, can_post = self.rum.api.trx_to_newobj(trx, nicknames)
-                if not can_post:
+                obj = self.rum.api.trx_to_newobj(trx)
+                if not obj:
                     continue
 
                 pubkey = trx["Publisher"]
@@ -378,16 +378,16 @@ class RssBot:
         thatday = datetime.datetime.now().date() + datetime.timedelta(days=days)
         counts_result = {"data": {}, "date": str(thatday)}
         while True:
-            _trxs = self.rum.api.content_trxs(is_reverse=True, num=num)
+            _trxs = self.rum.api.get_group_content(reverse=True, num=num)
             if len(_trxs) == 0:
                 return counts_result
             if num >= 1000:
                 return counts_result
-            lastest_day = timestamp_to_datetime(_trxs[-1]["TimeStamp"]).date()
+            lastest_day = utils.timestamp_to_datetime(_trxs[-1]["TimeStamp"]).date()
             if lastest_day < thatday:
                 counts = {}
                 for _trx in _trxs:
-                    _day = timestamp_to_datetime(_trx["TimeStamp"]).date()
+                    _day = utils.timestamp_to_datetime(_trx["TimeStamp"]).date()
                     if _day == thatday:
                         _pubkey = _trx["Publisher"]
                         if _pubkey not in counts:

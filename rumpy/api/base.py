@@ -40,3 +40,24 @@ class BaseAPI:
         if info.user_pubkey != info.owner_pubkey:
             raise ValueError(f"You are not the owner of this group: <{group_id}>.")
         return group_id
+
+    def is_joined(self, group_id=None) -> bool:
+        try:
+            self.check_group_joined_as_required(group_id)
+            return True
+        except:
+            return False
+
+    def is_owner(self, group_id=None) -> bool:
+        """return True if I create this group else False"""
+        try:
+            self.check_group_owner_as_required(group_id)
+            return True
+        except:
+            return False
+
+    def raise_error(self, resp, except_err=None):
+        if err := resp.get("error"):
+            if err != except_err:
+                raise ValueError(err)
+        return resp

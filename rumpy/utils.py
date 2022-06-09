@@ -13,8 +13,7 @@ import certifi
 import filetype
 from PIL import Image
 
-from rumpy.types.data import CHUNK_SIZE, IMAGE_MAX_SIZE_KB, TRX_TYPES, FileObj
-
+from rumpy.types.data import *
 logger = logging.getLogger(__name__)
 
 
@@ -42,6 +41,24 @@ def check_crtfile(crtfile):
     return crtfile
 
 
+def check_seed(seed: Dict):
+    if is_seed(seed):
+        return seed
+    try:
+        Seed(**seed)
+    except Exception as e:
+        raise ValueError(f"{seed.get('error')}\n\n{e}")
+
+
+def is_seed(seed: Dict) -> bool:
+    try:
+        Seed(**seed)
+        return True
+    except Exception as e:
+        logger.error(f"{e}")
+        return False
+
+
 def group_icon(icon):
     """icon: one image as file path, or bytes, or bytes-string."""
 
@@ -52,6 +69,21 @@ def group_icon(icon):
 
 def quote_str(text):
     return "".join(["> ", "\n> ".join(text.split("\n")), "\n"]) if text else ""
+
+
+def filename_init_from_bytes(file_bytes):
+    extension = filetype.guess(file_bytes).extension
+    name = f"{uuid.uuid4()}-{datetime.date.today()}"
+    return ".".join([name, extension])
+
+
+def filename_init(path_bytes_string):
+    file_bytes, is_file = get_filebytes(path_bytes_string)
+    if is_file:
+        file_name = os.path.basename(path_bytes_string).encode().decode("utf-8")
+    else:
+        file_name = filename_init_from_bytes(file_bytes)
+    return file_name
 
 
 def get_nickname(pubkey, nicknames):
@@ -77,21 +109,6 @@ def get_filebytes(path_bytes_string):
     else:
         raise ValueError(f"not support for type: {_type} and length: {_size}.and error: {e}")
     return file_bytes, is_file
-
-
-def filename_init_from_bytes(file_bytes):
-    extension = filetype.guess(file_bytes).extension
-    name = f"{uuid.uuid4()}-{datetime.date.today()}"
-    return ".".join([name, extension])
-
-
-def filename_init(path_bytes_string):
-    file_bytes, is_file = get_filebytes(path_bytes_string)
-    if is_file:
-        file_name = os.path.basename(path_bytes_string).encode().decode("utf-8")
-    else:
-        file_name = filename_init_from_bytes(file_bytes)
-    return file_name
 
 
 def read_file_to_bytes(file_path):
@@ -265,3 +282,120 @@ def merge_trxs_to_file(file_dir, info, trxs):
             ifile.write(content)
         ifile.close()
         logger.info(f"{ifilepath}, downloaded!")
+
+
+def merge_trxs_to_files(infos, trxs):
+    for info in infos:
+        merge_trxs_to_file(file_dir, info, trxs)
+
+
+def trx_typeurl(trx):
+    typeurl = trx.get("TypeUrl")
+    if type_url == "quorum.pb.Person":
+        return "Person"
+    elif type_url == "quorum.pb.Object":
+        return "Object"
+    return typeurl
+
+
+def trx_type(trx: Dict):
+    """get type of trx, trx is one of group content list"""
+    typeurl = trx_typeurl(trx)
+    if not typeurl:
+        return "encrypted"
+    if typeurl == "Person":
+        return "person"
+    content = trx.get("Content", {})
+    trxtype = content.get("type", "other")
+    if type(trxtype) == int:
+        return "announce"
+    if trxtype == "Note":
+        if "inreplyto" in content:
+            return "reply"
+        if "image" in content:
+            if "content" not in content:
+                return "image_only"
+            else:
+                return "image_text"
+        return "text_only"
+    return trxtype.lower()  # "like","dislike","other"
+
+
+def get_refer_trxid(trx):
+    # 从trx中筛选出引用的 trx_id
+    
+    try:
+        refer_tid = trx["Content"]["inreplyto"]["trxid"]
+    except Exception :
+        refer_tid = trx["Content"]["id"]
+        if len(refer_tid) != 36:
+            refer_tid = None
+    except:
+        refer_tid = None
+    return refer_tid
+
+
+def _init_profile_status(trx_content):
+    _name = "昵称" if "name" in trx_content else ""
+    _wallet = "钱包" if "wallet" in trx_content else ""
+    _image = "头像" if "image" in trx_content else ""
+    _profile = "、".join([i for i in [_name, _image, _wallet] if i])
+    return _profile
+
+
+def _get_content(trx_content):
+    _text = trx_content.get("content", "")
+    _imgs = trx_content.get("image", [])
+    return _text, _imgs
+
+
+def trx_retweet_params_init(trx, refer_trx=None):
+    refer_trx = refer_trx or {}
+    refer_nickname = get_nickname(refer_trx.get("Publisher", ""), nicknames)  # TODO:nicknames 的处理和数据来源
+    refer_text, refer_imgss = _get_content(refer_trx.get("Content", {}))
+
+    trx_content = trx.get("Content", {})
+    if not trx_content:
+        return None
+    trx_type = trx_type(trx)
+    text, imgs = _get_content(trx_content)
+    images = []
+    lines = []
+
+    if trx_type == "person":
+        _profile = _init_profile_status(trx_content)
+        lines.append(f"修改了个人信息：{_profile}。")
+    elif trx_type == "file":
+        lines.append("上传了文件。")
+    elif trx_type == "announce":
+        lines.append("处理了链上请求。")
+    elif trx_type == "like":
+        lines.append(f"点赞给 `{refer_nickname}` 所发布的内容：")
+    elif trx_type == "dislike":
+        lines.append(f"点踩给 `{refer_nickname}` 所发布的内容：")
+    elif trx_type == "text_only":
+        lines.insert(0, f"说：")
+        lines.append(text)
+    elif trx_type == "image_text":
+        lines.insert(0, f"发布了图片，并且说：")
+        lines.append(text)
+        images.extend(img)
+    elif trx_type == "image_only":
+        lines.insert(0, f"发布了图片。")
+        images.extend(img)
+    elif trx_type == "reply":
+        lines.insert(0, f"回复说：")
+        if text:
+            lines.append(text)
+        if img:
+            images.extend(img)
+        lines.append(f"\n回复给 `{refer_nickname}` 所发布的内容：")
+
+    if refer_text:
+        lines.append(quote_str(refer_text))
+    if refer_imgs:
+        images.extend(refer_imgs)
+
+    _dt = timestamp_to_datetime(trx.get("TimeStamp"))
+    params = {"content": f"{_dt} " + "\n".join(lines), "image": images}
+    return params
