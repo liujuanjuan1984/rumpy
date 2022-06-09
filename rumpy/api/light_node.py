@@ -151,6 +151,19 @@ class LightNodeAPI(BaseAPI):
             group_id=group_id,
         )
 
-    def update_profile(self, group_id, name=None, wallet=None, image=None):
-        payload = {}  # todo
+    def update_profile(self, group_id, name=None, mixin_id=None, image=None):
+        """user update the profile: name, image, or wallet.
+
+        name: nickname of user
+        image: one image, as file_path or bytes or bytes-string
+        mixin_id: one kind of wallet
+        """
+        kwargs = dict(
+            activity_type="Update",
+            group_id=group_id,
+            name=name,
+            image=image,
+            wallet={"wallet_id": mixin_id},
+        )
+        payload = NewTrx(**kwargs).__dict__
         return self._post(f"/v1/group/profile", payload)

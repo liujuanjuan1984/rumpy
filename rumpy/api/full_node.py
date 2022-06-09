@@ -679,40 +679,81 @@ class FullNodeAPI(BaseAPI):
         """获取某个组的黑名单"""
         return self._list("deny", group_id)
 
-    def set_appconfig(
-        self,
-        name="group_desc",
-        the_type="string",
-        value="增加组的简介",
-        action="add",
-        image=None,
-        memo="add",
-        group_id=None,
-    ):
-        """组创建者更新组的某个配置项
-
-        name: 配置项的名称, 自定义, 以 rum-app 为例, 目前支持 'group_announcement'(组的公告),
-            'group_desc'(组的简介),'group_icon'(组的图标), 均是 "string" 类型
-        the_type: 配置项的类型, 可选值为 "int", "bool", "string"
-        value: 配置项的值, 必须与 type 相对应
-        action: "add" 或 "del", 增加/修改 或 删除
-        image: 一张图片路径, 如果提供, 将转换为 value 的值,
-            例如 rum-app 用作组的图标(需要 name 是 'group_icon')
-        memo: Memo
-        """
+    def _update_appconfig(self, key_name, key_type, key_value, action="add", memo=None, group_id=None):
         group_id = self.check_group_owner_as_required(group_id)
-        if image:
-            value = utils.group_icon(image)
+
         payload = {
             "action": action,
             "group_id": group_id,
-            "name": name,
-            "type": the_type,
-            "value": value,
-            "memo": memo,
+            "name": key_name,
+            "type": key_type,
+            "value": key_value,
+            "memo": memo or f"update {key_name}",
         }
-
         return self._post("/api/v1/group/appconfig", payload)
+
+    def set_group_desc(self, desc: str, action="add", memo=None, group_id=None):
+        payload = {
+            "key_name": "group_desc",
+            "key_type": "string",
+            "key_value": desc,
+            "action": action,
+            "memo": memo,
+            "group_id": group_id,
+        }
+        return self._update_appconfig(**payload)
+
+    def set_group_icon(self, icon, action="add", memo=None, group_id=None):
+        payload = {
+            "key_name": "group_icon",
+            "key_type": "string",
+            "key_value": utils.group_icon(icon),
+            "action": action,
+            "memo": memo,
+            "group_id": group_id,
+        }
+        return self._update_appconfig(**payload)
+
+    def set_group_announcement(self, announcement, action="add", memo=None, group_id=None):
+        payload = {
+            "key_name": "group_announcement",
+            "key_type": "string",
+            "key_value": announcement,
+            "action": action,
+            "memo": memo,
+            "group_id": group_id,
+        }
+        return self._update_appconfig(**payload)
+
+    def set_group_default_permission(self, default_permission, action="add", memo=None, group_id=None):
+        payload = {
+            "key_name": "group_default_permission",
+            "key_type": "string",
+            "key_value": default_permission,  # WRITE or READ
+            "action": action,
+            "memo": memo,
+            "group_id": group_id,
+        }
+        return self._update_appconfig(**payload)
+
+    def set_appconfig(
+        self,
+        desc: str = None,
+        icon=None,
+        announcement: str = None,
+        default_permission: str = None,
+        action="add",
+        memo=None,
+        group_id=None,
+    ):
+        if desc:
+            self.set_group_desc(desc, action=action, memo=memo, group_id=group_id)
+        if icon:
+            self.set_group_icon(icon, action=action, memo=memo, group_id=group_id)
+        if announcement:
+            self.set_group_announcement(announcement, action=action, memo=memo, group_id=group_id)
+        if default_permission:
+            self.set_group_default_permission(default_permission, action=action, memo=memo, group_id=group_id)
 
     def keylist(self, group_id=None):
         """获取组的所有配置项"""
@@ -821,25 +862,20 @@ class FullNodeAPI(BaseAPI):
         }
         return self._post("/api/v1/group/producer", payload)
 
-    def update_profile(self, name, image=None, mixin_id=None, group_id=None):
+    def update_profile(self, name=None, image=None, mixin_id=None, group_id=None):
         """user update the profile: name, image, or wallet.
 
         name: nickname of user
-        image: image file_path
+        image: one image, as file_path or bytes or bytes-string
         mixin_id: one kind of wallet
         """
         group_id = self.check_group_joined_as_required(group_id)
-        if image:
-            image = NewTrxImg(file_path=image).__dict__
-        payload = {
-            "type": "Update",
-            "person": {"name": name, "image": image},
-            "target": {"id": group_id, "type": "Group"},
-        }
-        if mixin_id:
-            payload["person"]["wallet"] = {
-                "id": mixin_id,
-                "type": "mixin",
-                "name": "mixin messenger",
-            }
+        kwargs = dict(
+            activity_type="Update",
+            group_id=group_id,
+            name=name,
+            image=image,
+            wallet={"wallet_id": mixin_id},
+        )
+        payload = NewTrx(**kwargs).__dict__
         return self._post("/api/v1/group/profile", payload)

@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import time
-import uuid
 from typing import Any, Dict, List
 
 import filetype
@@ -22,8 +21,11 @@ TRX_TYPES = [
 ]
 
 API_PAYMENT_GATEWAY: str = "https://prs-bp2.press.one/api"
-IMAGE_MAX_SIZE_KB = 200  # kb 每条trx中所包含的图片总大小限制为 200
-CHUNK_SIZE = 150 * 1024  # 150kb
+# 将一张或多张图片处理成 RUM 支持的图片对象列表, 要求总大小小于 200kb，此为链端限定
+IMAGE_MAX_SIZE_KB = 200  # 200 kb 每条trx中所包含的图片总大小限制为 200
+# 单条 trx 最多4 张图片；此为 rum app 客户端限定：第三方 app 调整该限定
+IMAGE_MAX_NUM = 4
+CHUNK_SIZE = 150 * 1024  # 150 kb，文件切割为多条trxs时，每条trx所包含的文件字节流上限
 
 
 @dataclasses.dataclass
@@ -143,31 +145,17 @@ class ProfileParams:
 
 @dataclasses.dataclass
 class NewTrxImg:
-    """将一张图片处理成 RUM 支持的图片对象, 例如用户头像, 要求大小小于 200kb
-
-    kb: 设置图片大小, 需要小于 200kb
-    """
-
-    def __init__(self, file_path=None, file_bytes=None, kb=None):
-
-        from rumpy.utils import zip_image_file
+    def __init__(self, path_bytes_string, kb=None):
+        from rumpy.utils import filename_init, zip_image
 
         kb = kb or IMAGE_MAX_SIZE_KB
-
-        if file_path == None and file_bytes == None:
-            raise ValueError("need file_path or file_bytes")
-
-        if file_path:
-            file_bytes = zip_image_file(file_path, kb)
-            self.name = os.path.basename(file_path).encode().decode("utf-8")
-
-        if file_bytes:
-            extension = filetype.guess(file_bytes).extension
-            name = f"{uuid.uuid4()}-{round(int(time.time()*1000000))}"
-            self.name = ".".join([name, extension])
-
+        self.name = filename_init(path_bytes_string)
+        file_bytes = zip_image(path_bytes_string, kb)
         self.mediaType = filetype.guess(file_bytes).mime
         self.content = base64.b64encode(file_bytes).decode("utf-8")
+
+    def person_img(self):
+        return {"content": self.content, "mediaType": self.mediaType}
 
 
 @dataclasses.dataclass
@@ -209,19 +197,17 @@ class NewTrxObject:
         if name and type(name) == str:
             self.name = name
 
-        if images:  # 待优化 TODO
-            # 将一张或多张图片处理成 RUM 支持的图片对象列表, 要求总大小小于 200kb
-            # 客户端限定：单条 trx 最多4 张图片
-            kb = int(200 // min(len(images), 4))
-            self.image = [NewTrxImg(file_path=file_path, kb=kb).__dict__ for file_path in images[:4]]
+        if images:
+            kb = int(IMAGE_MAX_SIZE_KB // min(len(images), IMAGE_MAX_NUM))
+            self.image = [NewTrxImg(i, kb=kb).__dict__ for i in images[:IMAGE_MAX_NUM]]
 
         if edit_trx_id and type(edit_trx_id) == str:
             self.id = edit_trx_id
             # check other params:
             if self.type != "Note":
                 raise ValueError(f"only Note type can be edited. type now: {self.type} ")
-            if not (self.content or self.images):
-                raise ValueError("content or images is needed.")
+            if not (self.content or self.image):
+                raise ValueError("content or image is needed.")
 
         if del_trx_id and type(del_trx_id) == str:
             self.id = del_trx_id
@@ -233,8 +219,8 @@ class NewTrxObject:
 
         if reply_trx_id and type(reply_trx_id) == str:
             self.inreplyto = {"trxid": reply_trx_id}
-            if not (self.content or self.images):
-                raise ValueError("content or images is needed.")
+            if not (self.content or self.image):
+                raise ValueError("content or image is needed.")
 
         if like_trx_id and type(like_trx_id) == str:
             self.id = like_trx_id
@@ -257,10 +243,38 @@ class FileObj(NewTrxObject):
 
 
 @dataclasses.dataclass
+class WalletInfo:
+    def __init__(self, wallet_id=None, wallet_type=None, wallet_name=None, **kwargs):
+        self.id = wallet_id or kwargs.get("wallet_id")
+        self.type = wallet_type or kwargs.get("wallet_type", "mixin")
+        self.name = wallet_name or kwargs.get("wallet_name", "mixinmessenger")
+
+
+@dataclasses.dataclass
+class PersonObj(NewTrxObject):
+    """activity.person object; for user to update profile."""
+
+    def __init__(
+        self,
+        name: str = None,
+        image=None,
+        wallet: Dict = None,
+    ):
+        if name:
+            self.name = name
+        if image:
+            self.image = NewTrxImg(image).person_img()
+        if wallet.get("wallet_id"):
+            self.wallet = [WalletInfo(**wallet).__dict__]
+        if not (name or image or wallet):
+            raise ValueError("update person profile needs at least one of name or image or wallet.")
+
+
+@dataclasses.dataclass
 class NewTrx:
     def __init__(self, activity_type, group_id, obj=None, **kwargs):
         self.type = activity_type
-        if self.type not in [4, "Add", "Like", "Dislike"]:
+        if self.type not in [4, "Add", "Like", "Dislike", "Update"]:
             raise ValueError(
                 f"{self.type} is not one of 4,Add,Like,Dislike... check the input params or update the rumpy code. "
             )
@@ -270,7 +284,9 @@ class NewTrx:
         else:
             raise ValueError("group_id param is need.")
 
-        if isinstance(obj, NewTrxObject):
+        if self.type == "Update":
+            self.person = PersonObj(**kwargs).__dict__
+        elif isinstance(obj, NewTrxObject):
             self.object = NewTrxObject(**obj.__dict__).__dict__
         elif isinstance(obj, dict):
             if self.type == "Add" and "type" not in obj:

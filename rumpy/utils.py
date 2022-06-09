@@ -6,6 +6,7 @@ import json
 import logging
 import math
 import os
+import uuid
 from typing import Any, Dict, List
 
 import certifi
@@ -41,11 +42,11 @@ def check_crtfile(crtfile):
     return crtfile
 
 
-def group_icon(file_path: str):
-    """将一张图片处理成组配置项 value 字段的值, 例如组的图标对象"""
+def group_icon(icon):
+    """icon: one image as file path, or bytes, or bytes-string."""
 
-    img_bytes = zip_image_file(file_path)
-    icon = f'data:{filetype.guess(img_bytes).mime}base64,{base64.b64encode(img_bytes).decode("utf-8")}'
+    img_bytes = zip_image(icon)
+    icon = f'data:{filetype.guess(img_bytes).mime};base64,{base64.b64encode(img_bytes).decode("utf-8")}'
     return icon
 
 
@@ -61,8 +62,39 @@ def get_nickname(pubkey, nicknames):
     return name
 
 
-def read_file_to_bytes(file_path):
+def get_filebytes(path_bytes_string):
+    _type = type(path_bytes_string)
+    _size = len(path_bytes_string)
+    is_file = False
+    if _type == str:
+        if os.path.exists(path_bytes_string):
+            file_bytes = read_file_to_bytes(path_bytes_string)
+            is_file = True
+        else:
+            file_bytes = base64.b64decode(path_bytes_string)
+    elif _type == bytes:
+        file_bytes = path_bytes_string
+    else:
+        raise ValueError(f"not support for type: {_type} and lenth: {_size}.and error: {e}")
+    return file_bytes, is_file
 
+
+def filename_init_from_bytes(file_bytes):
+    extension = filetype.guess(file_bytes).extension
+    name = f"{uuid.uuid4()}-{datetime.date.today()}"
+    return ".".join([name, extension])
+
+
+def filename_init(path_bytes_string):
+    file_bytes, is_file = get_filebytes(path_bytes_string)
+    if is_file:
+        file_name = os.path.basename(path_bytes_string).encode().decode("utf-8")
+    else:
+        file_name = filename_init_from_bytes(file_bytes)
+    return file_name
+
+
+def read_file_to_bytes(file_path):
     if not os.path.exists(file_path):
         raise ValueError(f"{file_path} file is not exists.")
 
@@ -129,19 +161,14 @@ def zip_gif(gif, kb=IMAGE_MAX_SIZE_KB, cover=False):
     return read_file_to_bytes(gif)
 
 
-def zip_image(img_bytes, kb=IMAGE_MAX_SIZE_KB):
-    """压缩图片(非动图)到指定大小 (kb) 以下
-
-    img_bytes: 图片字节
-    kb: 指定压缩大小, 默认 200kb
-
-    返回压缩后的图片字节
-    """
+def zip_image_bytes(img_bytes, kb=IMAGE_MAX_SIZE_KB):
+    """zip image bytes and return bytes; default changed to .jpeg"""
 
     kb = kb or IMAGE_MAX_SIZE_KB
+    guess_extension = filetype.guess(img_bytes).extension
 
     with io.BytesIO(img_bytes) as im:
-        size = len(im.getvalue()) / 1024
+        size = len(im.getvalue()) // 1024
         if size < kb:
             return img_bytes
         while size >= kb:
@@ -150,22 +177,24 @@ def zip_image(img_bytes, kb=IMAGE_MAX_SIZE_KB):
             out = img.resize((int(x * 0.95), int(y * 0.95)), Image.ANTIALIAS)
             im.close()
             im = io.BytesIO()
-            out.save(im, "jpeg")
-            size = len(im.getvalue()) / 1024
+            try:
+                out.save(im, "jpeg")
+            except:
+                out.save(im, guess_extension)
+            size = len(im.getvalue()) // 1024
         return im.getvalue()
 
 
-def zip_image_file(file_path, kb=IMAGE_MAX_SIZE_KB):
+def zip_image(path_bytes_string, kb=IMAGE_MAX_SIZE_KB):
+    file_bytes, is_file = get_filebytes(path_bytes_string)
 
-    img_bytes = read_file_to_bytes(file_path)
     try:
-        if filetype.guess(img_bytes).extension == "gif":
-            img_bytes = zip_gif(file_path, kb=kb, cover=False)
+        if filetype.guess(file_bytes).extension == "gif" and is_file:
+            img_bytes = zip_gif(path_bytes_string, kb=kb, cover=False)
         else:
-            img_bytes = zip_image(img_bytes, kb=kb)
+            img_bytes = zip_image_bytes(file_bytes, kb=kb)
     except Exception as e:
-        logger.warning(f"zip_image_file {e}")
-
+        logger.warning(f"zip_image {e}")
     return img_bytes
 
 
