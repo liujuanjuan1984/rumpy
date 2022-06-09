@@ -238,9 +238,9 @@ class RssBot:
             if text.find("OBJECT_STATUS_DELETED") >= 0:
                 return False
 
-            _lenth = 200
-            if len(text) > _lenth:
-                text = text[:_lenth] + "...略..."
+            _length = 200
+            if len(text) > _length:
+                text = text[:_length] + "...略..."
             return text
 
         def _one_group(group_id):

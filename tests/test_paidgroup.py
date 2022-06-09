@@ -41,11 +41,6 @@ def test_update():
     print(r)
 
 
-def test_end():
-    client.api.leave_group()
-
-
 if __name__ == "__main__":
     test_basic()
     test_update()
-    test_end()

@@ -32,8 +32,10 @@ class HttpRequest:
         )
         if jwt_token:
             self._session.headers.update({"Authorization": f"Bearer {jwt_token}"})
-        if "127.0.0.1" in self.api_base:
-            os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.api_base])
+
+        _no_proxy = os.getenv("NO_PROXY", "")
+        if "127.0.0.1" in api_base and api_base not in _no_proxy:
+            os.environ["NO_PROXY"] = ",".join([_no_proxy, api_base])
 
     def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None):
         api_base = api_base or self.api_base or ""
@@ -51,8 +53,9 @@ class HttpRequest:
             body_json = {}
 
         if resp.status_code != 200:
-            logger.warning(f"payload:{payload}")
-            logger.debug(f"url:{url}")
+            logger.info(f"payload:{payload}")
+            logger.info(f"url:{url}")
+
         return body_json
 
     def get(self, endpoint: str, payload: Dict = {}, api_base=None):

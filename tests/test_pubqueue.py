@@ -1,7 +1,9 @@
 import datetime
 
+from rumpy import FullNode
 from rumpy.utils import timestamp_to_datetime
-from tests import client
+
+client = FullNode()
 
 seed = client.api.create_group("mytest_pubqueque")
 client.group_id = seed["group_id"]
@@ -28,11 +30,6 @@ def test_update():
         print(idata["State"], tid, s2, s1 - s2)
 
 
-def test_end():
-    client.api.leave_group()
-
-
 if __name__ == "__main__":
     test_basic()
     test_update()
-    # test_end()

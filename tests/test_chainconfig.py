@@ -1,4 +1,6 @@
-from tests import client
+from rumpy import FullNode
+
+client = FullNode()
 
 seed = client.api.create_group("mytest_configs")
 client.group_id = seed["group_id"]
@@ -44,12 +46,6 @@ def test_update():
     test_basic()
 
 
-def test_end():
-    r = client.api.leave_group()
-    print(r)
-
-
 if __name__ == "__main__":
     test_basic()
     test_update()
-    test_end()

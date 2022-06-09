@@ -284,10 +284,8 @@ class NewTrx:
         else:
             raise ValueError("group_id param is need.")
 
-        if self.type == "Update":
-            self.person = PersonObj(**kwargs).__dict__
-        elif isinstance(obj, NewTrxObject):
-            self.object = NewTrxObject(**obj.__dict__).__dict__
+        if isinstance(obj, NewTrxObject):
+            self.object = obj.__dict__
         elif isinstance(obj, dict):
             if self.type == "Add" and "type" not in obj:
                 raise ValueError("obj need a `type` such as: `Note` or `File`")

@@ -75,7 +75,7 @@ def get_filebytes(path_bytes_string):
     elif _type == bytes:
         file_bytes = path_bytes_string
     else:
-        raise ValueError(f"not support for type: {_type} and lenth: {_size}.and error: {e}")
+        raise ValueError(f"not support for type: {_type} and length: {_size}.and error: {e}")
     return file_bytes, is_file
 
 
@@ -198,41 +198,35 @@ def zip_image(path_bytes_string, kb=IMAGE_MAX_SIZE_KB):
     return img_bytes
 
 
-def split_file_to_trx_objs(file_path):
-    file_total_size = os.path.getsize(file_path)
-    file_name = os.path.basename(file_path).encode().decode("utf-8")
-    file_obj = open(file_path, "rb")
+def split_file_to_trx_objs(path_bytes_string):
+    file_bytes, _ = get_filebytes(path_bytes_string)
+    total_size = len(file_bytes)
+    file_name = filename_init(path_bytes_string)
+
     fileinfo = {
-        "mediaType": filetype.guess(file_path).mime,
+        "mediaType": filetype.guess(file_bytes).mime,
         "name": file_name,
         "title": file_name.split(".")[0],
-        "sha256": sha256(file_obj.read()),
+        "sha256": sha256(file_bytes),
         "segments": [],
     }
 
-    chunks = math.ceil(file_total_size / CHUNK_SIZE)
+    n = math.ceil(total_size / CHUNK_SIZE)
+    chunks = [file_bytes[i * CHUNK_SIZE : (i + 1) * CHUNK_SIZE] for i in range(n)]
     objs = []
-
-    for i in range(chunks):
-        if i + 1 == chunks:
-            current_size = file_total_size % CHUNK_SIZE
-        else:
-            current_size = CHUNK_SIZE
-        file_obj.seek(i * CHUNK_SIZE)
-        ibytes = file_obj.read(current_size)
+    for i in range(n):
+        ibytes = file_bytes[i * CHUNK_SIZE : (i + 1) * CHUNK_SIZE]
         fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": sha256(ibytes)})
-        obj = FileObj(
-            name=f"seg-{i + 1}",
-            content=ibytes,
-            mediaType="application/octet-stream",
+        objs.append(
+            FileObj(
+                name=f"seg-{i + 1}",
+                content=ibytes,
+                mediaType="application/octet-stream",
+            )
         )
-        objs.append(obj)
-
     content = json.dumps(fileinfo).encode()
     obj = FileObj(content=content, name="fileinfo", mediaType="application/json")
-
     objs.insert(0, obj)
-    file_obj.close()
     return objs
 
 

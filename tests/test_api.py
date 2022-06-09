@@ -78,7 +78,8 @@ class TestCase:
             name = client.api.group_info().group_name
 
             if name.find("mytest_") >= 0 or name in group_names_to_leave:
-                client.api.leave_group()
+                # client.api.leave_group()
+                pass
 
     def test_group(self):
         seed = client.api.create_group("mytest_pytest_group")

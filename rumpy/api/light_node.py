@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict, List
 
 from rumpy.api.base import BaseAPI
-from rumpy.types.data import NewTrx
+from rumpy.types.data import NewTrx, PersonObj
 
 logger = logging.getLogger(__name__)
 
@@ -158,12 +158,6 @@ class LightNodeAPI(BaseAPI):
         image: one image, as file_path or bytes or bytes-string
         mixin_id: one kind of wallet
         """
-        kwargs = dict(
-            activity_type="Update",
-            group_id=group_id,
-            name=name,
-            image=image,
-            wallet={"wallet_id": mixin_id},
-        )
-        payload = NewTrx(**kwargs).__dict__
+        obj = PersonObj(name=name, image=image, wallet={"wallet_id": mixin_id})
+        payload = NewTrx(activity_type="Update", group_id=group_id, obj=obj).__dict__
         return self._post(f"/v1/group/profile", payload)

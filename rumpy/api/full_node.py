@@ -233,8 +233,9 @@ class FullNodeAPI(BaseAPI):
         num: 要获取内容条数, 默认获取最前面的 20 条内容
         is_include_starttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
         """
-        group_id = self.check_group_joined_as_required(group_id, quiet=True)
-        if not group_id:
+        try:
+            group_id = self.check_group_joined_as_required(group_id)
+        except:
             return []
 
         if trx_id:
@@ -870,12 +871,6 @@ class FullNodeAPI(BaseAPI):
         mixin_id: one kind of wallet
         """
         group_id = self.check_group_joined_as_required(group_id)
-        kwargs = dict(
-            activity_type="Update",
-            group_id=group_id,
-            name=name,
-            image=image,
-            wallet={"wallet_id": mixin_id},
-        )
-        payload = NewTrx(**kwargs).__dict__
+        obj = PersonObj(name=name, image=image, wallet={"wallet_id": mixin_id})
+        payload = NewTrx(activity_type="Update", group_id=group_id, obj=obj).__dict__
         return self._post("/api/v1/group/profile", payload)
