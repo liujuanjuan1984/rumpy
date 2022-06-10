@@ -98,16 +98,7 @@ class FullNodeAPI(BaseAPI):
 
         param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
         """
-        api = "/api/v1/network/stats"
-
-        if start or end:
-            query = "?"
-            if start:
-                query += f"&start={start}"
-            if end:
-                query += f"&end={end}"
-            api += urllib.parse.quote(query, safe="?&/")
-
+        api = utils.get_url(None, "/api/v1/network/stats", start=start, end=end)
         return self._get(api)
 
     def create_group(
@@ -199,10 +190,10 @@ class FullNodeAPI(BaseAPI):
     def get_group_content(
         self,
         group_id=None,
-        reverse: bool = False,
-        trx_id: str = None,
         num: int = 20,
-        is_include_starttrx: bool = False,
+        trx_id: str = None,
+        reverse: bool = False,
+        includestarttrx: bool = False,
         senders: List = None,
     ) -> List:
         """requests the content trxs of a group,return the list of the trxs data.
@@ -212,18 +203,21 @@ class FullNodeAPI(BaseAPI):
         reverse: 默认按顺序获取, 如果是 True, 从最新的内容开始获取
         trx_id: 某条内容的 Trx ID, 如果提供, 从该条之后(不包含)获取
         num: 要获取内容条数, 默认获取最前面的 20 条内容
-        is_include_starttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
+        includestarttrx: 如果是 True, 获取内容包含 Trx ID 这条内容
         """
         try:
             group_id = self.check_group_joined_as_required(group_id)
         except:
             return []
-
-        if trx_id:
-            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&starttrx={trx_id}&reverse={str(reverse).lower()}&includestarttrx={str(is_include_starttrx).lower()}"
-        else:
-            apiurl = f"/app/api/v1/group/{group_id}/content?num={num}&reverse={str(reverse).lower()}"
-
+        params = {
+            "num": num,
+            "starttrx": trx_id,
+            "reverse": reverse,
+            "includestarttrx": includestarttrx,
+            "senders": senders,
+        }
+        endpoint = f"/app/api/v1/group/{group_id}/content"
+        apiurl = utils.get_url(None, endpoint, **params)
         trxs = self._post(apiurl) or []
         return utils.unique_trxs(trxs)
 
@@ -335,7 +329,7 @@ class FullNodeAPI(BaseAPI):
         """get trx data by trx_id"""
         group_id = self.check_group_id_as_required(group_id)
         data = {}
-        trxs = self.get_group_content(trx_id=trx_id, num=1, is_include_starttrx=True, group_id=group_id)
+        trxs = self.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
         if len(trxs) > 1:
             raise ValueError(f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.")
         elif len(trxs) == 1:
@@ -561,7 +555,15 @@ class FullNodeAPI(BaseAPI):
         """获取某个组的黑名单"""
         return self._list("deny", group_id)
 
-    def _update_appconfig(self, key_name, key_type, key_value, action="add", memo=None, group_id=None):
+    def _update_appconfig(
+        self,
+        key_name,
+        key_type,
+        key_value,
+        action="add",
+        memo=None,
+        group_id=None,
+    ):
         group_id = self.check_group_owner_as_required(group_id)
 
         payload = {

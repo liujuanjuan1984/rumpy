@@ -101,17 +101,19 @@ class LightNodeAPI(BaseAPI):
         self,
         group_id: str,
         reverse: bool = False,
-        start_trx: str = None,
+        starttrx: str = None,
         num: int = 20,
-        include_start_trx: bool = False,
+        includestarttrx: bool = False,
+        senders: List = None,
     ) -> List:
 
         payload = {
             "group_id": group_id,
             "num": num,
-            "start_trx": start_trx,
+            "start_trx": starttrx,
             "reverse": json.dumps(reverse),
-            "include_start_trx": json.dumps(include_start_trx),
+            "include_start_trx": json.dumps(includestarttrx),
+            "senders": senders,
         }
 
         return self._post(f"/v1/group/getctn", payload)

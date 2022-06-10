@@ -8,12 +8,14 @@ import math
 import os
 import uuid
 from typing import Any, Dict, List
+from urllib import parse
 
 import certifi
 import filetype
 from PIL import Image
 
 from rumpy.types.data import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -323,10 +325,10 @@ def trx_type(trx: Dict):
 
 def get_refer_trxid(trx):
     # 从trx中筛选出引用的 trx_id
-    
+
     try:
         refer_tid = trx["Content"]["inreplyto"]["trxid"]
-    except Exception :
+    except Exception:
         refer_tid = trx["Content"]["id"]
         if len(refer_tid) != 36:
             refer_tid = None
@@ -399,3 +401,15 @@ def trx_retweet_params_init(trx, refer_trx=None):
     _dt = timestamp_to_datetime(trx.get("TimeStamp"))
     params = {"content": f"{_dt} " + "\n".join(lines), "image": images}
     return params
+
+
+def get_url(base=None, endpoint=None, **query_params):
+    url = parse.urljoin(base, endpoint)
+    if query_params:
+        for k, v in query_params.items():
+            if type(v) == bool:
+                query_params[k] = json.dumps(v)
+        query_ = parse.urlencode(query_params)
+        query_ = parse.quote(query_, safe="?&/")
+        return "?".join([url, query_])
+    return url

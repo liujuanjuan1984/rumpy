@@ -38,8 +38,11 @@ class HttpRequest:
             os.environ["NO_PROXY"] = ",".join([_no_proxy, api_base])
 
     def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None):
-        api_base = api_base or self.api_base or ""
-        url = api_base + endpoint
+        api_base = api_base or self.api_base
+        if not api_base:
+            raise ValueError(f"api_base is null, {api_base}")
+        url = utils.get_url(api_base, endpoint)
+
         try:
             resp = self._session.request(method=method, url=url, json=payload)
         except Exception as e:  # SSLCertVerificationError
