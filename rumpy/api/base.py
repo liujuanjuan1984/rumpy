@@ -107,7 +107,7 @@ class BaseAPI:
         return params
 
     def search_file_trxs(self, trx_id=None, group_id=None):
-        trxs = self._http.api.all_content_trxs(trx_id, group_id=group_id)
+        trxs = self._http.api.get_group_all_contents(trx_id=trx_id, group_id=group_id)
         infos = []
         filetrxs = []
         for trx in trxs:
@@ -129,3 +129,22 @@ class BaseAPI:
     def download_files(self, file_dir, group_id=None):
         infos, trxs = self.search_file_trxs(group_id)
         utils.merge_trxs_to_files(file_dir, infos, trxs)
+
+    def get_group_all_contents(self, trx_id=None, group_id=None, senders=None):
+        """返回的是一个生成器，可以用 for ... in ... 来迭代访问。"""
+        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20)
+        checked_trxids = []
+        while trxs:
+            if trx_id in checked_trxids:
+                break
+            else:
+                checked_trxids.append(trx_id)
+            for trx in trxs:
+                if senders:
+                    if trx.get("Publisher", "") in senders:
+                        yield trx
+                else:
+                    yield trx
+
+            trx_id = utils.last_trx_id(trx_id, trxs)
+            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20)

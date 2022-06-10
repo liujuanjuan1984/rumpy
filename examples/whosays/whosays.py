@@ -51,12 +51,8 @@ class WhoSays(FullNode):
             if group_id not in progress:
                 progress[group_id] = None
 
-            trxs = self.api.all_content_trxs(senders=pubkeys, trx_id=progress[group_id])
+            trxs = self.api.get_group_all_contents(senders=pubkeys, trx_id=progress[group_id])
             for trx in trxs:
-                if trx["Publisher"] not in pubkeys:
-                    print("ERROR: all_content_trxs senders params must be wrong.")
-                    continue
-
                 if trx["TrxId"] not in data[group_id]:
                     data[group_id][trx["TrxId"]] = trx
 
