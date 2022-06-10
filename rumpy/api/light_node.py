@@ -122,37 +122,6 @@ class LightNodeAPI(BaseAPI):
         payload = NewTrx(group_id=group_id, obj=obj, activity_type=activity_type, **kwargs).__dict__
         return self._post("/v1/group/content", payload)
 
-    def like(self, trx_id: str, group_id=None) -> Dict:
-        return self._send(like_trx_id=trx_id, activity_type="Like", group_id=group_id)
-
-    def dislike(self, trx_id: str, group_id=None) -> Dict:
-        return self._send(like_trx_id=trx_id, activity_type="Dislike", group_id=group_id)
-
-    def __send_note(self, group_id=None, **kwargs):
-        return self._send(group_id=group_id, activity_type="Add", object_type="Note", **kwargs)
-
-    def send_note(self, content: str = None, images: List = None, name=None, group_id=None):
-        return self.__send_note(content=content, images=images, name=None, group_id=group_id)
-
-    def del_note(self, trx_id, group_id=None):
-        return self.__send_note(del_trx_id=trx_id, group_id=group_id)
-
-    def edit_note(self, trx_id, content: str = None, images: List = None, group_id=None):
-        return self.__send_note(
-            edit_trx_id=trx_id,
-            content=content,
-            images=images,
-            group_id=group_id,
-        )
-
-    def reply(self, trx_id: str, content: str = None, images=None, group_id=None):
-        return self.__send_note(
-            reply_trx_id=trx_id,
-            content=content,
-            images=images,
-            group_id=group_id,
-        )
-
     def update_profile(self, group_id, name=None, mixin_id=None, image=None):
         """user update the profile: name, image, or wallet.
 

@@ -98,7 +98,7 @@ class FullNodeAPI(BaseAPI):
 
         param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
         """
-        api = utils.get_url(None, "/api/v1/network/stats", start=start, end=end)
+        api = utils.get_url(None, "/api/v1/network/stats", is_quote=True, start=start, end=end)
         return self._get(api)
 
     def create_group(
@@ -211,13 +211,15 @@ class FullNodeAPI(BaseAPI):
             return []
         params = {
             "num": num,
-            "starttrx": trx_id,
             "reverse": reverse,
-            "includestarttrx": includestarttrx,
-            "senders": senders,
         }
+        if trx_id:
+            params["starttrx"] = trx_id
+            params["includestarttrx"] = includestarttrx
+        if senders:
+            params["senders"] = senders
         endpoint = f"/app/api/v1/group/{group_id}/content"
-        apiurl = utils.get_url(None, endpoint, **params)
+        apiurl = utils.get_url(None, endpoint, is_quote=False, **params)
         trxs = self._post(apiurl) or []
         return utils.unique_trxs(trxs)
 
@@ -225,71 +227,6 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_joined_as_required(group_id)
         payload = NewTrx(group_id=group_id, obj=obj, activity_type=activity_type, **kwargs).__dict__
         return self._post("/api/v1/group/content", payload)
-
-    def like(self, trx_id: str, group_id=None) -> Dict:
-        return self._send(like_trx_id=trx_id, activity_type="Like", group_id=group_id)
-
-    def dislike(self, trx_id: str, group_id=None) -> Dict:
-        return self._send(like_trx_id=trx_id, activity_type="Dislike", group_id=group_id)
-
-    def __send_note(self, group_id=None, **kwargs):
-        return self._send(group_id=group_id, activity_type="Add", object_type="Note", **kwargs)
-
-    def send_note(self, content: str = None, images: List = None, name=None, group_id=None):
-        return self.__send_note(content=content, images=images, name=None, group_id=group_id)
-
-    def del_note(self, trx_id, group_id=None):
-        return self.__send_note(del_trx_id=trx_id, group_id=group_id)
-
-    def edit_note(self, trx_id, content: str = None, images: List = None, group_id=None):
-        return self.__send_note(
-            edit_trx_id=trx_id,
-            content=content,
-            images=images,
-            group_id=group_id,
-        )
-
-    def reply(self, trx_id: str, content: str = None, images=None, group_id=None):
-        return self.__send_note(
-            reply_trx_id=trx_id,
-            content=content,
-            images=images,
-            group_id=group_id,
-        )
-
-    def trx_to_newobj(self, trx, group_id=None):
-        """trans from trx to an object of new trx to send to chain.
-        Returns:
-            obj: object of NewTrx,can be used as: self.send_note(obj=obj).
-        """
-
-        refer_trx = self.trx(utils.get_refer_trxid(trx), group_id)
-        params = utils.rx_retweet_params_init(trx, refer_trx)
-        return params
-
-    def search_file_trxs(self, trx_id=None, group_id=None):
-        trxs = self.all_content_trxs(trx_id, group_id=group_id)
-        infos = []
-        filetrxs = []
-        for trx in trxs:
-            if trx["Content"].get("name") == "fileinfo":
-                info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
-                logger.debug(f"{info}")
-                infos.append(info)
-            if trx["Content"].get("type") == "File":
-                filetrxs.append(trx)
-        return infos, filetrxs
-
-    def upload_file(self, file_path, group_id=None):
-        if not os.path.isfile(file_path):
-            logger.warning(f"{file_path} is not a file.")
-            return
-        for obj in utils.split_file_to_trx_objs(file_path):
-            self._send(obj=obj, activity_type="Add", group_id=group_id)
-
-    def download_file(self, file_dir, group_id=None):
-        infos, trxs = self.search_file_trxs(group_id)
-        utils.merge_trxs_to_files(infos, trxs)
 
     def block(self, block_id: str, group_id=None):
         """get the info of a block in a group"""
@@ -314,16 +251,9 @@ class FullNodeAPI(BaseAPI):
                 trxs.extend([itrx for itrx in newtrxs if itrx.get("Publisher") in senders])
             else:
                 trxs.extend(newtrxs)
-            trx_id = self.last_trx_id(trx_id, newtrxs)
-        return trxs
+            trx_id = utils.last_trx_id(trx_id, newtrxs)
 
-    def last_trx_id(self, trx_id: str, trxs: List):
-        """get the last-trx_id of trxs which if different from given trx_id"""
-        for i in range(-1, -1 * len(trxs), -1):
-            tid = trxs[i]["TrxId"]
-            if tid != trx_id:
-                return tid
-        return trx_id
+        return trxs
 
     def trx(self, trx_id: str, group_id=None):
         """get trx data by trx_id"""

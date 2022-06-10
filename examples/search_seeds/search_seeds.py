@@ -59,7 +59,7 @@ class SearchSeeds(FullNode):
 
         trxs = self.api.all_content_trxs(trx_id=trx_id)
         print(datetime.datetime.now(), trx_id, len(trxs))
-        logs[self.group_id] = self.api.last_trx_id(trx_id, trxs)
+        logs[self.group_id] = utils.last_trx_id(trx_id, trxs)
 
         for trx in trxs:
             for seed in self.intrx(trx):

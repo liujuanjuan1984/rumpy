@@ -42,6 +42,6 @@ elif asku == "2":
     file_dir = r"D:\test_download"
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
-    bot.api.download_file(file_dir)
+    bot.api.download_files(file_dir)
 else:
     print("byebye.")

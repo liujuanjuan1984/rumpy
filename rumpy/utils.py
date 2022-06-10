@@ -246,6 +246,7 @@ def split_file_to_trx_objs(path_bytes_string):
     content = json.dumps(fileinfo).encode()
     obj = FileObj(content=content, name="fileinfo", mediaType="application/json")
     objs.insert(0, obj)
+    logger.info(f"{file_name} objs {len(objs)}...")
     return objs
 
 
@@ -254,7 +255,7 @@ def merge_trxs_to_file(file_dir, info, trxs):
     if os.path.exists(ifilepath):
         logger.info(f" file exists {ifilepath}")
         return
-
+    logger.info(f"ifilepath {ifilepath} init..")
     # _check_trxs
     right_shas = [i["sha256"] for i in info["segments"]]
     contents = {}
@@ -286,7 +287,7 @@ def merge_trxs_to_file(file_dir, info, trxs):
         logger.info(f"{ifilepath}, downloaded!")
 
 
-def merge_trxs_to_files(infos, trxs):
+def merge_trxs_to_files(file_dir, infos, trxs):
     for info in infos:
         merge_trxs_to_file(file_dir, info, trxs)
 
@@ -403,13 +404,23 @@ def trx_retweet_params_init(trx, refer_trx=None):
     return params
 
 
-def get_url(base=None, endpoint=None, **query_params):
+def get_url(base=None, endpoint=None, is_quote=False, **query_params):
     url = parse.urljoin(base, endpoint)
     if query_params:
         for k, v in query_params.items():
             if type(v) == bool:
                 query_params[k] = json.dumps(v)
         query_ = parse.urlencode(query_params)
-        query_ = parse.quote(query_, safe="?&/")
+        if is_quote:
+            query_ = parse.quote(query_, safe="?&/")
         return "?".join([url, query_])
     return url
+
+
+def last_trx_id(trx_id: str, trxs: List):
+    """get the last-trx_id of trxs which if different from given trx_id"""
+    for i in range(-1, -1 * len(trxs), -1):
+        tid = trxs[i]["TrxId"]
+        if tid != trx_id:
+            return tid
+    return trx_id

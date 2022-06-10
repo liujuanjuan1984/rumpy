@@ -62,7 +62,7 @@ class SearchUser(FullNode):
             if name not in group_rlt[pubkey]:
                 group_rlt[pubkey].append(name)
 
-        trx_id = self.api.last_trx_id(trx_id, trxs)
+        trx_id = utils.last_trx_id(trx_id, trxs)
 
         return trx_id, group_rlt
 
