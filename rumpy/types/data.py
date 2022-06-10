@@ -137,13 +137,23 @@ class ProfileParams:
 @dataclasses.dataclass
 class NewTrxImg:
     def __init__(self, path_bytes_string, kb=None):
-        from rumpy.utils import filename_init, zip_image
+        from rumpy.utils import filename_init, get_filebytes, zip_image
 
-        kb = kb or IMAGE_MAX_SIZE_KB
-        self.name = filename_init(path_bytes_string)
-        file_bytes = zip_image(path_bytes_string, kb)
-        self.mediaType = filetype.guess(file_bytes).mime
-        self.content = base64.b64encode(file_bytes).decode("utf-8")
+        if type(path_bytes_string) == dict:
+            d = path_bytes_string
+            self.content = d.get("content")
+            if not self.content:
+                raise ValueError(f"NewTrxImg  type: {type(path_bytes_string)} ,content got null ")
+            _bytes, _ = get_filebytes(self.content)
+            self.name = d.get("name", filename_init(_bytes))
+            self.mediaType = d.get("mediaType", filetype.guess(_bytes).mime)
+
+        else:
+            kb = kb or IMAGE_MAX_SIZE_KB
+            self.name = filename_init(path_bytes_string)
+            file_bytes = zip_image(path_bytes_string, kb)
+            self.mediaType = filetype.guess(file_bytes).mime
+            self.content = base64.b64encode(file_bytes).decode("utf-8")
 
     def person_img(self):
         return {"content": self.content, "mediaType": self.mediaType}

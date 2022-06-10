@@ -22,7 +22,7 @@ def group_update_profiles(
 ):
     client.group_id = group_id
     if users_data:
-        return client.api.get_users_profiles(users_data, types)
+        return client.api.update_profiles_data(users_data=users_data, types=types)
 
     filename = f"users_profiles_group_{client.group_id}.json"
     if datadir:
@@ -31,8 +31,7 @@ def group_update_profiles(
         users_profiles_file = users_profiles_file or filename
 
     users_data = JsonFile(users_profiles_file).read({})
-    users_data = client.api.get_users_profiles(users_data, types)
-
+    users_data = client.api.update_profiles_data(users_data=users_data, types=types)
     JsonFile(users_profiles_file).write(users_data)
     return users_data
 

@@ -90,5 +90,5 @@ if __name__ == "__main__":
     group_id = "1b26b056-30af-4720-a4d2-706773cc497f"
     block_id = "7adf9dab-4730-4734-8570-40ed6e6e842a"
     trx_id = "604dc47f-636b-4e5f-a70a-92dd55e148d5"
-    resp = bot.api.trx(group_id, trx_id)
+    resp = bot.api.trx(group_id=group_id, trx_id=trx_id)
     print(resp)

@@ -151,7 +151,7 @@ class TestCase:
         trxs = block.get("Trxs", [])
         if len(trxs) > 0:
             tid = trxs[0]["TrxId"]
-            x = client.api.trx(tid)
+            x = client.api.trx(trx_id=tid)
             assert "TrxId" in x
 
         trxs = client.api.get_group_content()

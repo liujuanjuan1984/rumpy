@@ -109,7 +109,7 @@ def get_filebytes(path_bytes_string):
     elif _type == bytes:
         file_bytes = path_bytes_string
     else:
-        raise ValueError(f"not support for type: {_type} and length: {_size}.and error: {e}")
+        raise ValueError(f"not support for type: {_type} and length: {_size}")
     return file_bytes, is_file
 
 
@@ -294,9 +294,9 @@ def merge_trxs_to_files(file_dir, infos, trxs):
 
 def trx_typeurl(trx):
     typeurl = trx.get("TypeUrl")
-    if type_url == "quorum.pb.Person":
+    if typeurl == "quorum.pb.Person":
         return "Person"
-    elif type_url == "quorum.pb.Object":
+    elif typeurl == "quorum.pb.Object":
         return "Object"
     return typeurl
 
@@ -326,14 +326,12 @@ def trx_type(trx: Dict):
 
 def get_refer_trxid(trx):
     # 从trx中筛选出引用的 trx_id
-
-    try:
+    trxtype = trx_type(trx)
+    if trxtype == "reply":
         refer_tid = trx["Content"]["inreplyto"]["trxid"]
-    except Exception:
+    elif trxtype in ("like", "dislike"):
         refer_tid = trx["Content"]["id"]
-        if len(refer_tid) != 36:
-            refer_tid = None
-    except:
+    else:
         refer_tid = None
     return refer_tid
 
@@ -352,46 +350,48 @@ def _get_content(trx_content):
     return _text, _imgs
 
 
-def trx_retweet_params_init(trx, refer_trx=None):
+def trx_retweet_params_init(trx, refer_trx=None, nicknames={}):
+
     refer_trx = refer_trx or {}
-    refer_nickname = get_nickname(refer_trx.get("Publisher", ""), nicknames)  # TODO:nicknames 的处理和数据来源
-    refer_text, refer_imgss = _get_content(refer_trx.get("Content", {}))
+    refer_pubkey = refer_trx.get("Publisher", "")
+    refer_nickname = get_nickname(refer_pubkey, nicknames)  # TODO:nicknames 的处理和数据来源
+    refer_text, refer_imgs = _get_content(refer_trx.get("Content", {}))
 
     trx_content = trx.get("Content", {})
     if not trx_content:
         return None
-    trx_type = trx_type(trx)
+    trxtype = trx_type(trx)
     text, imgs = _get_content(trx_content)
     images = []
     lines = []
 
-    if trx_type == "person":
+    if trxtype == "person":
         _profile = _init_profile_status(trx_content)
         lines.append(f"修改了个人信息：{_profile}。")
-    elif trx_type == "file":
+    elif trxtype == "file":
         lines.append("上传了文件。")
-    elif trx_type == "announce":
+    elif trxtype == "announce":
         lines.append("处理了链上请求。")
-    elif trx_type == "like":
+    elif trxtype == "like":
         lines.append(f"点赞给 `{refer_nickname}` 所发布的内容：")
-    elif trx_type == "dislike":
+    elif trxtype == "dislike":
         lines.append(f"点踩给 `{refer_nickname}` 所发布的内容：")
-    elif trx_type == "text_only":
+    elif trxtype == "text_only":
         lines.insert(0, f"说：")
         lines.append(text)
-    elif trx_type == "image_text":
+    elif trxtype == "image_text":
         lines.insert(0, f"发布了图片，并且说：")
         lines.append(text)
-        images.extend(img)
-    elif trx_type == "image_only":
+        images.extend(imgs)
+    elif trxtype == "image_only":
         lines.insert(0, f"发布了图片。")
-        images.extend(img)
-    elif trx_type == "reply":
+        images.extend(imgs)
+    elif trxtype == "reply":
         lines.insert(0, f"回复说：")
         if text:
             lines.append(text)
-        if img:
-            images.extend(img)
+        if imgs:
+            images.extend(imgs)
         lines.append(f"\n回复给 `{refer_nickname}` 所发布的内容：")
 
     if refer_text:
@@ -400,12 +400,12 @@ def trx_retweet_params_init(trx, refer_trx=None):
         images.extend(refer_imgs)
 
     _dt = timestamp_to_datetime(trx.get("TimeStamp"))
-    params = {"content": f"{_dt} " + "\n".join(lines), "image": images}
+    params = {"content": f"{_dt} " + "\n".join(lines), "images": images}
     return params
 
 
 def get_url(base=None, endpoint=None, is_quote=False, **query_params):
-    url = parse.urljoin(base, endpoint)
+    url = parse.urljoin(base, endpoint) if base else endpoint
     if query_params:
         for k, v in query_params.items():
             if type(v) == bool:
@@ -417,9 +417,14 @@ def get_url(base=None, endpoint=None, is_quote=False, **query_params):
     return url
 
 
-def last_trx_id(trx_id: str, trxs: List):
+def last_trx_id(trx_id: str, trxs: List, reverse=False):
     """get the last-trx_id of trxs which if different from given trx_id"""
-    for i in range(-1, -1 * len(trxs), -1):
+    # TODO: 不支持生成器，需要改写
+    if reverse:
+        _range = range(len(trxs))
+    else:
+        _range = range(-1, -1 * len(trxs), -1)
+    for i in _range:
         tid = trxs[i]["TrxId"]
         if tid != trx_id:
             return tid

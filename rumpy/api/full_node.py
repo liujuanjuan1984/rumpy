@@ -257,6 +257,9 @@ class FullNodeAPI(BaseAPI):
 
     def trx(self, trx_id: str, group_id=None):
         """get trx data by trx_id"""
+        if trx_id is None:
+            return None
+
         group_id = self.check_group_id_as_required(group_id)
         data = {}
         trxs = self.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
@@ -283,65 +286,6 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_id_as_required(group_id)
         tids = [i["Trx"]["TrxId"] for i in self.pubqueue(group_id) if i["State"] == "FAIL"]
         return self.ack(tids)
-
-    def get_users_profiles(
-        self,
-        users_data: Dict = {},
-        types=("name", "image", "wallet"),
-        group_id=None,
-    ) -> Dict:
-        """update users_data and returns it.
-        {
-            group_id:  "", # the group_id
-            group_name: "", # the group_name
-            trx_id: "", # the trx_id of groups progress
-            trx_timestamp:"",
-            update_at: "",
-            data:{ pubkey:{
-                name:"",
-                image:{},
-                wallet:[],
-                }
-            }
-        }
-        """
-        # check group_id
-
-        group_id = users_data.get("group_id") or self.check_group_id_as_required(group_id)
-
-        # get new trxs from the trx_id
-        trx_id = users_data.get("trx_id", None)
-        trxs = self.all_content_trxs(trx_id=trx_id, group_id=group_id)
-
-        if len(trxs) == 0:
-            logger.debug(f"get_users_profiles: got 0 new trxs. get content started from trx_id:{trx_id}.")
-            return users_data
-
-        # update trx_id: to record the progress to get new trxs
-
-        users_data.update(
-            {
-                "group_id": group_id,
-                "group_name": self.seed(group_id).get("group_name"),
-                "trx_id": trxs[-1]["TrxId"],
-                "trx_timestamp": str(utils.timestamp_to_datetime(trxs[-1].get("TimeStamp", ""))),
-            }
-        )
-
-        users = users_data.get("data", {})
-        profile_trxs = [trx for trx in trxs if trx.get("TypeUrl") == "quorum.pb.Person"]
-
-        for trx in profile_trxs:
-            if "Content" not in trx:
-                continue
-            pubkey = trx["Publisher"]
-            if pubkey not in users:
-                users[pubkey] = {}
-            for key in trx["Content"]:
-                if key in types:
-                    users[pubkey].update({key: trx["Content"][key]})
-        users_data.update({"data": users, "update_at": str(datetime.datetime.now())})
-        return users_data
 
     def trx_mode(self, trx_type: str = "POST", group_id=None):
         """获取某个 trx 类型的授权方式

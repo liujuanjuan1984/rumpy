@@ -1,4 +1,5 @@
 import base64
+import datetime
 import logging
 import os
 from typing import Any, Dict, List
@@ -96,21 +97,23 @@ class BaseAPI:
             group_id=group_id,
         )
 
-    def trx_to_newobj(self, trx, group_id=None):
+    def trx_retweet_params(self, trx, group_id=None, nicknames={}):
         """trans from trx to an object of new trx to send to chain.
         Returns:
             obj: object of NewTrx,can be used as: self.send_note(obj=obj).
         """
-
-        refer_trx = self._http.api.trx(utils.get_refer_trxid(trx), group_id)
-        params = utils.rx_retweet_params_init(trx, refer_trx)
+        refer_tid = utils.get_refer_trxid(trx)
+        refer_trx = None
+        if refer_tid:
+            refer_trx = self._http.api.trx(trx_id=refer_tid, group_id=group_id)
+        params = utils.trx_retweet_params_init(trx=trx, refer_trx=refer_trx, nicknames=nicknames)
         return params
 
     def search_file_trxs(self, trx_id=None, group_id=None):
-        trxs = self._http.api.get_group_all_contents(trx_id=trx_id, group_id=group_id)
+        trxs = self.get_group_all_contents(trx_id=trx_id, group_id=group_id)
         infos = []
         filetrxs = []
-        for trx in trxs:
+        for trx, _ in trxs:
             if trx["Content"].get("name") == "fileinfo":
                 info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
                 logger.debug(f"{info}")
@@ -130,21 +133,112 @@ class BaseAPI:
         infos, trxs = self.search_file_trxs(group_id)
         utils.merge_trxs_to_files(file_dir, infos, trxs)
 
-    def get_group_all_contents(self, trx_id=None, group_id=None, senders=None):
-        """返回的是一个生成器，可以用 for ... in ... 来迭代访问。"""
-        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20)
+    def get_group_all_contents(
+        self,
+        trx_id=None,
+        group_id=None,
+        senders=None,
+        trx_types=None,
+        reverse=False,
+    ):
+        """返回的是一个生成器，可以用 for ... in ... 来迭代访问。trx_types 的取值见 utils.trx_type() 的各种返回值"""
+        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20, reverse=reverse)
         checked_trxids = []
+        trx_types = trx_types or []
+        senders = senders or []
         while trxs:
             if trx_id in checked_trxids:
                 break
             else:
                 checked_trxids.append(trx_id)
             for trx in trxs:
-                if senders:
-                    if trx.get("Publisher", "") in senders:
-                        yield trx
-                else:
-                    yield trx
+                flag1 = (utils.trx_type(trx) in trx_types) or (not trx_types)
+                flag2 = (trx.get("Publisher", "") in senders) or (not senders)
+                if flag1 and flag2:
+                    yield trx, trx.get("TrxId")
+            trx_id = utils.last_trx_id(trx_id, trxs, reverse=reverse)
+            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20, reverse=reverse)
 
-            trx_id = utils.last_trx_id(trx_id, trxs)
-            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20)
+    def get_profiles(
+        self,
+        trx_id=None,
+        types=("name", "image", "wallet"),
+        group_id=None,
+        pubkey=None,
+        users=None,
+    ):
+        group_id = self.check_group_id_as_required(group_id)
+        senders = [pubkey] if pubkey else None
+        trxs = self.get_group_all_contents(
+            trx_id=trx_id,
+            group_id=group_id,
+            trx_types=["person"],
+            senders=senders,
+            reverse=False,
+        )
+        users = users or {}
+        progress_tid = None
+        for trx, tid in trxs:
+
+            progress_tid = tid
+            if trx_content := trx.get("Content"):
+                pubkey = trx["Publisher"]
+                users[pubkey] = users.get(pubkey, {})
+                for key in trx_content:
+                    if key in types:
+                        users[pubkey].update({key: trx_content[key]})
+        return users, progress_tid
+
+    def update_profiles_data(
+        self,
+        users_data: Dict = {},
+        types=("name", "image", "wallet"),
+        group_id=None,
+        pubkey=None,
+    ) -> Dict:
+        """update users_data and returns it.
+        {
+            group_id:  "", # the group_id
+            group_name: "", # the group_name
+            trx_id: "", # the trx_id of groups progress
+            trx_timestamp:"",
+            update_at: "",
+            data:{ pubkey:{
+                name:"",
+                image:{},
+                wallet:[],
+                }
+            }
+        }
+        """
+        # check group_id
+
+        group_id = users_data.get("group_id") or self.check_group_id_as_required(group_id)
+
+        # get new trxs from the trx_id
+        trx_id = users_data.get("trx_id", None)
+        users = users_data.get("data", {})
+        users, progress_tid = self.get_profiles(
+            users=users,
+            trx_id=trx_id,
+            types=types,
+            group_id=group_id,
+            pubkey=pubkey,
+        )
+        try:
+            _ts = self._http.api.trx(group_id=group_id, trx_id=progress_tid)["TimeStamp"]
+            _dt = utils.timestamp_to_datetime(_ts)
+        except TypeError:
+            _dt = None
+
+        _now = datetime.datetime.now()
+        users_data.update(
+            {
+                "group_id": group_id,
+                "trx_id": progress_tid,
+                "trx_timestamp": str(_dt or _now),
+                "data": users,
+                "update_at": str(_now),
+            }
+        )
+        return users_data

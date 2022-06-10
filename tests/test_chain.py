@@ -91,7 +91,7 @@ class TestChain:
         while h > 0 and bid:
             block = self.client.api.block(bid)
             for trx in block.get("Trxs", {}):
-                _trx = self.client.api.trx(trx["TrxId"])
+                _trx = self.client.api.trx(trx_id=trx["TrxId"])
                 if "Content" not in _trx:
                     _trx_type = _trx.get("Type", "???")
                     if _trx_type not in [

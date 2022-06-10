@@ -71,7 +71,7 @@ class RssBot:
 
         p_tid = None if progress == None else progress.trx_id
 
-        data = self.rum.api.get_users_profiles({"trx_id": p_tid}, ("name", "wallet"))
+        data = self.rum.api.update_profiles_data(users_data={"trx_id": p_tid}, types=("name", "wallet"))
         if data is None:
             return
         tid = data.get("trx_id")
@@ -198,7 +198,7 @@ class RssBot:
                 if ts <= str(datetime.datetime.now() + datetime.timedelta(minutes=minutes)):
                     continue
 
-                obj = self.rum.api.trx_to_newobj(trx)
+                obj = self.rum.api.trx_retweet_params(trx=trx)
                 if not obj:
                     continue
 
