@@ -6,6 +6,7 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import rumpy.utils as utils
+from rumpy.exceptions import *
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class HttpRequest:
     def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None):
         api_base = api_base or self.api_base
         if not api_base:
-            raise ValueError(f"api_base is null, {api_base}")
+            raise ParamValueError(f"api_base is null, {api_base}")
         url = utils.get_url(api_base, endpoint)
 
         try:
@@ -56,7 +57,9 @@ class HttpRequest:
             body_json = {}
 
         if resp.status_code != 200:
-            logger.info(f"payload:{payload}")
+            logger.info(f"body_json:{body_json}")
+            logger.info(f"resp.status_code:{resp.status_code}")
+            logger.info(f"payload:{payload.keys()}")
             logger.info(f"url:{url}")
 
         return body_json

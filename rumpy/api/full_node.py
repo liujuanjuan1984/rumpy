@@ -11,6 +11,7 @@ import filetype
 
 import rumpy.utils as utils
 from rumpy.api.base import BaseAPI
+from rumpy.exceptions import *
 from rumpy.types.data import *
 
 logger = logging.getLogger(__name__)
@@ -121,11 +122,11 @@ class FullNodeAPI(BaseAPI):
         """
         # check encryption_type
         if encryption_type.lower() not in ("public", "private"):
-            raise ValueError("encryption_type should be `public` or `private`")
+            raise ParamValueError("encryption_type should be `public` or `private`")
 
         # check consensus_type
         if consensus_type.lower() not in ("poa",):
-            raise ValueError("consensus_type should be `poa` or `pos` or `pow`, but only `poa` is supported now.")
+            raise ParamValueError("consensus_type should be `poa` or `pos` or `pow`, but only `poa` is supported now.")
 
         payload = {
             "group_name": group_name,
@@ -264,7 +265,7 @@ class FullNodeAPI(BaseAPI):
         data = {}
         trxs = self.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
         if len(trxs) > 1:
-            raise ValueError(f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.")
+            raise ParamOverflowError(f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.")
         elif len(trxs) == 1:
             data = trxs[0]
         else:
@@ -335,7 +336,7 @@ class FullNodeAPI(BaseAPI):
 
         trx_type = utils.check_trx_type(trx_type)
         if not memo:
-            raise ValueError("say something in param:memo")
+            raise ParamValueError("say something in param:memo")
 
         payload = {
             "group_id": group_id,
@@ -407,7 +408,7 @@ class FullNodeAPI(BaseAPI):
 
     def _list(self, mode: str, group_id=None) -> List:
         if mode not in ["allow", "deny"]:
-            raise ValueError("mode must be one of these: allow,deny")
+            raise ParamValueError("mode must be one of these: allow,deny")
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/group/{group_id}/trx/{mode}list") or []
 
@@ -612,7 +613,7 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_owner_as_required(group_id)
         action = action.lower()
         if action not in ("add", "remove"):
-            raise ValueError("action should be `add` or `remove`")
+            raise ParamValueError("action should be `add` or `remove`")
         payload = {
             "producer_pubkey": pubkey,
             "group_id": group_id,

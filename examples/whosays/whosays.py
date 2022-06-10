@@ -6,6 +6,7 @@ from officy import JsonFile
 
 import rumpy.utils as utils
 from rumpy import FullNode
+from rumpy.exceptions import *
 
 
 class WhoSays(FullNode):
@@ -36,7 +37,7 @@ class WhoSays(FullNode):
         progress = JsonFile(self.progressfile).read({})
 
         if not self.names_info:
-            raise ValueError("add data in names_info file with data like {group_id:[pubkey]}")
+            raise ParamValueError("add data in names_info file with data like {group_id:[pubkey]}")
 
         for group_id in self.names_info:
             pubkeys = [k for k in self.names_info[group_id]]

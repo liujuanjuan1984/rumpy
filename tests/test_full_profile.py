@@ -34,32 +34,11 @@ def test_profiles_update():
     resp = bot.api.update_profile(image=img2)
     # print(resp)
 
-    try:
-        resp = bot.api.update_profile(image=img3)
-        # print(resp)
-    except:
-        pass
-
-    resp = bot.api.update_profile(mixin_id=mixin_id1)
-    # print(resp)
-
     resp = bot.api.update_profile(mixin_id=mixin_id2)
     # print(resp)
 
     resp = bot.api.update_profile(mixin_id=mixin_id3)
     # print(resp)
-
-    try:
-        resp = bot.api.update_profile(mixin_id=mixin_id4)
-        # print(resp)
-    except:
-        pass
-
-    try:
-        resp = bot.api.update_profile(mixin_id=mixin_id5)
-        # print(resp)
-    except:
-        pass
 
     resp = bot.api.update_profile(name=name1, image=img1, mixin_id=mixin_id2)
     # print(resp)

@@ -3,6 +3,7 @@ import logging
 from typing import Any, Dict, List
 
 from rumpy.api.base import BaseAPI
+from rumpy.exceptions import *
 from rumpy.types.data import NewTrx, PersonObj
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ class LightNodeAPI(BaseAPI):
 
     def __create_alias_of_key(self, alias: str, key_type: str):
         if key_type not in ("sign", "encrypt"):
-            raise ValueError("key_type must be one of `sign`, `encrypt`.")
+            raise ParamValueError("key_type must be one of `sign`, `encrypt`.")
         payload = {"alias": alias, "type": key_type}
         return self._post("/v1/keystore/create", payload)
 
@@ -24,7 +25,7 @@ class LightNodeAPI(BaseAPI):
     def create_alias_of_encrypt_key(self, alias="my_encrypt"):
         # """需要环境变量 RUM_KSPASSWD"""
         # if not os.getenv("RUM_KSPASSWD"):
-        #    raise ValueError("need RUM_KSPASSWD")
+        #    raise RumChainException("need RUM_KSPASSWD")
         return self.__create_alias_of_key(alias, "encrypt")
 
     def create_keypair(self, alias_piece="my"):
@@ -42,7 +43,12 @@ class LightNodeAPI(BaseAPI):
         payload = {"alias": alias, "keyname": keyname, "type": type_str}
         return self._post("/v1/keystore/bindalias", payload)
 
-    def join_group(self, seed: Dict, sign_alias: str, encrypt_alias: str, urls: List):
+    def join_group(
+        self, seed: Dict, sign_alias: str = None, encrypt_alias: str = None, urls: List = None, pair_alias=None
+    ):
+        if pair_alias:
+            sign_alias = pair_alias + "_sign"
+            encrypt_alias = pair_alias + "_encrypt"
         payload = {
             "seed": seed,
             "sign_alias": sign_alias,

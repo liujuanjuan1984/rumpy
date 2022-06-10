@@ -6,6 +6,7 @@ from typing import Dict, List
 from officy import JsonFile
 
 from rumpy import FullNode
+from rumpy.exceptions import *
 
 
 class SearchUser(FullNode):
@@ -13,9 +14,9 @@ class SearchUser(FullNode):
 
     def init(self, name_fragment, seedsfile=None):
         if type(name_fragment) != str:
-            raise TypeError("param:name_fragment type error. It should be string.")
+            raise ParamTypeError("param:name_fragment type error. It should be string.")
         if len(name_fragment) < 2:
-            raise ValueError("param:name_fragment too short! Give something to search.")
+            raise ParamValueError("param:name_fragment too short! Give something to search.")
 
         self.name_fragment = name_fragment.lower()
         this_dir = os.path.dirname(__file__)

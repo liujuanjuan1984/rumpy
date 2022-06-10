@@ -8,6 +8,8 @@ from typing import Any, Dict, List
 
 import filetype
 
+from rumpy.exceptions import *
+
 logger = logging.getLogger(__name__)
 
 TRX_TYPES = [
@@ -130,7 +132,7 @@ class ProfileParams:
             d["wallet"] = [{"id": self.wallet, "type": "mixin", "name": "mixin messenger"}]
 
         if len(d) == 0:
-            raise ValueError("Person must have name or image fields")
+            raise ParamRequiredError("Person must have name or image fields")
         self.__dict__ = d
 
 
@@ -143,7 +145,7 @@ class NewTrxImg:
             d = path_bytes_string
             self.content = d.get("content")
             if not self.content:
-                raise ValueError(f"NewTrxImg  type: {type(path_bytes_string)} ,content got null ")
+                raise ParamValueError(f"NewTrxImg  type: {type(path_bytes_string)} ,content got null ")
             _bytes, _ = get_filebytes(self.content)
             self.name = d.get("name", filename_init(_bytes))
             self.mediaType = d.get("mediaType", filetype.guess(_bytes).mime)
@@ -185,7 +187,7 @@ class NewTrxObject:
         if object_type in ["Note", "File"]:
             self.type = object_type
         elif object_type:
-            raise ValueError(f"new object_type: {object_type}. check the param or update rumpy code.")
+            raise ParamTypeError(f"new object_type: {object_type}. check the param or update rumpy code.")
 
         if content:
             if type(content) == str:
@@ -193,7 +195,7 @@ class NewTrxObject:
             elif type(content) in (dict, list):
                 self.content = json.dumps(content)
             else:
-                raise ValueError(f"new content type: {type(content)}. check the param or update rumpy code.")
+                raise ParamTypeError(f"new content type: {type(content)}. check the param or update rumpy code.")
 
         if name and type(name) == str:
             self.name = name
@@ -206,9 +208,9 @@ class NewTrxObject:
             self.id = edit_trx_id
             # check other params:
             if self.type != "Note":
-                raise ValueError(f"only Note type can be edited. type now: {self.type} ")
+                raise ParamOverflowError(f"only Note type can be edited. type now: {self.type} ")
             if not (self.content or self.image):
-                raise ValueError("content or image is needed.")
+                raise ParamRequiredError("content or image is needed.")
 
         if del_trx_id and type(del_trx_id) == str:
             self.id = del_trx_id
@@ -216,19 +218,19 @@ class NewTrxObject:
             self.content = "OBJECT_STATUS_DELETED"
             for key in self.__dict__:
                 if key not in ["type", "id", "content"]:
-                    raise ValueError(f"del object got a no-need param {key}")
+                    raise ParamOverflowError(f"del object got a no-need param {key}")
 
         if reply_trx_id and type(reply_trx_id) == str:
             self.inreplyto = {"trxid": reply_trx_id}
             if not (self.content or self.image):
-                raise ValueError("content or image is needed.")
+                raise ParamRequiredError("content or image is needed.")
 
         if like_trx_id and type(like_trx_id) == str:
             self.id = like_trx_id
             # check other params: only id param is needed.
             for key in self.__dict__:
                 if key != "id":
-                    raise ValueError(f"like or dislike object can only have id param. but param {key} is found.")
+                    raise ParamTypeError(f"like or dislike object can only have id param. but param {key} is found.")
 
 
 @dataclasses.dataclass
@@ -268,7 +270,7 @@ class PersonObj(NewTrxObject):
         if wallet.get("wallet_id"):
             self.wallet = [WalletInfo(**wallet).__dict__]
         if not (name or image or wallet):
-            raise ValueError("update person profile needs at least one of name or image or wallet.")
+            raise ParamRequiredError("update person profile needs at least one of name or image or wallet.")
 
 
 @dataclasses.dataclass
@@ -276,20 +278,24 @@ class NewTrx:
     def __init__(self, activity_type, group_id, obj=None, **kwargs):
         self.type = activity_type
         if self.type not in [4, "Add", "Like", "Dislike", "Update"]:
-            raise ValueError(
+            raise ParamValueError(
                 f"{self.type} is not one of 4,Add,Like,Dislike... check the input params or update the rumpy code. "
             )
 
         if group_id:
             self.target = {"id": group_id, "type": "Group"}
         else:
-            raise ValueError("group_id param is need.")
+            raise ParamRequiredError("group_id param is need.")
 
-        if isinstance(obj, NewTrxObject):
+        if isinstance(obj, PersonObj):
+            self.person = obj.__dict__
+        elif isinstance(obj, NewTrxObject):
             self.object = obj.__dict__
         elif isinstance(obj, dict):
             if self.type == "Add" and "type" not in obj:
-                raise ValueError("obj need a `type` such as: `Note` or `File`")
+                raise ParamRequiredError("obj need a `type` such as: `Note` or `File`")
             self.object = NewTrxObject(**obj).__dict__
+            logger.info("dict")
         else:
             self.object = NewTrxObject(**kwargs).__dict__
+            logger.info("kwargs")
