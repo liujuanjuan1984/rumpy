@@ -122,11 +122,14 @@ class FullNodeAPI(BaseAPI):
         """
         # check encryption_type
         if encryption_type.lower() not in ("public", "private"):
-            raise ParamValueError("encryption_type should be `public` or `private`")
+            raise ParamValueError(403, "encryption_type should be `public` or `private`")
 
         # check consensus_type
         if consensus_type.lower() not in ("poa",):
-            raise ParamValueError("consensus_type should be `poa` or `pos` or `pow`, but only `poa` is supported now.")
+            raise ParamValueError(
+                403,
+                "consensus_type should be `poa` or `pos` or `pow`, but only `poa` is supported now.",
+            )
 
         payload = {
             "group_name": group_name,
@@ -234,28 +237,6 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/block/{group_id}/{block_id}")
 
-    def all_content_trxs(self, trx_id: str = None, group_id=None, senders=None):
-        """get all the trxs of content started from trx_id"""
-        group_id = self.check_group_id_as_required(group_id)
-        trxs = []
-        checked_trxids = []
-        senders = senders or []
-        while True:
-            if trx_id in checked_trxids:
-                break
-            else:
-                checked_trxids.append(trx_id)
-            newtrxs = self.get_group_content(trx_id=trx_id, num=100, group_id=group_id)
-            if len(newtrxs) == 0:
-                break
-            if senders:
-                trxs.extend([itrx for itrx in newtrxs if itrx.get("Publisher") in senders])
-            else:
-                trxs.extend(newtrxs)
-            trx_id = utils.last_trx_id(trx_id, newtrxs)
-
-        return trxs
-
     def trx(self, trx_id: str, group_id=None):
         """get trx data by trx_id"""
         if trx_id is None:
@@ -336,7 +317,7 @@ class FullNodeAPI(BaseAPI):
 
         trx_type = utils.check_trx_type(trx_type)
         if not memo:
-            raise ParamValueError("say something in param:memo")
+            raise ParamValueError(403, "say something in param:memo")
 
         payload = {
             "group_id": group_id,
@@ -408,7 +389,7 @@ class FullNodeAPI(BaseAPI):
 
     def _list(self, mode: str, group_id=None) -> List:
         if mode not in ["allow", "deny"]:
-            raise ParamValueError("mode must be one of these: allow,deny")
+            raise ParamValueError(403, "mode must be one of these: allow,deny")
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/group/{group_id}/trx/{mode}list") or []
 
@@ -613,7 +594,7 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_owner_as_required(group_id)
         action = action.lower()
         if action not in ("add", "remove"):
-            raise ParamValueError("action should be `add` or `remove`")
+            raise ParamValueError(403, "action should be `add` or `remove`")
         payload = {
             "producer_pubkey": pubkey,
             "group_id": group_id,

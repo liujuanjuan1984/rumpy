@@ -14,9 +14,9 @@ class SearchUser(FullNode):
 
     def init(self, name_fragment, seedsfile=None):
         if type(name_fragment) != str:
-            raise ParamTypeError("param:name_fragment type error. It should be string.")
+            raise ParamValueError(403, "param:name_fragment type error. It should be string.")
         if len(name_fragment) < 2:
-            raise ParamValueError("param:name_fragment too short! Give something to search.")
+            raise ParamValueError(403, "param:name_fragment too short! Give something to search.")
 
         self.name_fragment = name_fragment.lower()
         this_dir = os.path.dirname(__file__)
@@ -52,7 +52,7 @@ class SearchUser(FullNode):
         group_rlt = group_rlt or {}
 
         print(datetime.datetime.now(), self.name_fragment, trx_id, "...")
-        trxs = self.api.all_content_trxs(trx_id=trx_id)
+        trxs = self.api.get_group_all_contents(trx_id=trx_id)
 
         for trx in trxs:
             pubkey, name = self._intrx(trx)
@@ -63,9 +63,9 @@ class SearchUser(FullNode):
             if name not in group_rlt[pubkey]:
                 group_rlt[pubkey].append(name)
 
-        trx_id = utils.last_trx_id(trx_id, trxs)
+        progress_tid = utils.get_last_trxid_by_ts(trxs)
 
-        return trx_id, group_rlt
+        return progress_tid, group_rlt
 
     def innode(self):
         """

@@ -125,16 +125,6 @@ class TestCase:
         resp = client.api.dislike(trx_id)
         assert "trx_id" in resp
 
-        trxs = client.api.all_content_trxs()
-        try:
-            trxtype = utils.trx_type(trxs[-1])
-            assert type(trxtype) == str
-        except IndexError as e:
-            print(e)
-            pass
-
-        trxs = client.api.all_content_trxs()
-
         resp = client.api.leave_group()
         r2 = client.api.is_joined()
         assert r2 == False

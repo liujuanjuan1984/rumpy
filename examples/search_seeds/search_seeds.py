@@ -57,15 +57,14 @@ class SearchSeeds(FullNode):
             if seed:
                 seeds[self.group_id] = seed
 
-        trxs = self.api.all_content_trxs(trx_id=trx_id)
-        print(datetime.datetime.now(), trx_id, len(trxs))
-        logs[self.group_id] = utils.last_trx_id(trx_id, trxs)
+        trxs = self.api.get_group_all_contents(trx_id=trx_id)
 
-        for trx in trxs:
+        for trx, tid in trxs:
             for seed in self.intrx(trx):
                 if seed["group_id"] not in seeds:
                     seeds[seed["group_id"]] = seed
 
+        logs[self.group_id] = utils.get_last_trxid_by_ts(trxs)
         JsonFile(self.seedsfile).write(seeds)
         JsonFile(self.progressfile).write(logs)
 

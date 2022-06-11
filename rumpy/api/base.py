@@ -30,7 +30,7 @@ class BaseAPI:
     def check_group_id_as_required(self, group_id=None):
         group_id = group_id or self._http.group_id
         if not group_id:
-            raise ParamValueError("group_id is required, now it's None.")
+            raise ParamValueError(403, "group_id is required, now it's None.")
         return group_id
 
     def check_group_joined_as_required(self, group_id=None):
@@ -114,7 +114,7 @@ class BaseAPI:
         trxs = self.get_group_all_contents(trx_id=trx_id, group_id=group_id)
         infos = []
         filetrxs = []
-        for trx, _ in trxs:
+        for trx in trxs:
             if trx["Content"].get("name") == "fileinfo":
                 info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
                 logger.debug(f"{info}")
@@ -143,7 +143,7 @@ class BaseAPI:
         reverse=False,
     ):
         """返回的是一个生成器，可以用 for ... in ... 来迭代访问。trx_types 的取值见 utils.trx_type() 的各种返回值"""
-        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20, reverse=reverse)
+        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=200, reverse=reverse)
         checked_trxids = []
         trx_types = trx_types or []
         senders = senders or []
@@ -156,9 +156,9 @@ class BaseAPI:
                 flag1 = (utils.trx_type(trx) in trx_types) or (not trx_types)
                 flag2 = (trx.get("Publisher", "") in senders) or (not senders)
                 if flag1 and flag2:
-                    yield trx, trx.get("TrxId")
-            trx_id = utils.last_trx_id(trx_id, trxs, reverse=reverse)
-            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=20, reverse=reverse)
+                    yield trx
+            trx_id = utils.get_last_trxid_by_chain(trx_id, trxs, reverse=reverse)
+            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=200, reverse=reverse)
 
     def get_profiles(
         self,
@@ -166,7 +166,7 @@ class BaseAPI:
         types=("name", "image", "wallet"),
         group_id=None,
         pubkey=None,
-        users=None,
+        users=None,  # 已有的data，传入可用来更新数据
     ):
         group_id = self.check_group_id_as_required(group_id)
         senders = [pubkey] if pubkey else None
@@ -178,17 +178,15 @@ class BaseAPI:
             reverse=False,
         )
         users = users or {}
-        progress_tid = None
-        for trx, tid in trxs:
-
-            progress_tid = tid
+        for trx in trxs:
             if trx_content := trx.get("Content"):
                 pubkey = trx["Publisher"]
                 users[pubkey] = users.get(pubkey, {})
                 for key in trx_content:
                     if key in types:
                         users[pubkey].update({key: trx_content[key]})
-        return users, progress_tid
+        users["progress_tid"] = utils.get_last_trxid_by_ts(trxs)
+        return users
 
     def update_profiles_data(
         self,
@@ -219,13 +217,14 @@ class BaseAPI:
         # get new trxs from the trx_id
         trx_id = users_data.get("trx_id", None)
         users = users_data.get("data", {})
-        users, progress_tid = self.get_profiles(
+        users = self.get_profiles(
             users=users,
             trx_id=trx_id,
             types=types,
             group_id=group_id,
             pubkey=pubkey,
         )
+        progress_tid = users["progress_tid"]
         try:
             _ts = self._http.api.trx(group_id=group_id, trx_id=progress_tid)["TimeStamp"]
             _dt = utils.timestamp_to_datetime(_ts)

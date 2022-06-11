@@ -6,6 +6,7 @@ import json
 import logging
 import math
 import os
+import re
 import uuid
 from typing import Any, Dict, List
 from urllib import parse
@@ -80,6 +81,11 @@ def filename_init_from_bytes(file_bytes):
     return ".".join([name, extension])
 
 
+def filename_check(name):
+    name = re.sub(r"([ :])", r"_", name)
+    return name
+
+
 def filename_init(path_bytes_string):
     file_bytes, is_file = get_filebytes(path_bytes_string)
     if is_file:
@@ -134,6 +140,18 @@ def timestamp_to_datetime(timestamp):
     ts = int(timestamp)
     n = 10 ** (len(str(ts)) - 10)
     return datetime.datetime.fromtimestamp(int(ts / n))
+
+
+def trx_ts(trx, rlt_type="str"):
+    ts = trx["TimeStamp"]
+    dt = timestamp_to_datetime(ts)
+    if rlt_type == "str":
+        return str(dt)
+    if rlt_type == "datetime":
+        return dt
+    if rlt_type == "int":
+        return int(ts)
+    raise ParamValueError(f"{rlt_type}")
 
 
 def unique_trxs(trxs: List):
@@ -347,7 +365,15 @@ def _init_profile_status(trx_content):
 
 def _get_content(trx_content):
     _text = trx_content.get("content", "")
-    _imgs = trx_content.get("image", [])
+    _imgs = []
+    if "image" in trx_content:
+        imgs = trx_content["image"]
+        if type(imgs) == list:
+            _imgs = imgs
+        elif type(imgs) == dict:
+            _imgs = [imgs]
+        else:
+            raise ParamValueError(403, f"type {type(imgs)} is not supported.")
     return _text, _imgs
 
 
@@ -355,7 +381,7 @@ def trx_retweet_params_init(trx, refer_trx=None, nicknames={}):
 
     refer_trx = refer_trx or {}
     refer_pubkey = refer_trx.get("Publisher", "")
-    refer_nickname = get_nickname(refer_pubkey, nicknames)  # TODO:nicknames 的处理和数据来源
+    refer_nickname = get_nickname(refer_pubkey, nicknames)
     refer_text, refer_imgs = _get_content(refer_trx.get("Content", {}))
 
     trx_content = trx.get("Content", {})
@@ -418,9 +444,8 @@ def get_url(base=None, endpoint=None, is_quote=False, **query_params):
     return url
 
 
-def last_trx_id(trx_id: str, trxs: List, reverse=False):
-    """get the last-trx_id of trxs which if different from given trx_id"""
-    # TODO: 不支持生成器，需要改写
+def get_last_trxid_by_chain(trx_id: str, trxs: List, reverse=False):
+    """get the last trx_id of trxs <type: list> which if different from given trx_id by chain index"""
     if reverse:
         _range = range(len(trxs))
     else:
@@ -430,3 +455,17 @@ def last_trx_id(trx_id: str, trxs: List, reverse=False):
         if tid != trx_id:
             return tid
     return trx_id
+
+
+def get_last_trxid_by_ts(trx_id: str, trxs, reverse=False):
+    """get the last trx_id of trxs <type: generator> which if different from given trx_id by trx timestamp"""
+    _ts = datetime.datetime.now() + datetime.timedelta(weeks=-520)
+    _tid = None
+    for trx, tid in trxs:
+        ts = trx_ts(trx, "datetime")
+        if ts > _ts:
+            _ts = ts
+            _tid = tid
+    if _tid and _tid != trx_id:
+        return _tid, _ts
+    return trx_id, _ts

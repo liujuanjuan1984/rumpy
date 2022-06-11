@@ -37,7 +37,10 @@ class WhoSays(FullNode):
         progress = JsonFile(self.progressfile).read({})
 
         if not self.names_info:
-            raise ParamValueError("add data in names_info file with data like {group_id:[pubkey]}")
+            raise ParamValueError(
+                403,
+                "add data in names_info file with data like {group_id:[pubkey]}",
+            )
 
         for group_id in self.names_info:
             pubkeys = [k for k in self.names_info[group_id]]
@@ -55,12 +58,11 @@ class WhoSays(FullNode):
 
             trxs = self.api.get_group_all_contents(senders=pubkeys, trx_id=progress[group_id])
             progress_tid = None
-            for trx, trx_id in trxs:
-                progress_tid = trx_id
+            for trx in trxs:
                 if trx["TrxId"] not in data[group_id]:
                     data[group_id][trx["TrxId"]] = trx
 
-            progress[group_id] = progress_tid
+            progress[group_id] = utils.get_last_trxid_by_ts(trxs)
             JsonFile(self.trxs_file).write(data)
             JsonFile(self.progressfile).write(progress)
 
