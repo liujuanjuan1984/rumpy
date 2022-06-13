@@ -432,7 +432,13 @@ def trx_retweet_params_init(trx, refer_trx=None, nicknames={}):
 
 
 def get_url(base=None, endpoint=None, is_quote=False, **query_params):
-    url = parse.urljoin(base, endpoint) if base else endpoint
+    # url = parse.urljoin(base, endpoint) if base else endpoint
+    url = ""
+    if base:
+        url = base
+    if endpoint:
+        url += endpoint
+
     if query_params:
         for k, v in query_params.items():
             if type(v) == bool:

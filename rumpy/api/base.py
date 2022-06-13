@@ -77,7 +77,7 @@ class BaseAPI:
         return self._http.api._send(group_id=group_id, activity_type="Add", object_type="Note", **kwargs)
 
     def send_note(self, content: str = None, images: List = None, name=None, group_id=None):
-        return self.__send_note(content=content, images=images, name=None, group_id=group_id)
+        return self.__send_note(content=content, images=images, name=name, group_id=group_id)
 
     def del_note(self, trx_id, group_id=None):
         return self.__send_note(del_trx_id=trx_id, group_id=group_id)

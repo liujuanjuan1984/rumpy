@@ -130,7 +130,7 @@ class LightNodeAPI(BaseAPI):
         return self._post(f"/v1/group/getctn", payload)
 
     def _send(self, activity_type=None, group_id=None, obj=None, **kwargs) -> Dict:
-        payload = NewTrx(group_id=group_id, obj=obj, activity_type=activity_type, **kwargs).__dict__
+        payload = NewTrx(group_id=group_id, activity_type=activity_type, obj=obj, **kwargs).__dict__
         return self._post("/v1/group/content", payload)
 
     def update_profile(self, group_id, name=None, mixin_id=None, image=None):
