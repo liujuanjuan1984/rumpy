@@ -17,7 +17,7 @@ class LightNode:
             local_crtfile = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
             crtfile = os.getenv("RUM_CRTFILE", local_crtfile)
         api_base = ApiBaseURLS(port=port, host=host).LIGHT_NODE
-        self.http = HttpRequest(api_base)
+        self.http = HttpRequest(api_base=api_base, crtfile=crtfile)
         self.api = self.http.api = LightNodeAPI(self.http)
 
     def init_app(self, app, rum_kspasswd=None, rum_port=None):

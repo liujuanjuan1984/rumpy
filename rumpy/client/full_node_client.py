@@ -19,7 +19,7 @@ class FullNode:
             local_crtfile = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
             crtfile = os.getenv("RUM_CRTFILE", local_crtfile)
         _apis = ApiBaseURLS(port=port, host=host)
-        self.http = HttpRequest(_apis.FULL_NODE)
+        self.http = HttpRequest(api_base=_apis.FULL_NODE, crtfile=crtfile)
         self.api = self.http.api = FullNodeAPI(self.http)
         self.paid = self.http.paid = PaidGroup(self.http)
 
