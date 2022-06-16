@@ -225,7 +225,6 @@ class RssBot:
         # 计算出时间
         def _get_nice_ts(group_id):
             nice_ts = str(datetime.datetime.now() + datetime.timedelta(minutes=self.groups[group_id]["minutes"]))
-            # logger.debug(f"_get_nice_ts, group_id:{group_id}, _g:{_g}, _g[0]: {_g[0]},minutes: {minutes}, nice_ts:{nice_ts}")
             return nice_ts
 
         def _check_text(text):
@@ -298,9 +297,8 @@ class RssBot:
                     else:
                         logger.debug(f"xin.api.send_messages resp: {json.dumps(resp)}")
                 else:
-
-                    for user in users:
-                        user = user[0]
+                    # TODO:用 unpacking 的方式取代下标的方式；但要验证下
+                    for user, *others in users:
                         logger.debug(f"user: {user}")
                         if user in _sent_users:
                             logger.debug(f"user in sent_users,user: {user},trx_id: {trx.trx_id}")

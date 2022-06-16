@@ -1,16 +1,5 @@
-import os
+from rumpy import FullNode
+from rumpy.bots import SearchUser
 
-from officy import JsonFile
-from search_user import SearchUser
-
-searchuser = SearchUser()
-seedsfile = r"D:\Jupyter\seeds\data\seeds.json"
-# example: one
-
-searchuser.init("huoju", seedsfile)
-searchuser.innode()
-
-# example: two
-
-searchuser.init("xiaolai", seedsfile)
-searchuser.innode()
+rum = FullNode()
+SearchUser(rum, "huoju").io_with_file(data_dir=r"D:\Jupyter\rumpy\rum_whosays\whosays")

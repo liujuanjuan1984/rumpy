@@ -11,6 +11,7 @@ class ExportData:
     def __init__(self, rum_client):
         self.rum = rum_client
 
+    # TODO:这个处理适合whosays借鉴？
     def data_generator(self, group_id, senders):
         trxs = self.rum.api.get_group_all_contents(group_id=group_id, senders=senders)
         nicknames = self.rum.api.get_profiles(group_id=group_id, types=("name",))

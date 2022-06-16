@@ -12,67 +12,11 @@ DONT_JOIN = ["测试一下", "测试一下下", "nihao3", "nihao"]
 DONT_JOIN_PIECES = ["mytest_", "测试", "test"]
 
 
-class SearchSeeds(FullNode):
+class SearchSeeds(FullNode):  # TODO: 还没改完。其它方法应该拆开
     def init_app(self, seedsfile, progressfile, infofile):
         self.seedsfile = seedsfile
         self.progressfile = progressfile
         self.infofile = infofile
-
-    def intext(self, text: str) -> List:
-        """
-        Search seeds in text, return list of seeds.
-        Only one seed in text can be found.
-        """
-        seeds = []
-        pt = r"""({['"].*genesis_block.*['"]})"""
-        for i in re.findall(pt, text or "", re.S):
-            try:
-                iseed = json.loads(i)
-                if utils.is_seed(iseed):
-                    seeds.append(iseed)
-            except json.JSONDecodeError:
-                continue
-            except Exception as e:
-                print(e)
-                continue
-        return seeds
-
-    def intrx(self, trx: Dict) -> List:
-        """Search seeds in trx, return list of seeds."""
-        return self.intext(trx["Content"].get("content") or "")
-
-    def ingroup(self, trx_id=None, flag=True) -> Dict:
-        """Search seeds in group, and write result to datafile."""
-
-        logs = JsonFile(self.progressfile).read({})
-        seeds = JsonFile(self.seedsfile).read({})
-
-        if self.group_id not in logs:
-            logs[self.group_id] = None
-
-        trx_id = logs[self.group_id]
-
-        if self.group_id not in seeds:
-            seed = self.api.seed()
-            if seed:
-                seeds[self.group_id] = seed
-
-        trxs = self.api.get_group_all_contents(trx_id=trx_id)
-
-        for trx, tid in trxs:
-            for seed in self.intrx(trx):
-                if seed["group_id"] not in seeds:
-                    seeds[seed["group_id"]] = seed
-
-        logs[self.group_id] = utils.get_last_trxid_by_ts(trxs)
-        JsonFile(self.seedsfile).write(seeds)
-        JsonFile(self.progressfile).write(logs)
-
-    def innode(self) -> Dict:
-        """Search seeds in node."""
-        for group_id in self.api.groups_id:
-            self.group_id = group_id
-            self.ingroup()
 
     def update_status(self):
         """从已加入的种子网络中搜索新的种子，并更新数据文件"""

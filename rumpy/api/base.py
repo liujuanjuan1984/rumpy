@@ -39,6 +39,8 @@ class BaseAPI:
             raise RumChainException(f"You are not in this group: <{group_id}>.")
         return group_id
 
+    # TODO:整理所有的params的排序，保持一致性
+
     def check_group_owner_as_required(self, group_id=None):
         group_id = self.check_group_joined_as_required(group_id)
         info = self._http.api.group_info(group_id)
