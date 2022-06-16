@@ -136,6 +136,36 @@ class BaseAPI:
         infos, trxs = self.search_file_trxs(group_id)
         utils.merge_trxs_to_files(file_dir, infos, trxs)
 
+    def get_contents(
+        self,
+        trx_id=None,
+        group_id=None,
+        senders=None,
+        trx_types=None,
+        reverse=False,
+        num=20,
+    ):
+        """返回的是一个生成器，可以用 for ... in ... 来迭代访问。trx_types 的取值见 utils.trx_type() 的各种返回值"""
+        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=num, reverse=reverse)
+        checked_trxids = []
+        trx_types = trx_types or []
+        senders = senders or []
+        got_num = 0
+        while trxs:
+            if trx_id in checked_trxids:
+                break
+            else:
+                checked_trxids.append(trx_id)
+            for trx in trxs:
+                if got_num != num:
+                    flag1 = (utils.trx_type(trx) in trx_types) or (not trx_types)
+                    flag2 = (trx.get("Publisher", "") in senders) or (not senders)
+                    if flag1 and flag2:
+                        got_num += 1
+                        yield trx
+            trx_id = utils.get_last_trxid_by_chain(trx_id, trxs, reverse=reverse)
+            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=num, reverse=reverse)
+
     def get_group_all_contents(
         self,
         trx_id=None,
