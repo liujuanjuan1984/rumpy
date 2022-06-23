@@ -112,7 +112,7 @@ class LightNodeAPI(BaseAPI):
         self,
         group_id: str,
         reverse: bool = False,
-        starttrx: str = None,
+        trx_id: str = None,
         num: int = 20,
         includestarttrx: bool = False,
         senders: List = None,
@@ -121,7 +121,7 @@ class LightNodeAPI(BaseAPI):
         payload = {
             "group_id": group_id,
             "num": num,
-            "start_trx": starttrx,
+            "start_trx": trx_id,
             "reverse": json.dumps(reverse),
             "include_start_trx": json.dumps(includestarttrx),
             "senders": senders,
