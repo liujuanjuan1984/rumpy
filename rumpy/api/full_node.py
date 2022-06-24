@@ -139,13 +139,13 @@ class FullNodeAPI(BaseAPI):
         }
 
         seed = self._post("/api/v1/group", payload)
-        return utils.check_seed(seed)
+        return seed #utils.check_seed(seed)
 
     def seed(self, group_id=None) -> Dict:
         """get the seed of a group which you've joined in."""
         group_id = self.check_group_id_as_required(group_id)
         seed = self._get(f"/api/v1/group/{group_id}/seed")
-        return utils.check_seed(seed)
+        return seed #utils.check_seed(seed)
 
     def group_info(self, group_id=None):
         """return group info,type: datacalss"""
@@ -170,11 +170,12 @@ class FullNodeAPI(BaseAPI):
     def eth_addr(self):
         return self.group_info().user_eth_addr
 
-    def join_group(self, seed: Dict):
+    def join_group(self, seed: Dict,v=1):
         """join a group with the seed of the group"""
-        seed = utils.check_seed(seed)
-        resp = self._post("/api/v1/group/join", seed)
-        return self.raise_error(resp, "Group with same GroupId existed")
+        
+        #seed = utils.check_seed(seed)
+        resp = self._post(f"/api/v{v}/group/join", seed)
+        return resp #self.raise_error(resp, "Group with same GroupId existed")
 
     def leave_group(self, group_id=None):
         """leave a group"""
