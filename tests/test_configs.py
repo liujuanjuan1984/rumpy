@@ -2,8 +2,9 @@ from tests import client
 
 
 def test_configs_view(group_id=None):
+    group_id = group_id or client.api.create_group("mytest_configs")["group_id"]
 
-    client.group_id = group_id or client.api.create_group("mytest_configs")["group_id"]
+    client.group_id = group_id
     seed = client.api.seed()
 
     print("==== appconfig ====")
@@ -14,6 +15,7 @@ def test_configs_view(group_id=None):
         ik = client.api.key(key)
         print("key", key, ik)
 
+    """  seedimprove is update.
     print("==== group info ====")
 
     r = seed["app_key"]
@@ -24,6 +26,7 @@ def test_configs_view(group_id=None):
 
     r = seed["encryption_type"]
     print("encryption_type", r)
+    """
 
     print("==== user info ====")
 

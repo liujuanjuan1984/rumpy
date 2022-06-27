@@ -11,7 +11,7 @@ def do_group(group_id):
 
 
 def do_node(toshare):
-    for gid in client.api.groups_id:  # TODO:轻节点还没有支持全部groups_id
+    for gid in client.api.groups_id:
         try:
             bot.view_to_post(gid, toshare)
         except ParamValueError as e:

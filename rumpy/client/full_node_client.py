@@ -22,6 +22,7 @@ class FullNode:
         self.http = HttpRequest(api_base=_apis.FULL_NODE, crtfile=crtfile)
         self.api = self.http.api = FullNodeAPI(self.http)
         self.paid = self.http.paid = PaidGroup(self.http)
+        # TODO:paid其实也是 api 的一类，这个处理需要集中搞下
 
     @property
     def group_id(self):

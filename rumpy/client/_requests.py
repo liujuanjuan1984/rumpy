@@ -62,7 +62,7 @@ class HttpRequest:
             logger.info(f"body_json:{body_json}")
             logger.info(f"resp.status_code:{resp.status_code}")
 
-        logger.debug(f"payload:{payload.keys()}")
+        logger.debug(f"payload:{payload}")
         logger.debug(f"url:{url}")
         logger.debug(f"body_json:{body_json}")
         logger.debug(f"resp.status_code:{resp.status_code}")

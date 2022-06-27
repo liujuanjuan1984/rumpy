@@ -15,7 +15,7 @@ class TestCase:
         assert r0.lower().find("online") >= 0
 
         r1 = client.api.create_group("mytest_pytest")
-        assert "genesis_block" in r1
+        assert "group_id" in r1
         client.api.join_group(r1)
 
         group_id = r1["group_id"]
@@ -83,13 +83,13 @@ class TestCase:
 
     def test_group(self):
         seed = client.api.create_group("mytest_pytest_group")
-        assert "genesis_block" in seed
+        assert "group_id" in seed
 
         client.api.join_group(seed)
         client.group_id = seed["group_id"]
 
         seed = client.api.seed()
-        assert "genesis_block" in seed
+        assert type(seed) == dict
 
         for i in range(10):
             kwargs = {"content": f"你好 {i}"}

@@ -44,7 +44,13 @@ class LightNodeAPI(BaseAPI):
         return self._post("/v1/keystore/bindalias", payload)
 
     def join_group(
-        self, seed: Dict, sign_alias: str = None, encrypt_alias: str = None, urls: List = None, pair_alias=None, v=2
+        self,
+        seed: str,
+        sign_alias: str = None,
+        encrypt_alias: str = None,
+        urls: List = None,
+        pair_alias=None,
+        v=2,
     ):
         if pair_alias:
             sign_alias = pair_alias + "_sign"
@@ -57,14 +63,16 @@ class LightNodeAPI(BaseAPI):
         }
         return self._post(f"/v{v}/group/join", payload)
 
-    def update_apihosts(self, group_id, urls):
+    def update_apihosts(self, urls, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         payload = {
             "group_id": group_id,
             "urls": urls,
         }
         return self._post("/v1/group/apihosts", payload)
 
-    def leave_group(self, group_id):
+    def leave_group(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         payload = {
             "group_id": group_id,
         }
@@ -73,46 +81,56 @@ class LightNodeAPI(BaseAPI):
     def _groups(self):
         return self._get("/v1/group/listall")
 
-    def group(self, group_id):
+    def group(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/list")
 
-    def group_info(self, group_id):
+    def group_info(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/info")
 
-    def seed(self, group_id):
+    def seed(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/seed")
 
-    def trx(self, group_id, trx_id):
+    def trx(self, trx_id, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/trx/{group_id}/{trx_id}")
 
-    def block(self, group_id, block_id):
+    def block(self, block_id, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/block/{group_id}/{block_id}")
 
-    def producers(self, group_id):
+    def producers(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/producers")
 
-    def users(self, group_id):
+    def users(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/announced/users")
 
-    def user(self, group_id, pubkey):
+    def user(self, pubkey, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/announced/user/{pubkey}")
 
-    def appconfig_keylist(self, group_id):
+    def appconfig_keylist(self, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/appconfig/keylist")
 
-    def appconfig_key(self, group_id, key):
+    def appconfig_key(self, key, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/appconfig/{key}")
 
     def get_group_content(
         self,
-        group_id: str,
+        group_id: str = None,
         reverse: bool = False,
         trx_id: str = None,
         num: int = 20,
         includestarttrx: bool = False,
         senders: List = None,
     ) -> List:
-
+        group_id = self.check_group_id_as_required(group_id)
         payload = {
             "group_id": group_id,
             "num": num,
@@ -125,16 +143,18 @@ class LightNodeAPI(BaseAPI):
         return self._post(f"/v1/group/getctn", payload)
 
     def _send(self, activity_type=None, group_id=None, obj=None, **kwargs) -> Dict:
+        group_id = self.check_group_id_as_required(group_id)
         payload = NewTrx(group_id=group_id, activity_type=activity_type, obj=obj, **kwargs).__dict__
         return self._post("/v1/group/content", payload)
 
-    def update_profile(self, group_id, name=None, mixin_id=None, image=None):
+    def update_profile(self, group_id=None, name=None, mixin_id=None, image=None):
         """user update the profile: name, image, or wallet.
 
         name: nickname of user
         image: one image, as file_path or bytes or bytes-string
         mixin_id: one kind of wallet
         """
+        group_id = self.check_group_id_as_required(group_id)
         obj = PersonObj(name=name, image=image, wallet={"wallet_id": mixin_id})
         payload = NewTrx(activity_type="Update", group_id=group_id, obj=obj).__dict__
         return self._post(f"/v1/group/profile", payload)
