@@ -18,6 +18,7 @@ class LightNode:
             crtfile = os.getenv("RUM_CRTFILE", local_crtfile)
         api_base = ApiBaseURLS(port=port, host=host).LIGHT_NODE
         self.http = HttpRequest(api_base=api_base, crtfile=crtfile)
+        # TODO:某些请求，会检查 node 运行目录下的 server.crt 而不是传入的 文件。如何统一？
         self.api = self.http.api = LightNodeAPI(self.http)
 
     def init_app(self, app, rum_kspasswd=None, rum_port=None):

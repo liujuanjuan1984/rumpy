@@ -134,7 +134,8 @@ class BaseAPI:
             resp = self._http.api._send(obj=obj, activity_type="Add", group_id=group_id)
 
     def download_files(self, file_dir, group_id=None):
-        infos, trxs = self.search_file_trxs(group_id)
+        utils.check_dir(file_dir)
+        infos, trxs = self.search_file_trxs(group_id=group_id)
         utils.merge_trxs_to_files(file_dir, infos, trxs)
 
     def get_contents(

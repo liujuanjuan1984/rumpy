@@ -23,9 +23,7 @@ class WhoSays(FullNode):
 
         """
         datadir = os.path.join(os.path.dirname(__file__), "data", dirname)
-        if not os.path.exists(datadir):
-            os.makedirs(datadir)
-
+        utils.check_dir(datadir)
         namesinfofile = os.path.join(datadir, "names_info.json")
         self.datadir = datadir
         self.trxs_file = os.path.join(datadir, "whosays_trxs.json")

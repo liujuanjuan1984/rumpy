@@ -21,6 +21,11 @@ from rumpy.types.data import *
 logger = logging.getLogger(__name__)
 
 
+def check_dir(dirpath):
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+
 def check_trx_mode(mode: str):
     if mode.lower() not in ["dny", "deny", "allow", "alw"]:
         raise ParamValueError(f"{mode} mode must be one of ['deny','allow']")

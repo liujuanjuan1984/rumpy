@@ -23,8 +23,7 @@ class ExportData:
     def save_to_dir(self, group_id, datadir, filetype="md", pubkeys=None):
         # check dir
         imgdir = os.path.join(datadir, "images")
-        if not os.path.exists(imgdir):
-            os.makedirs(imgdir)
+        utils.check_dir(imgdir)
         if filetype not in ("md", "html"):
             filetype = "md"
             logger.warning(f"filetype {filetype} is not supported yet.")

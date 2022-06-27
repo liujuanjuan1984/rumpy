@@ -120,8 +120,7 @@ class GroupStatistics:
             self.rum.api.send_note(group_id=toshare_group_id, content=note, images=[imgbytes])
 
         if save_to_dir:
-            if not os.path.exists(save_to_dir):
-                os.makedirs(save_to_dir)
+            utils.check_dir(save_to_dir)
             _today = datetime.date.today()
             datafile = os.path.join(
                 save_to_dir,
