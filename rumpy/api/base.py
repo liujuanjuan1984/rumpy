@@ -1,5 +1,6 @@
 import base64
 import datetime
+import json
 import logging
 import os
 from typing import Any, Dict, List
@@ -274,3 +275,14 @@ class BaseAPI:
             }
         )
         return users_data
+
+    def groups(self) -> List:
+        resp = self._http.api._groups()
+        if "groups" in resp:
+            return resp["groups"]
+        raise RumException(500, json.dumps(resp))
+
+    @property
+    def groups_id(self) -> List:
+        """return list of group_id which node has joined"""
+        return [i["group_id"] for i in self.groups()]

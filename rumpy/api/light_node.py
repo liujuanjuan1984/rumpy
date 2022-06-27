@@ -75,7 +75,7 @@ class LightNodeAPI(BaseAPI):
         }
         return self._post("/v1/group/leave", payload)
 
-    def groups(self):
+    def _groups(self):
         return self._get("/v1/group/listall")
 
     def group(self, group_id):

@@ -73,14 +73,9 @@ class FullNodeAPI(BaseAPI):
     def node_eth_addr(self):
         return self.network.get("eth_addr")
 
-    def groups(self) -> List:
+    def _groups(self) -> List:
         """return list of group info which node has joined"""
-        return self._get("/api/v1/groups")["groups"]
-
-    @property
-    def groups_id(self) -> List:
-        """return list of group_id which node has joined"""
-        return [i["group_id"] for i in self.groups()]
+        return self._get("/api/v1/groups")
 
     def backup(self):
         """Backup my group seed/keystore/config"""
