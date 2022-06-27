@@ -50,6 +50,7 @@ class LightNodeAPI(BaseAPI):
         encrypt_alias: str = None,
         urls: List = None,
         pair_alias=None,
+        v=2
     ):
         if pair_alias:
             sign_alias = pair_alias + "_sign"
@@ -60,7 +61,7 @@ class LightNodeAPI(BaseAPI):
             "encrypt_alias": encrypt_alias,
             "urls": urls,
         }
-        return self._post("/v1/group/join", payload)
+        return self._post(f"/v{v}/group/join", payload)
 
     def update_apihosts(self, group_id, urls):
         payload = {

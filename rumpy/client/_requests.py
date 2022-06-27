@@ -57,10 +57,16 @@ class HttpRequest:
             body_json = {}
 
         if resp.status_code != 200:
+            logger.info(f"payload:{payload}")
+            logger.info(f"url:{url}")
             logger.info(f"body_json:{body_json}")
             logger.info(f"resp.status_code:{resp.status_code}")
-            logger.info(f"payload:{payload.keys()}")
-            logger.info(f"url:{url}")
+
+
+        logger.debug(f"payload:{payload.keys()}")
+        logger.debug(f"url:{url}")
+        logger.debug(f"body_json:{body_json}")
+        logger.debug(f"resp.status_code:{resp.status_code}")
 
         return body_json
 
