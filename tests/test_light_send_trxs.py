@@ -12,7 +12,7 @@ def test_sends(app_key="group_timeline"):
     seed = full.api.create_group("mytest_send_trxs", app_key=app_key)
     assert "group_id" in seed
 
-    # create new keypair to join the group.
+    # create new key pair to join the group.
     bot.group_id = name_piece = seed["group_id"]
     bot.api.create_keypair(name_piece)
     params = {

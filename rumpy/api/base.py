@@ -40,8 +40,6 @@ class BaseAPI:
             raise RumChainException(f"You are not in this group: <{group_id}>.")
         return group_id
 
-    # TODO:整理所有的params的排序，保持一致性
-
     def check_group_owner_as_required(self, group_id=None):
         group_id = self.check_group_joined_as_required(group_id)
         info = self._http.api.group_info(group_id)
@@ -153,18 +151,24 @@ class BaseAPI:
         trx_types = trx_types or []
         senders = senders or []
         got_num = 0
-        while trxs:
+        stop = False
+        while trxs and not stop:
             if trx_id in checked_trxids:
                 break
             else:
                 checked_trxids.append(trx_id)
             for trx in trxs:
-                if got_num != num:
+                if got_num < num:
                     flag1 = (utils.trx_type(trx) in trx_types) or (not trx_types)
                     flag2 = (trx.get("Publisher", "") in senders) or (not senders)
                     if flag1 and flag2:
                         got_num += 1
                         yield trx
+                else:
+                    stop = True  
+                    break
+            if stop:
+                break
             trx_id = utils.get_last_trxid_by_chain(trx_id, trxs, reverse=reverse)
             trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=num, reverse=reverse)
 

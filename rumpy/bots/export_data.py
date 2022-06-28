@@ -34,12 +34,12 @@ class ExportData:
 
         senders = pubkeys or [self.rum.api.group_info(group_id).user_pubkey]
         data = self.data_generator(group_id, senders)
-        hander = open(textfile, "w+", encoding="utf-8")
+        handler = open(textfile, "w+", encoding="utf-8")
         title = {
             "html": f"""<!DOCTYPE html>\n<html lang="zh-CN">\n<head><h1>Export Data</h1>\n<p>Group: {group_id}</p><p>Senders: {senders}</p></head>\n<body>\n""",
             "md": "\n\n".join([f"# Group: {group_id}", f"Senders: {senders}"]),
         }
-        hander.write(title[filetype])
+        handler.write(title[filetype])
 
         # write to html file.
 
@@ -47,7 +47,7 @@ class ExportData:
             # one trx start.
             _md = f"""<!-- group_id="{group_id}" trx_id="{params['trx_id']}-->\n\n"""
             text = {"html": f"<div></div>\n<section>\n{_md}", "md": _md}
-            hander.write(text[filetype])
+            handler.write(text[filetype])
 
             # content in trx
             if lines := params.get("content"):
@@ -55,7 +55,7 @@ class ExportData:
                 _html = "\n".join([f"<div>{i}</div>" for i in _lines]) + "\n<div></div>\n"
                 _md = "\n\n".join(_lines) + "\n\n"
                 text = {"html": _html, "md": _md}
-                hander.write(text[filetype])
+                handler.write(text[filetype])
 
             # images in trx: write imgs to imgdir
             for img in params.get("images", []):
@@ -68,15 +68,15 @@ class ExportData:
                 _html = f'\n<img src="images/{imgname}"></img>\n'
                 _md = "\n\n".join([f"![](images/{imgname})", "------"]) + "\n\n"
                 imgquote = {"html": _html, "md": _md}
-                hander.write(imgquote[filetype])
+                handler.write(imgquote[filetype])
 
             # one trx end.
             text = {"html": f"</section>\n<hr>\n", "md": "----\n\n"}
-            hander.write(text[filetype])
+            handler.write(text[filetype])
 
         text = {"html": "</body>\n</html>", "md": "\n<!--end-->\n\n"}
-        hander.write(text[filetype])
-        hander.close()
+        handler.write(text[filetype])
+        handler.close()
 
 
 if __name__ == "__main__":

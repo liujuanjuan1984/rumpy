@@ -11,7 +11,6 @@ import uuid
 from typing import Any, Dict, List
 from urllib import parse
 
-import certifi
 import filetype
 from PIL import Image
 
@@ -44,6 +43,7 @@ def check_trx_type(trx_type: str):
 def check_crtfile(crtfile):
     try:
         if not os.path.exists(crtfile):
+            import certifi
             crtfile = certifi.where()
     except:
         crtfile = True

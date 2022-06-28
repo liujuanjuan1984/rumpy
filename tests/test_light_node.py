@@ -1,10 +1,7 @@
 from rumpy import LightNode
 
-crtfile = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
-
-bot = LightNode(crtfile=crtfile)
-
-full_node_urls = ["https://127.0.0.1:62663"]
+bot = LightNode()
+full_node_urls = ["https://127.0.0.1:51194"]
 
 
 def test_keys():

@@ -15,13 +15,15 @@ logger = logging.getLogger(__name__)
 class HttpRequest:
     def __init__(
         self,
+        host: str = "127.0.0.1",
+        port: str = "8080",
         api_base: str = None,
         crtfile: str = None,
         jwt_token: str = None,
     ):
 
         requests.adapters.DEFAULT_RETRIES = 5
-        self.api_base = api_base
+        self.api_base = api_base or f"https://{host}:{port}"
         self._session = requests.Session()
         self._session.verify = utils.check_crtfile(crtfile)
         self._session.keep_alive = False
@@ -35,8 +37,8 @@ class HttpRequest:
             self._session.headers.update({"Authorization": f"Bearer {jwt_token}"})
 
         _no_proxy = os.getenv("NO_PROXY", "")
-        if "127.0.0.1" in api_base and api_base not in _no_proxy:
-            os.environ["NO_PROXY"] = ",".join([_no_proxy, api_base])
+        if "127.0.0.1" in self.api_base and self.api_base not in _no_proxy:
+            os.environ["NO_PROXY"] = ",".join([_no_proxy, self.api_base])
 
     def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None):
         api_base = api_base or self.api_base
