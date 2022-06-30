@@ -84,6 +84,8 @@ class RssBot:
 
         users = users_data.get("data", {})
         for pubkey in users:
+            if pubkey == "progress_tid":
+                continue 
             _name = users[pubkey].get("name", pubkey)
             _wallet = users[pubkey].get("wallet", None)
             if type(_wallet) == list:
