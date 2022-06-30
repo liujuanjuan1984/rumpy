@@ -10,6 +10,6 @@ __author__ = "liujuanjuan1984"
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 logging.basicConfig(
     format="%(name)s %(asctime)s %(levelname)s %(message)s",
-    filename=f"rumpy_{datetime.date.today()}.log",
-    level=logging.DEBUG,
+    #filename=f"rumpy_{datetime.date.today()}.log",
+    level=logging.INFO,
 )

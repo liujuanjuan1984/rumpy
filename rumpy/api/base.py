@@ -221,7 +221,8 @@ class BaseAPI:
             progress_tid = trx["TrxId"]
             if trx_content := trx.get("Content"):
                 pubkey = trx["Publisher"]
-                users[pubkey] = users.get(pubkey, {})
+                if pubkey not in users:
+                    users[pubkey] = {}
                 for key in trx_content:
                     if key in types:
                         users[pubkey].update({key: trx_content[key]})

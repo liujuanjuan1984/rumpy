@@ -53,7 +53,6 @@ class RssBot:
         self.update_all_profiles("bot")
 
     def update_profiles(self, group_id):
-        self.rum.group_id = group_id
         _x = and_(
             BotRumProgress.group_id == group_id,
             BotRumProgress.progress_type == "GET_PROFILES",
@@ -71,7 +70,9 @@ class RssBot:
 
         p_tid = None if progress == None else progress.trx_id
 
-        data = self.rum.api.update_profiles_data(users_data={"trx_id": p_tid}, types=("name", "wallet"))
+        data = self.rum.api.update_profiles_data(
+            group_id=group_id, users_data={"trx_id": p_tid}, types=("name", "wallet")
+        )
         if data is None:
             return
         tid = data.get("trx_id")
@@ -82,7 +83,7 @@ class RssBot:
             self.db.session.commit()
 
         for pubkey in data.get("data") or {}:
-            _name = data["data"][pubkey].get("name")
+            _name = data["data"][pubkey].get("name", pubkey)  # TODO:有bug?
             _wallet = data["data"][pubkey].get("wallet")
             if type(_wallet) == list:
                 _wallet = _wallet[0]["id"]
@@ -123,10 +124,9 @@ class RssBot:
         for k in RSS_BOT_COMMANDS:
             _gid = RSS_BOT_COMMANDS[k]["group_id"]
             if _gid not in (None, -1):
-                self.rum.group_id = _gid
                 groups[_gid] = {
                     "group_id": _gid,
-                    "group_name": self.rum.api.seed().get("group_name"),
+                    "group_name": self.rum.api.seed(_gid).get("group_name"),
                     "minutes": RSS_BOT_COMMANDS[k].get("minutes") or DEFAULT_MINUTES,
                 }
         return groups
@@ -139,10 +139,8 @@ class RssBot:
         return nicknames
 
     def get_trxs_from_rum(self):
-        # logger.debug("get_trxs_from_rum start ...")
         for group_id in self.groups:
-            self.rum.group_id = group_id
-            if not self.rum.api.is_joined():
+            if not self.rum.api.is_joined(group_id):
                 logger.warning(f"group_id: {group_id}, you are not in this group. you need to join it.")
                 continue
 
@@ -161,7 +159,7 @@ class RssBot:
             gname = self.groups[group_id]["group_name"]
             minutes = self.groups[group_id]["minutes"]
             if not existd:
-                _trxs = self.rum.api.get_group_content(reverse=True, num=10)
+                _trxs = self.rum.api.get_group_content(group_id=group_id, reverse=True, num=10)
                 if len(_trxs) > 0:
                     trx_id = _trxs[-1]["TrxId"]
                     _ts = str(utils.timestamp_to_datetime(_trxs[-1]["TimeStamp"]))
@@ -179,7 +177,7 @@ class RssBot:
             else:
                 trx_id = existd.trx_id
 
-            trxs = self.rum.api.get_group_content(trx_id=trx_id, num=10)
+            trxs = self.rum.api.get_group_content(group_id=group_id, trx_id=trx_id, num=10)
             for trx in trxs:
                 _tid = trx["TrxId"]
                 trx_id = _tid
@@ -198,7 +196,7 @@ class RssBot:
                 if ts <= str(datetime.datetime.now() + datetime.timedelta(minutes=minutes)):
                     continue
 
-                obj = self.rum.api.trx_retweet_params(trx=trx)
+                obj = self.rum.api.trx_retweet_params(group_id=group_id, trx=trx)
                 if not obj:
                     continue
 
@@ -217,7 +215,6 @@ class RssBot:
                 }
                 logger.info(f"got new trx from rum. trx_id: {_tid}, group_id: {group_id}")
                 self.db.add(BotTrxs(_trx))
-        # logger.debug("get_trxs_from_rum done")
 
     def send_msg_to_xin_update(self):
         # 先筛选出等待推送的 trxs，再推送给订阅了的人。
@@ -236,6 +233,10 @@ class RssBot:
                 return False
             if text.find("OBJECT_STATUS_DELETED") >= 0:
                 return False
+
+            # 移除种子来源展示
+            if text.find("Happyness(hDZVqRpg)@Huoju在Rum上说了啥") >= 0:
+                text = text.split("""origin: {"genesis_block":""")[0]
 
             _length = 200
             if len(text) > _length:
@@ -327,7 +328,6 @@ class RssBot:
             _one_group(group_id)
 
     def send_to_rum(self, group_id=MY_RUM_GROUP_ID):
-        self.rum.group_id = group_id
         logger.info("send_to_rum start ...")
         data = (
             self.db.session.query(BotComments)
@@ -342,7 +342,7 @@ class RssBot:
         for r in data:
             if r.is_to_rum:
                 continue
-            resp = self.rum.api.send_note(content=r.text[3:])
+            resp = self.rum.api.send_note(group_id=group_id, content=r.text[3:])
             logger.info(f"rum.api.send_note, message_id: {r.message_id}...")
             if "trx_id" not in resp:
                 logger.warning(f"rum.api.send_note, resp: {json.dumps(resp)}")
@@ -359,7 +359,7 @@ class RssBot:
         self.send_msg_to_xin_update()
         self.get_trxs_from_rum()
 
-    def counts_trxs(self, days=-1, num=100):
+    def counts_trxs(self, group_id, days=-1, num=100):
         """counts trxs num of every pubkey published at that day.
 
         Args:
@@ -402,11 +402,10 @@ class RssBot:
         return counts_result
 
     def airdrop_to_group(self, group_id, num_trxs=1, days=-1, memo=None):
-        self.rum.group_id = group_id
-        group_name = self.rum.api.seed().get("group_name")
+        group_name = self.rum.api.seed(group_id).get("group_name")
         logger.debug(f"airdrop_to_group {group_id}, {group_name}, ...")
 
-        counts_result = self.counts_trxs(days=days)
+        counts_result = self.counts_trxs(group_id, days=days)
         date = datetime.datetime.now().date() + datetime.timedelta(days=days)
         memo = memo or f"{date} Rum 种子网络空投"
         for pubkey in counts_result["data"]:
