@@ -70,21 +70,22 @@ class RssBot:
 
         p_tid = None if progress == None else progress.trx_id
 
-        data = self.rum.api.update_profiles_data(
+        users_data = self.rum.api.update_profiles_data(
             group_id=group_id, users_data={"trx_id": p_tid}, types=("name", "wallet")
         )
-        if data is None:
+        if users_data is None:
             return
-        tid = data.get("trx_id")
-        ts = data.get("trx_timestamp")
+        tid = users_data.get("trx_id")
+        ts = users_data.get("trx_timestamp")
 
         if tid and tid != p_tid:
             self.db.session.query(BotRumProgress).filter(_x).update({"trx_id": tid, "timestamp": ts})
             self.db.session.commit()
 
-        for pubkey in data.get("data") or {}:
-            _name = data["data"][pubkey].get("name", pubkey)  # TODO:有bug?
-            _wallet = data["data"][pubkey].get("wallet")
+        users = users_data.get("data", {})
+        for pubkey in users:
+            _name = users[pubkey].get("name", pubkey)
+            _wallet = users[pubkey].get("wallet", None)
             if type(_wallet) == list:
                 _wallet = _wallet[0]["id"]
             _x = and_(
@@ -112,12 +113,14 @@ class RssBot:
                 self.db.commit()
 
     def update_all_profiles(self, where="bot"):
+        groups = []
         if where == "bot":
-            for group_id in self.groups:
-                self.update_profiles(group_id)
+            groups = self.groups
         elif where == "node":
-            for group_id in self.rum.api.groups_id:
-                self.update_profiles(group_id)
+            groups = self.rum.api.groups_id
+
+        for group_id in groups:
+            self.update_profiles(group_id)
 
     def check_groups(self):
         groups = {}
