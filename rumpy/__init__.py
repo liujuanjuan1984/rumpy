@@ -3,7 +3,7 @@ import logging
 
 from rumpy.client import FullNode, LightNode
 
-__version__ = "0.5.1"
+__version__ = "0.6.0"
 __author__ = "liujuanjuan1984"
 
 # Set default logging handler to avoid "No handler found" warnings.
