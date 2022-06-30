@@ -49,7 +49,7 @@ class SearchSeeds:
             trx_id=trx_id,
             trx_types=("text_only", "image_text", "reply"),
         )
-        progress_tid = None
+        progress_tid = trx_id
         for trx in trxs:
             progress_tid = trx["TrxId"]
             if _seeds := self.search_in_trx(trx):

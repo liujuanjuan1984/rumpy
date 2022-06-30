@@ -44,6 +44,7 @@ def check_crtfile(crtfile):
     try:
         if not os.path.exists(crtfile):
             import certifi
+
             crtfile = certifi.where()
     except:
         crtfile = True

@@ -165,7 +165,7 @@ class BaseAPI:
                         got_num += 1
                         yield trx
                 else:
-                    stop = True  
+                    stop = True
                     break
             if stop:
                 break
@@ -216,14 +216,16 @@ class BaseAPI:
             reverse=False,
         )
         users = users or {}
+        progress_tid = trx_id
         for trx in trxs:
+            progress_tid = trx["TrxId"]
             if trx_content := trx.get("Content"):
                 pubkey = trx["Publisher"]
                 users[pubkey] = users.get(pubkey, {})
                 for key in trx_content:
                     if key in types:
                         users[pubkey].update({key: trx_content[key]})
-        users["progress_tid"] = utils.get_last_trxid_by_ts(trxs)
+        users["progress_tid"] = progress_tid
         return users
 
     def update_profiles_data(
