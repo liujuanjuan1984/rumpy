@@ -43,7 +43,7 @@ class HttpRequest:
     def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None):
         api_base = api_base or self.api_base
         if not api_base:
-            raise ParamValueError(f"api_base is null, {api_base}")
+            raise ParamValueError(403, f"api_base is null, {api_base}")
         url = utils.get_url(api_base, endpoint)
 
         try:

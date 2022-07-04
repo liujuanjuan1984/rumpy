@@ -242,7 +242,10 @@ class FullNodeAPI(BaseAPI):
         data = {}
         trxs = self.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
         if len(trxs) > 1:
-            raise ParamOverflowError(f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.")
+            raise ParamOverflowError(
+                403,
+                f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.",
+            )
         elif len(trxs) == 1:
             data = trxs[0]
         else:

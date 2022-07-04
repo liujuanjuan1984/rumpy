@@ -145,7 +145,10 @@ class NewTrxImg:
             d = path_bytes_string
             self.content = d.get("content")
             if not self.content:
-                raise ParamValueError(f"NewTrxImg  type: {type(path_bytes_string)} ,content got null ")
+                raise ParamValueError(
+                    403,
+                    f"NewTrxImg  type: {type(path_bytes_string)} ,content got null ",
+                )
             _bytes, _ = get_filebytes(self.content)
             self.name = d.get("name", filename_init(_bytes))
             self.mediaType = d.get("mediaType", filetype.guess(_bytes).mime)
@@ -187,7 +190,10 @@ class NewTrxObject:
         if object_type in ["Note", "File"]:
             self.type = object_type
         elif object_type:
-            raise ParamTypeError(f"new object_type: {object_type}. check the param or update rumpy code.")
+            raise ParamTypeError(
+                403,
+                f"new object_type: {object_type}. check the param or update rumpy code.",
+            )
 
         if content:
             if type(content) == str:
@@ -195,7 +201,10 @@ class NewTrxObject:
             elif type(content) in (dict, list):
                 self.content = json.dumps(content)
             else:
-                raise ParamTypeError(f"new content type: {type(content)}. check the param or update rumpy code.")
+                raise ParamTypeError(
+                    403,
+                    f"new content type: {type(content)}. check the param or update rumpy code.",
+                )
 
         if name and type(name) == str:
             self.name = name
@@ -208,7 +217,7 @@ class NewTrxObject:
             self.id = edit_trx_id
             # check other params:
             if self.type != "Note":
-                raise ParamOverflowError(f"only Note type can be edited. type now: {self.type} ")
+                raise ParamOverflowError(403, f"only Note type can be edited. type now: {self.type} ")
             if not (self.content or self.image):
                 raise ParamRequiredError(403, "content or image is needed.")
 
@@ -218,7 +227,7 @@ class NewTrxObject:
             self.content = "OBJECT_STATUS_DELETED"
             for key in self.__dict__:
                 if key not in ["type", "id", "content"]:
-                    raise ParamOverflowError(f"del object got a no-need param {key}")
+                    raise ParamOverflowError(403, f"del object got a no-need param {key}")
 
         if reply_trx_id and type(reply_trx_id) == str:
             self.inreplyto = {"trxid": reply_trx_id}
@@ -230,7 +239,10 @@ class NewTrxObject:
             # check other params: only id param is needed.
             for key in self.__dict__:
                 if key != "id":
-                    raise ParamTypeError(f"like or dislike object can only have id param. but param {key} is found.")
+                    raise ParamTypeError(
+                        403,
+                        f"like or dislike object can only have id param. but param {key} is found.",
+                    )
 
 
 @dataclasses.dataclass
@@ -282,7 +294,8 @@ class NewTrx:
         self.type = activity_type
         if self.type not in [4, "Add", "Like", "Dislike", "Update"]:
             raise ParamValueError(
-                f"{self.type} is not one of 4,Add,Like,Dislike... check the input params or update the rumpy code. "
+                403,
+                f"{self.type} is not one of 4,Add,Like,Dislike... check the input params or update the rumpy code. ",
             )
 
         if group_id:

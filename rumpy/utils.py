@@ -27,7 +27,7 @@ def check_dir(dirpath):
 
 def check_trx_mode(mode: str):
     if mode.lower() not in ["dny", "deny", "allow", "alw"]:
-        raise ParamValueError(f"{mode} mode must be one of ['deny','allow']")
+        raise ParamValueError(403, f"{mode} mode must be one of ['deny','allow']")
     if mode.lower() in ["dny", "deny"]:
         return "dny"
     if mode.lower() in ["alw", "allow"]:
@@ -36,7 +36,7 @@ def check_trx_mode(mode: str):
 
 def check_trx_type(trx_type: str):
     if trx_type.upper() not in TRX_TYPES:
-        raise ParamValueError(f"{trx_type} must be one of {TRX_TYPES}")
+        raise ParamValueError(403, f"{trx_type} must be one of {TRX_TYPES}")
     return trx_type.lower()
 
 
@@ -57,7 +57,7 @@ def check_seed(seed: Dict):
     try:
         Seed(**seed)
     except Exception as e:
-        raise RumChainException(f"{seed.get('error')}\n\n{e}")
+        raise RumChainException(500, f"{seed.get('error')}\n\n{e}")
 
 
 def is_seed(seed: Dict) -> bool:
@@ -122,16 +122,16 @@ def get_filebytes(path_bytes_string):
     elif _type == bytes:
         file_bytes = path_bytes_string
     else:
-        raise ParamTypeError(f"not support for type: {_type} and length: {_size}")
+        raise ParamTypeError(403, f"not support for type: {_type} and length: {_size}")
     return file_bytes, is_file
 
 
 def read_file_to_bytes(file_path):
     if not os.path.exists(file_path):
-        raise ParamValueError(f"{file_path} file is not exists.")
+        raise ParamValueError(403, f"{file_path} file is not exists.")
 
     if not os.path.isfile(file_path):
-        raise ParamValueError(f"{file_path} is not a file.")
+        raise ParamValueError(403, f"{file_path} is not a file.")
 
     with open(file_path, "rb") as f:
         bytes_data = f.read()
@@ -157,7 +157,7 @@ def trx_ts(trx, rlt_type="str"):
         return dt
     if rlt_type == "int":
         return int(ts)
-    raise ParamValueError(f"{rlt_type}")
+    raise ParamValueError(403, f"{rlt_type}")
 
 
 def unique_trxs(trxs: List):
