@@ -481,3 +481,13 @@ def get_last_trxid_by_ts(trx_id: str, trxs, reverse=False):  # TODO:这个方法
     if _tid and _tid != trx_id:
         return _tid, _ts
     return trx_id, _ts
+
+
+def check_sub_strs(string, *subs):
+    """判断 string 中是否存在多个子串中的任意一个"""
+    rlt = False
+    for sub in subs:
+        if sub in string:
+            rlt = True
+            break
+    return rlt

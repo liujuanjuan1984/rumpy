@@ -71,7 +71,9 @@ class RssBot:
         p_tid = None if progress == None else progress.trx_id
 
         users_data = self.rum.api.update_profiles_data(
-            group_id=group_id, users_data={"trx_id": p_tid}, types=("name", "wallet")
+            group_id=group_id,
+            users_data={"trx_id": p_tid},
+            types=("name", "wallet"),
         )
         if users_data is None:
             return
@@ -85,7 +87,7 @@ class RssBot:
         users = users_data.get("data", {})
         for pubkey in users:
             if pubkey == "progress_tid":
-                continue 
+                continue
             _name = users[pubkey].get("name", pubkey)
             _wallet = users[pubkey].get("wallet", None)
             if type(_wallet) == list:
@@ -230,18 +232,22 @@ class RssBot:
             return nice_ts
 
         def _check_text(text):
-            if text.find(" 点赞给 `") >= 0:
-                return False
-            if text.find(" 点踩给 `") >= 0:
-                return False
-            if text.find(" 修改了个人信息：") >= 0:
-                return False
-            if text.find("OBJECT_STATUS_DELETED") >= 0:
-                return False
+            # subs = (" 点赞给 `"," 点踩给 `"," 修改了个人信息：","OBJECT_STATUS_DELETED")
+            # is_pass = utils.check_sub_strs(text,*subs)
+            # if is_pass and not is_except:
+            #    return False
+
+            sub = "Happyness(hDZVqRpg)@Huoju在Rum上说了啥"
+            is_except = utils.check_sub_strs(text, sub)
+
+            subs = (" 点赞给 `", " 点踩给 `")
+            is_split = utils.check_sub_strs(text, *subs)
+            if is_split and not is_except:
+                text = text.split("所发布的内容：")[0] + "所发布的内容。"
 
             # 移除种子来源展示
-            if text.find("Happyness(hDZVqRpg)@Huoju在Rum上说了啥") >= 0:
-                text = text.split("""origin: {"genesis_block":""")[0]
+            if is_except:
+                text = text.split("origin: ")[0]
 
             _length = 200
             if len(text) > _length:
