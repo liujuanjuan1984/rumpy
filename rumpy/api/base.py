@@ -294,3 +294,21 @@ class BaseAPI:
     def groups_id(self) -> List:
         """return list of group_id which node has joined"""
         return [i["group_id"] for i in self.groups()]
+
+    def trx(self, trx_id: str, group_id=None):
+        """get trx data by trx_id"""
+        data = {}
+        if not trx_id:
+            return data
+
+        trxs = self._http.api.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
+        if len(trxs) > 1:
+            raise ParamOverflowError(
+                403,
+                f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.",
+            )
+        elif len(trxs) == 1:
+            data = trxs[0]
+        else:
+            data = self._http.api.get_trx(trx_id=trx_id, group_id=group_id)
+        return data

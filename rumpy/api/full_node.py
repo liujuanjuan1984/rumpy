@@ -233,27 +233,9 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/block/{group_id}/{block_id}")
 
-    def trx(self, trx_id: str, group_id=None):
-        """get trx data by trx_id"""
-        if trx_id is None:
-            return None
-
+    def get_trx(self, trx_id: str, group_id=None):
         group_id = self.check_group_id_as_required(group_id)
-        data = {}
-        trxs = self.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
-        if len(trxs) > 1:
-            raise ParamOverflowError(
-                403,
-                f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.",
-            )
-        elif len(trxs) == 1:
-            data = trxs[0]
-        else:
-            data = self._get(f"/api/v1/trx/{group_id}/{trx_id}")
-            logger.info(f"data is encrypted for trx: <{trx_id}> of group: <{group_id}>.")
-        if not data:
-            logger.warning(f"data is empty for trx: <{trx_id}> of group: <{group_id}>.")
-        return data
+        return self._get(f"/api/v1/trx/{group_id}/{trx_id}")
 
     def pubqueue(self, group_id=None):
         group_id = self.check_group_id_as_required(group_id)

@@ -93,7 +93,7 @@ class LightNodeAPI(BaseAPI):
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/group/{group_id}/seed")
 
-    def trx(self, trx_id, group_id=None):
+    def get_trx(self, trx_id, group_id=None):
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/v1/trx/{group_id}/{trx_id}")
 
