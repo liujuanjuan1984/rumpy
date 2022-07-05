@@ -515,6 +515,7 @@ class FullNodeAPI(BaseAPI):
         如果已经是用户, 返回申请状态
         """
         status = self.announced_user(self.pubkey)
+        # TODO:如果 pubkey 没有被 announced ，会有个 400 的 chain 的报错，需要封装下
         if status.get("Result") == "APPROVED":
             return status
         return self.announce("add", "user", "rumpy.api,announce self as user", group_id)
@@ -559,7 +560,7 @@ class FullNodeAPI(BaseAPI):
         }
         return self._post("/api/v1/group/user", payload)
 
-    def approve_as_user(self, pubkey=None, group_id=None):
+    def approve_as_user(self, pubkey=None, group_id=None):  # TODO:这几个 用户 全选管理的方法 从语义的角落来看，挺臃肿的，待修改。
         """approve pubkey as a user of group.
 
         pubkey: 用户公钥, 如果不提供该参数, 默认将 owner 自己添加为私有组用户

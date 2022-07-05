@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from rumpy.client import FullNode, LightNode
+from rumpy.client import FullNode, HttpRequest, LightNode
 
 __version__ = "0.6.0"
 __author__ = "liujuanjuan1984"

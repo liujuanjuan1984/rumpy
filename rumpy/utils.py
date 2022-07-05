@@ -469,20 +469,6 @@ def get_last_trxid_by_chain(trx_id: str, trxs: List, reverse=False):
     return trx_id
 
 
-def get_last_trxid_by_ts(trx_id: str, trxs, reverse=False):  # TODO:这个方法不好，相关调用要改写
-    """get the last trx_id of trxs <type: generator> which if different from given trx_id by trx timestamp"""
-    _ts = datetime.datetime.now() + datetime.timedelta(weeks=-520)
-    _tid = None
-    for trx in trxs:
-        ts = trx_ts(trx, "datetime")
-        if ts > _ts:
-            _ts = ts
-            _tid = trx["TrxId"]
-    if _tid and _tid != trx_id:
-        return _tid, _ts
-    return trx_id, _ts
-
-
 def check_sub_strs(string, *subs):
     """判断 string 中是否存在多个子串中的任意一个"""
     rlt = False

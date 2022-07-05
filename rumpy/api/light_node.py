@@ -55,12 +55,19 @@ class LightNodeAPI(BaseAPI):
         if pair_alias:
             sign_alias = pair_alias + "_sign"
             encrypt_alias = pair_alias + "_encrypt"
-        payload = {
-            "seed": seed,
-            "sign_alias": sign_alias,
-            "encrypt_alias": encrypt_alias,
-            "urls": urls,  # TODO:新版 seed 方法已修改，该方法的urls参数要移除，并放入seed中..
-        }
+        if v == 1:  # TODO:等 quorum main 合并了 seed 分支后，需升级该方法
+            payload = {
+                "seed": seed,
+                "sign_alias": sign_alias,
+                "encrypt_alias": encrypt_alias,
+                "urls": urls,
+            }
+        elif v == 2:
+            payload = {
+                "seed": seed,  # TODO:需要对 u 的参数进行检查？
+                "sign_alias": sign_alias,
+                "encrypt_alias": encrypt_alias,
+            }
         return self._post(f"/v{v}/group/join", payload)
 
     def update_apihosts(self, urls, group_id=None):

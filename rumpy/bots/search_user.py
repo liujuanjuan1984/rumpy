@@ -82,7 +82,7 @@ class SearchUser:
         JsonFile(progress_file).write(progress)
         JsonFile(rlt_file).write(rlt)
 
-    def io_with_db(self):  # TODO:
+    def io_with_db(self):  # TODO:待实现，通过db来读写数据
         pass
 
 
