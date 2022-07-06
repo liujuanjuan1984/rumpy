@@ -142,10 +142,14 @@ def sha256(ibytes):
     return hashlib.sha256(ibytes).hexdigest()
 
 
-def timestamp_to_datetime(timestamp):
+def timestamp_to_datetime(timestamp, rlt_type="dt"):
     ts = int(timestamp)
     n = 10 ** (len(str(ts)) - 10)
-    return datetime.datetime.fromtimestamp(int(ts / n))
+    dt = datetime.datetime.fromtimestamp(int(ts / n))
+    if rlt_type == "dt":
+        return dt
+    elif rlt_type == "str":
+        return str(dt)
 
 
 def trx_ts(trx, rlt_type="str"):
@@ -477,3 +481,89 @@ def check_sub_strs(string, *subs):
             rlt = True
             break
     return rlt
+
+
+def get_seed_url(seed_dict: Dict) -> str:
+    """从新版 seed 中获取 url 形式的 seed url 字符串"""
+    if type(seed_dict) != dict:
+        raise ParamValueError(404, "param type should be dict")
+    url = seed_dict.get("seed")
+    if not url:
+        raise ParamValueError(404, "param value is wrong")
+    return url
+
+
+def _get_seed_query(seed_url: str) -> Dict:
+    """从 seed_url 转换为 字典形式的参数列表"""
+    if not seed_url.startswith("rum://seed?"):
+        raise ParamValueError(404, "invalid Seed URL")
+
+    _q = parse.urlparse(seed_url).query
+    _d = parse.parse_qs(_q)
+
+    # 由于 Python 的实现中，每个 key 的 value 都是 列表，所以做了下述处理
+    # TODO: 如果 u 参数的值有多个，该方法需升级
+    query_dict = {}
+    for k, v in _d.items():
+        if len(v) == 1:
+            query_dict[k] = v[0]
+        else:
+            raise ParamValueError(404, f"key:{k},value:{v},is not 1:1,update the code")
+    return query_dict
+
+
+def _check_b64str(b64str: str) -> bytes:
+    """对 base64 字符串检查长度，并补位，转换为字节"""
+    l = len(b64str)
+    m = (4 - l % 4) % 4
+    b64byte = b64str.encode() + b"=" * m
+    return b64byte
+
+
+def _b64_url_decode(b64str):
+    b64byte = _check_b64str(b64str)
+    b64byte = base64.urlsafe_b64decode(b64byte)
+    return b64byte
+
+
+def _decode_uuid(b64str):
+    b64byte = _b64_url_decode(b64str)
+    b64uuid = uuid.UUID(bytes=b64byte)
+    return str(b64uuid)
+
+
+def _decode_timestamp(b64str):
+    b64byte = _b64_url_decode(b64str)
+    bigint = int.from_bytes(b64byte, "big")
+    return bigint
+
+
+def _decode_cipher_key(b64str):
+    b64byte = _b64_url_decode(b64str)
+    return b64byte.hex()
+
+
+def _decode_pubkey(b64str):
+    b64byte = _b64_url_decode(b64str)
+    pubkey = base64.standard_b64encode(b64byte).decode()
+    return pubkey
+
+
+def decode_seed_url(url):
+    q = _get_seed_query(url)
+    timestamp = _decode_timestamp(q.get("t"))
+
+    info = {
+        "group_id": _decode_uuid(q.get("g")),
+        "group_name": q.get("a"),
+        "app_key": q.get("y"),
+        "owner": _decode_pubkey(q.get("k")),
+        "created_at": timestamp_to_datetime(timestamp, "str"),
+        "genesis_block_id": _decode_uuid(q.get("b")),
+    }
+    return info
+
+
+def decode_seed(seed):
+    url = get_seed_url(seed)
+    return decode_seed_url(url)

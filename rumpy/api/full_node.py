@@ -169,6 +169,9 @@ class FullNodeAPI(BaseAPI):
         """join a group with the seed of the group"""
 
         # seed = utils.check_seed(seed)
+        # 兼容新版本 seed
+        if type(seed) == str and seed.startswith("rum://seed?"):
+            seed = {"seed": seed}
         resp = self._post(f"/api/v{v}/group/join", seed)
         return resp  # self.raise_error(resp, "Group with same GroupId existed")
 
