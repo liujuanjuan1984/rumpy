@@ -78,7 +78,7 @@ class BlazeBot:
         is_to_rum = (
             msgview.conversation_id == MY_CONVERSATION_ID
             and len(msgview.data_decoded) > 10
-            and msgview.data_decoded.startswith("代发：")
+            and msgview.data_decoded.startswith("代发")
         )
         if is_to_rum:
 
