@@ -598,3 +598,11 @@ class FullNodeAPI(BaseAPI):
         obj = PersonObj(name=name, image=image, wallet={"wallet_id": mixin_id})
         payload = NewTrx(activity_type="Update", group_id=group_id, obj=obj).__dict__
         return self._post("/api/v1/group/profile", payload)
+
+    def pubkey_to_addr(self, pubkey):
+        payload = {"encoded_pubkey": pubkey}
+        resp = self._post("/api/v1/tools/pubkeytoaddr", payload)
+        if addr := resp.get("addr"):
+            return addr
+        else:
+            raise ParamValueError(404, f"pubkey_to_addr failed. pubkey:{pubkey},resp: {resp}")
