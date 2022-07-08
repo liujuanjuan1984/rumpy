@@ -606,3 +606,12 @@ class FullNodeAPI(BaseAPI):
             return addr
         else:
             raise ParamValueError(404, f"pubkey_to_addr failed. pubkey:{pubkey},resp: {resp}")
+
+    def ask_for_relay(self, reley_ips: List):
+        """owner in private network ask for relay servers
+
+        Args:
+            reley_ips (List): ["/ip4/10x.xx.xxx.xxx/tcp/31124/ws/p2p/16Uiu2H...uisLB""]
+        {'ok': True}
+        """
+        return self._post("/api/v1/network/relay", reley_ips)
