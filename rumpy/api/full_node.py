@@ -517,10 +517,12 @@ class FullNodeAPI(BaseAPI):
 
         如果已经是用户, 返回申请状态
         """
-        status = self.announced_user(self.pubkey)
-        # TODO:如果 pubkey 没有被 announced ，会有个 400 的 chain 的报错，需要封装下
-        if status.get("Result") == "APPROVED":
-            return status
+        try:
+            status = self.announced_user(self.pubkey)
+            if status.get("Result") == "APPROVED":
+                return status
+        except:
+            pass
         return self.announce("add", "user", "rumpy.api,announce self as user", group_id)
 
     def announce_as_producer(self, group_id=None):

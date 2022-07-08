@@ -10,7 +10,7 @@ import re
 import uuid
 from typing import Any, Dict, List
 from urllib import parse
-
+import zipfile
 import filetype
 from PIL import Image
 
@@ -126,16 +126,28 @@ def get_filebytes(path_bytes_string):
     return file_bytes, is_file
 
 
-def read_file_to_bytes(file_path):
+def check_file(file_path):
     if not os.path.exists(file_path):
         raise ParamValueError(f"{file_path} file is not exists.")
 
     if not os.path.isfile(file_path):
         raise ParamValueError(f"{file_path} is not a file.")
 
+
+def read_file_to_bytes(file_path):
+    check_file(file_path)
     with open(file_path, "rb") as f:
         bytes_data = f.read()
     return bytes_data
+
+
+def zip_file(file_path, to_zipfile=None, mode="w"):
+    check_file(file_path)
+    to_zipfile = to_zipfile or file_path + "_.zip"
+    zf = zipfile.ZipFile(to_zipfile, mode, zipfile.ZIP_DEFLATED)
+    zf.write(file_path, arcname=os.path.basename(file_path))
+    zf.close()
+    return to_zipfile
 
 
 def sha256(ibytes):

@@ -124,10 +124,13 @@ class BaseAPI:
                 filetrxs.append(trx)
         return infos, filetrxs
 
-    def upload_file(self, file_path, group_id=None):
-        if not os.path.isfile(file_path):
-            logger.warning(f"{file_path} is not a file.")
-            return
+    def upload_file(self, file_path, group_id=None, is_zip=False):
+        utils.check_file(file_path)
+
+        if is_zip:
+            file_path = utils.zip_file(file_path)
+            utils.check_file(file_path)
+
         for obj in utils.split_file_to_trx_objs(file_path):
             resp = self._http.api._send(obj=obj, activity_type="Add", group_id=group_id)
 
