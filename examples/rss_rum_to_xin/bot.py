@@ -338,7 +338,7 @@ class RssBot:
             logger.debug(f"send_msg_to_xin_update, group_id: {group_id}")
             _one_group(group_id)
 
-    def send_to_rum(self, group_id=MY_RUM_GROUP_ID):
+    def send_to_rum(self):
         logger.info("send_to_rum start ...")
         data = (
             self.db.session.query(BotComments)
@@ -353,7 +353,13 @@ class RssBot:
         for r in data:
             if r.is_to_rum:
                 continue
-            resp = self.rum.api.send_note(group_id=group_id, content=r.text[3:])
+            if r.text.startswith(r"代发微博"):
+                group_id = "3bb7a3be-d145-44af-94cf-e64b992ff8f0"
+                text = r.text[5:]
+            else:
+                group_id = "4e784292-6a65-471e-9f80-e91202e3358c"
+                text = r.text[3:]
+            resp = self.rum.api.send_note(group_id=group_id, content=text)
             logger.info(f"rum.api.send_note, message_id: {r.message_id}...")
             if "trx_id" not in resp:
                 logger.warning(f"rum.api.send_note, resp: {json.dumps(resp)}")
