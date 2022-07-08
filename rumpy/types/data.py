@@ -132,7 +132,7 @@ class ProfileParams:
             d["wallet"] = [{"id": self.wallet, "type": "mixin", "name": "mixin messenger"}]
 
         if len(d) == 0:
-            raise ParamRequiredError(403, "Person must have name or image fields")
+            raise ParamRequiredError("Person must have name or image fields")
         self.__dict__ = d
 
 
@@ -217,9 +217,9 @@ class NewTrxObject:
             self.id = edit_trx_id
             # check other params:
             if self.type != "Note":
-                raise ParamOverflowError(403, f"only Note type can be edited. type now: {self.type} ")
+                raise ParamOverflowError(f"only Note type can be edited. type now: {self.type} ")
             if not (self.content or self.image):
-                raise ParamRequiredError(403, "content or image is needed.")
+                raise ParamRequiredError("content or image is needed.")
 
         if del_trx_id and type(del_trx_id) == str:
             self.id = del_trx_id
@@ -227,12 +227,12 @@ class NewTrxObject:
             self.content = "OBJECT_STATUS_DELETED"
             for key in self.__dict__:
                 if key not in ["type", "id", "content"]:
-                    raise ParamOverflowError(403, f"del object got a no-need param {key}")
+                    raise ParamOverflowError(f"del object got a no-need param {key}")
 
         if reply_trx_id and type(reply_trx_id) == str:
             self.inreplyto = {"trxid": reply_trx_id}
             if not (self.content or self.image):
-                raise ParamRequiredError(403, "content or image is needed.")
+                raise ParamRequiredError("content or image is needed.")
 
         if like_trx_id and type(like_trx_id) == str:
             self.id = like_trx_id
@@ -301,7 +301,7 @@ class NewTrx:
         if group_id:
             self.target = {"id": group_id, "type": "Group"}
         else:
-            raise ParamRequiredError(403, "group_id param is need.")
+            raise ParamRequiredError("group_id param is need.")
 
         if isinstance(obj, PersonObj):
             self.person = obj.__dict__
@@ -309,7 +309,7 @@ class NewTrx:
             self.object = obj.__dict__
         elif isinstance(obj, dict):
             if self.type == "Add" and "type" not in obj:
-                raise ParamRequiredError(403, "obj need a `type` such as: `Note` or `File`")
+                raise ParamRequiredError("obj need a `type` such as: `Note` or `File`")
             self.object = NewTrxObject(**obj).__dict__
         else:
             self.object = NewTrxObject(**kwargs).__dict__

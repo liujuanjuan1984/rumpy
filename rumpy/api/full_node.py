@@ -117,7 +117,7 @@ class FullNodeAPI(BaseAPI):
         """
         # check encryption_type
         if encryption_type.lower() not in ("public", "private"):
-            raise ParamValueError(403, "encryption_type should be `public` or `private`")
+            raise ParamValueError("encryption_type should be `public` or `private`")
 
         # check consensus_type
         if consensus_type.lower() not in ("poa",):
@@ -301,7 +301,7 @@ class FullNodeAPI(BaseAPI):
 
         trx_type = utils.check_trx_type(trx_type)
         if not memo:
-            raise ParamValueError(403, "say something in param:memo")
+            raise ParamValueError("say something in param:memo")
 
         payload = {
             "group_id": group_id,
@@ -373,7 +373,7 @@ class FullNodeAPI(BaseAPI):
 
     def _list(self, mode: str, group_id=None) -> List:
         if mode not in ["allow", "deny"]:
-            raise ParamValueError(403, "mode must be one of these: allow,deny")
+            raise ParamValueError("mode must be one of these: allow,deny")
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/group/{group_id}/trx/{mode}list") or []
 
@@ -579,7 +579,7 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_owner_as_required(group_id)
         action = action.lower()
         if action not in ("add", "remove"):
-            raise ParamValueError(403, "action should be `add` or `remove`")
+            raise ParamValueError("action should be `add` or `remove`")
         payload = {
             "producer_pubkey": pubkey,
             "group_id": group_id,
@@ -605,7 +605,7 @@ class FullNodeAPI(BaseAPI):
         if addr := resp.get("addr"):
             return addr
         else:
-            raise ParamValueError(404, f"pubkey_to_addr failed. pubkey:{pubkey},resp: {resp}")
+            raise ParamValueError(f"pubkey_to_addr failed. pubkey:{pubkey},resp: {resp}")
 
     def ask_for_relay(self, reley_ips: List):
         """owner in private network ask for relay servers

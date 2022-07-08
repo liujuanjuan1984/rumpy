@@ -102,9 +102,9 @@ class GroupStatistics:
         try:
             days = (data["update_at"] - data["create_at"]).days
         except TypeError as e:
-            raise ParamValueError(403, f"{e}")
+            raise ParamValueError(f"{e}")
         if days < 3:
-            raise ParamValueError(403, f"only got {days} days data, too few to draw pictures.")
+            raise ParamValueError(f"only got {days} days data, too few to draw pictures.")
 
         # 绘图
         title = f"{data['info']['group_name']} Daily Trxs and Users Counts"

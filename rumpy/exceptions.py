@@ -4,7 +4,7 @@
 class RumException(Exception):
     """Base exception for rumpy"""
 
-    def __init__(self, errcode, errmsg):
+    def __init__(self, errmsg="", errcode=404):
         """
         :param errcode: Error code
         :param errmsg: Error message
@@ -24,8 +24,8 @@ class RumException(Exception):
 class RumClientException(RumException):
     """rumpy client exception class"""
 
-    def __init__(self, errcode, errmsg, client=None, request=None, response=None):
-        super().__init__(errcode, errmsg)
+    def __init__(self, errmsg="", errcode=400, client=None, request=None, response=None):
+        super().__init__(errmsg, errcode)
         self.client = client
         self.request = request
         self.response = response
@@ -50,8 +50,8 @@ class ParamRequiredError(RumClientException):
 class RumChainException(RumException):
     """rumpy chain exception class"""
 
-    def __init__(self, errcode, errmsg, request=None, response=None):
-        super().__init__(errcode, errmsg)
+    def __init__(self, errmsg="", errcode=500, request=None, response=None):
+        super().__init__(errmsg, errcode)
         self.request = request
         self.response = response
 

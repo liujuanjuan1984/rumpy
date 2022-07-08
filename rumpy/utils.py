@@ -27,7 +27,7 @@ def check_dir(dirpath):
 
 def check_trx_mode(mode: str):
     if mode.lower() not in ["dny", "deny", "allow", "alw"]:
-        raise ParamValueError(403, f"{mode} mode must be one of ['deny','allow']")
+        raise ParamValueError(f"{mode} mode must be one of ['deny','allow']")
     if mode.lower() in ["dny", "deny"]:
         return "dny"
     if mode.lower() in ["alw", "allow"]:
@@ -36,7 +36,7 @@ def check_trx_mode(mode: str):
 
 def check_trx_type(trx_type: str):
     if trx_type.upper() not in TRX_TYPES:
-        raise ParamValueError(403, f"{trx_type} must be one of {TRX_TYPES}")
+        raise ParamValueError(f"{trx_type} must be one of {TRX_TYPES}")
     return trx_type.lower()
 
 
@@ -57,7 +57,7 @@ def check_seed(seed: Dict):
     try:
         Seed(**seed)
     except Exception as e:
-        raise RumChainException(500, f"{seed.get('error')}\n\n{e}")
+        raise RumChainException(f"{seed.get('error')}\n\n{e}")
 
 
 def is_seed(seed: Dict) -> bool:
@@ -122,16 +122,16 @@ def get_filebytes(path_bytes_string):
     elif _type == bytes:
         file_bytes = path_bytes_string
     else:
-        raise ParamTypeError(403, f"not support for type: {_type} and length: {_size}")
+        raise ParamTypeError(f"not support for type: {_type} and length: {_size}")
     return file_bytes, is_file
 
 
 def read_file_to_bytes(file_path):
     if not os.path.exists(file_path):
-        raise ParamValueError(403, f"{file_path} file is not exists.")
+        raise ParamValueError(f"{file_path} file is not exists.")
 
     if not os.path.isfile(file_path):
-        raise ParamValueError(403, f"{file_path} is not a file.")
+        raise ParamValueError(f"{file_path} is not a file.")
 
     with open(file_path, "rb") as f:
         bytes_data = f.read()
@@ -161,7 +161,7 @@ def trx_ts(trx, rlt_type="str"):
         return dt
     if rlt_type == "int":
         return int(ts)
-    raise ParamValueError(403, f"{rlt_type}")
+    raise ParamValueError(f"{rlt_type}")
 
 
 def unique_trxs(trxs: List):
@@ -383,7 +383,7 @@ def _get_content(trx_content):
         elif type(imgs) == dict:
             _imgs = [imgs]
         else:
-            raise ParamValueError(403, f"type {type(imgs)} is not supported.")
+            raise ParamValueError(f"type {type(imgs)} is not supported.")
     return _text, _imgs
 
 
@@ -486,17 +486,17 @@ def check_sub_strs(string, *subs):
 def get_seed_url(seed_dict: Dict) -> str:
     """从新版 seed 中获取 url 形式的 seed url 字符串"""
     if type(seed_dict) != dict:
-        raise ParamValueError(404, "param type should be dict")
+        raise ParamValueError("param type should be dict")
     url = seed_dict.get("seed")
     if not url:
-        raise ParamValueError(404, "param value is wrong")
+        raise ParamValueError("param value is wrong")
     return url
 
 
 def _get_seed_query(seed_url: str) -> Dict:
     """从 seed_url 转换为 字典形式的参数列表"""
     if not seed_url.startswith("rum://seed?"):
-        raise ParamValueError(404, "invalid Seed URL")
+        raise ParamValueError("invalid Seed URL")
 
     _q = parse.urlparse(seed_url).query
     _d = parse.parse_qs(_q)
@@ -508,7 +508,7 @@ def _get_seed_query(seed_url: str) -> Dict:
         if len(v) == 1:
             query_dict[k] = v[0]
         else:
-            raise ParamValueError(404, f"key:{k},value:{v},is not 1:1,update the code")
+            raise ParamValueError(f"key:{k},value:{v},is not 1:1,update the code")
     return query_dict
 
 

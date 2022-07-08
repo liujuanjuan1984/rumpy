@@ -36,7 +36,6 @@ class WhoSays(FullNode):
 
         if not self.names_info:
             raise ParamValueError(
-                403,
                 "add data in names_info file with data like {group_id:[pubkey]}",
             )
 

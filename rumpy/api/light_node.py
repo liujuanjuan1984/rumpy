@@ -15,7 +15,7 @@ class LightNodeAPI(BaseAPI):
 
     def __create_alias_of_key(self, alias: str, key_type: str):
         if key_type not in ("sign", "encrypt"):
-            raise ParamValueError(403, "key_type must be one of `sign`, `encrypt`.")
+            raise ParamValueError("key_type must be one of `sign`, `encrypt`.")
         payload = {"alias": alias, "type": key_type}
         return self._post("/v1/keystore/create", payload)
 
@@ -25,7 +25,7 @@ class LightNodeAPI(BaseAPI):
     def create_alias_of_encrypt_key(self, alias="my_encrypt"):
         # """需要环境变量 RUM_KSPASSWD"""
         # if not os.getenv("RUM_KSPASSWD"):
-        #    raise RumChainException(500, "need RUM_KSPASSWD")
+        #    raise RumChainException("need RUM_KSPASSWD")
         return self.__create_alias_of_key(alias, "encrypt")
 
     def create_keypair(self, alias_piece="my"):

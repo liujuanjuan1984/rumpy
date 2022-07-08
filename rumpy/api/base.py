@@ -31,20 +31,20 @@ class BaseAPI:
     def check_group_id_as_required(self, group_id=None):
         group_id = group_id or self._http.group_id
         if not group_id:
-            raise ParamValueError(403, "group_id is required, now it's None.")
+            raise ParamValueError("group_id is required, now it's None.")
         return group_id
 
     def check_group_joined_as_required(self, group_id=None):
         group_id = self.check_group_id_as_required(group_id)
         if group_id not in self._http.api.groups_id:
-            raise RumChainException(500, f"You are not in this group: <{group_id}>.")
+            raise RumChainException(f"You are not in this group: <{group_id}>.")
         return group_id
 
     def check_group_owner_as_required(self, group_id=None):
         group_id = self.check_group_joined_as_required(group_id)
         info = self._http.api.group_info(group_id)
         if info.user_pubkey != info.owner_pubkey:
-            raise RumChainException(500, f"You are not the owner of this group: <{group_id}>.")
+            raise RumChainException(f"You are not the owner of this group: <{group_id}>.")
         return group_id
 
     def is_joined(self, group_id=None) -> bool:
@@ -65,7 +65,7 @@ class BaseAPI:
     def raise_error(self, resp, except_err=None):
         if err := resp.get("error"):
             if err != except_err:
-                raise RumChainException(500, err)
+                raise RumChainException(err)
         return resp
 
     def like(self, trx_id: str, group_id=None) -> Dict:
@@ -288,7 +288,7 @@ class BaseAPI:
         resp = self._http.api._groups()
         if "groups" in resp:
             return resp["groups"] or []
-        raise RumException(500, json.dumps(resp))
+        raise RumException(json.dumps(resp))
 
     @property
     def groups_id(self) -> List:
