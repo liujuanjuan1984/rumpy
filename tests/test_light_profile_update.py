@@ -25,8 +25,8 @@ img3 = [img1, img2]
 mixin_id1 = 123455
 mixin_id2 = "bae95683-eabb-422f-9588-24dadffd0323"
 mixin_id3 = "bae95683-eabb-422f-9588-24dadffd0300"  # FAKE
-mixin_id4 = {"mixin_id": mixin_id2}
-mixin_id5 = {"mixin_id": mixin_id3}
+mixin_id4 = {"id": mixin_id2}
+mixin_id5 = {"id": mixin_id3}
 
 
 def test_profiles_update():
@@ -49,28 +49,28 @@ def test_profiles_update():
     except:
         pass
 
-    resp = bot.api.update_profile(group_id, mixin_id=mixin_id1)
+    resp = bot.api.update_profile(group_id, wallet=mixin_id1)
     print(resp)
 
-    resp = bot.api.update_profile(group_id, mixin_id=mixin_id2)
+    resp = bot.api.update_profile(group_id, wallet=mixin_id2)
     print(resp)
 
-    resp = bot.api.update_profile(group_id, mixin_id=mixin_id3)
+    resp = bot.api.update_profile(group_id, wallet=mixin_id3)
     print(resp)
 
     try:
-        resp = bot.api.update_profile(group_id, mixin_id=mixin_id4)
+        resp = bot.api.update_profile(group_id, wallet=mixin_id4)
         print(resp)
     except:
         pass
 
     try:
-        resp = bot.api.update_profile(group_id, mixin_id=mixin_id5)
+        resp = bot.api.update_profile(group_id, wallet=mixin_id5)
         print(resp)
     except:
         pass
 
-    resp = bot.api.update_profile(group_id, name=name1, image=img1, mixin_id=mixin_id2)
+    resp = bot.api.update_profile(group_id, name=name1, image=img1, wallet=mixin_id2)
     print(resp)
 
 

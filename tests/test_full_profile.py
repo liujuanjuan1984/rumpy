@@ -16,8 +16,8 @@ img3 = [img1, img2]
 mixin_id1 = 123455
 mixin_id2 = "bae95683-eabb-422f-9588-24dadffd0323"
 mixin_id3 = "bae95683-eabb-422f-9588-24dadffd0300"  # FAKE
-mixin_id4 = {"mixin_id": mixin_id2}
-mixin_id5 = {"mixin_id": mixin_id3}
+mixin_id4 = {"id": mixin_id2}
+mixin_id5 = {"id": mixin_id3}
 
 
 def test_profiles_update():
@@ -34,13 +34,13 @@ def test_profiles_update():
     resp = bot.api.update_profile(image=img2)
     # print(resp)
 
-    resp = bot.api.update_profile(mixin_id=mixin_id2)
+    resp = bot.api.update_profile(wallet=mixin_id2)
     # print(resp)
 
-    resp = bot.api.update_profile(mixin_id=mixin_id3)
+    resp = bot.api.update_profile(wallet=mixin_id3)
     # print(resp)
 
-    resp = bot.api.update_profile(name=name1, image=img1, mixin_id=mixin_id2)
+    resp = bot.api.update_profile(name=name1, image=img1, wallet=mixin_id2)
     # print(resp)
 
 

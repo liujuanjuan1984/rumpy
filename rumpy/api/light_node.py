@@ -1,10 +1,10 @@
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from rumpy.api.base import BaseAPI
 from rumpy.exceptions import *
-from rumpy.types.data import NewTrx, PersonObj
+
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,9 @@ class LightNodeAPI(BaseAPI):
         return self.__create_alias_of_key(alias, "encrypt")
 
     def create_keypair(self, alias_piece="my"):
-        self.create_alias_of_sign_key(alias_piece + "_sign")
-        self.create_alias_of_encrypt_key(alias_piece + "_encrypt")
+        a = self.create_alias_of_sign_key(alias_piece + "_sign")
+        b = self.create_alias_of_encrypt_key(alias_piece + "_encrypt")
+        return a, b
 
     def keys(self):
         return self._get("/v1/keystore/listall")
@@ -149,19 +150,8 @@ class LightNodeAPI(BaseAPI):
 
         return self._post(f"/v1/group/getctn", payload)
 
-    def _send(self, activity_type=None, group_id=None, obj=None, **kwargs) -> Dict:
-        group_id = self.check_group_id_as_required(group_id)
-        payload = NewTrx(group_id=group_id, activity_type=activity_type, obj=obj, **kwargs).__dict__
-        return self._post("/v1/group/content", payload)
+    def _post_trx(self, trx):
+        return self._post("/v1/group/content", trx)
 
-    def update_profile(self, group_id=None, name=None, mixin_id=None, image=None):
-        """user update the profile: name, image, or wallet.
-
-        name: nickname of user
-        image: one image, as file_path or bytes or bytes-string
-        mixin_id: one kind of wallet
-        """
-        group_id = self.check_group_id_as_required(group_id)
-        obj = PersonObj(name=name, image=image, wallet={"wallet_id": mixin_id})
-        payload = NewTrx(activity_type="Update", group_id=group_id, obj=obj).__dict__
-        return self._post(f"/v1/group/profile", payload)
+    def _update_profile(self, trx):
+        return self._post(f"/v1/group/profile", trx)

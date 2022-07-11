@@ -1,13 +1,13 @@
 import logging
 
 from rumpy.api.base import BaseAPI
-from rumpy.types.data import API_PAYMENT_GATEWAY
+from rumpy.types.data import ApiBaseURLS
 
 logger = logging.getLogger(__name__)
 
 
 class PaidGroup(BaseAPI):
-    API_BASE = API_PAYMENT_GATEWAY
+    API_BASE = ApiBaseURLS.PAYMENT_GATEWAY
 
     def dapp(self):
         """Get Info of Paidgroup DApp"""

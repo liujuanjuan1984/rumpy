@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 import rumpy.utils as utils
 from rumpy.client._requests import HttpRequest
 from rumpy.exceptions import *
+from rumpy.types.data import *
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,17 @@ class BaseAPI:
             raise RumChainException(f"You are not the owner of this group: <{group_id}>.")
         return group_id
 
+    def groups(self) -> List:
+        resp = self._http.api._groups()
+        if "groups" in resp:
+            return resp["groups"] or []
+        raise RumException(json.dumps(resp))
+
+    @property
+    def groups_id(self) -> List:
+        """return list of group_id which node has joined"""
+        return [i["group_id"] for i in self.groups()]
+
     def is_joined(self, group_id=None) -> bool:
         try:
             self.check_group_joined_as_required(group_id)
@@ -62,77 +74,87 @@ class BaseAPI:
         except:
             return False
 
-    def raise_error(self, resp, except_err=None):
+    def raise_error(self, resp, except_err=None):  # TODO:这个封装，语义上不好，暂时没有调用。
         if err := resp.get("error"):
             if err != except_err:
                 raise RumChainException(err)
         return resp
 
-    def like(self, trx_id: str, group_id=None) -> Dict:
-        return self._http.api._send(like_trx_id=trx_id, activity_type="Like", group_id=group_id)
+    def like(self, trx_id: str, group_id=None, type="Like") -> Dict:
+        group_id = self.check_group_joined_as_required(group_id)
+        trx = NewTrxLike(trx_id, group_id, type).to_dict()
+        return self._http.api._post_trx(trx)
 
     def dislike(self, trx_id: str, group_id=None) -> Dict:
-        return self._http.api._send(like_trx_id=trx_id, activity_type="Dislike", group_id=group_id)
+        return self.like(trx_id, group_id, "Dislike")
 
-    def __send_note(self, group_id=None, **kwargs):
-        return self._http.api._send(group_id=group_id, activity_type="Add", object_type="Note", **kwargs)
+    def __post_content(self, group_id=None, **kwargs):
+        group_id = self.check_group_joined_as_required(group_id)
+        trx = NewTrxContent(group_id, **kwargs).to_dict()
+        return self._http.api._post_trx(trx)
 
     def send_note(self, content: str = None, images: List = None, name=None, group_id=None):
-        return self.__send_note(content=content, images=images, name=name, group_id=group_id)
+        return self.__post_content(content=content, images=images, name=name, group_id=group_id)
 
     def del_note(self, trx_id, group_id=None):
-        return self.__send_note(del_trx_id=trx_id, group_id=group_id)
+        return self.__post_content(del_trx_id=trx_id, group_id=group_id)
 
-    def edit_note(self, trx_id, content: str = None, images: List = None, group_id=None):
-        return self.__send_note(
+    def edit_note(self, trx_id, content: str = None, images: List = None, name=None, group_id=None):
+        return self.__post_content(
             edit_trx_id=trx_id,
             content=content,
             images=images,
+            name=name,
             group_id=group_id,
         )
 
     def reply(self, trx_id: str, content: str = None, images=None, group_id=None):
-        return self.__send_note(
+        return self.__post_content(
             reply_trx_id=trx_id,
             content=content,
             images=images,
             group_id=group_id,
         )
 
-    def trx_retweet_params(self, trx, group_id=None, nicknames={}):
-        """trans from trx to an object of new trx to send to chain.
-        Returns:
-            obj: object of NewTrx,can be used as: self.send_note(obj=obj).
-        """
-        refer_tid = utils.get_refer_trxid(trx)
-        refer_trx = None
-        if refer_tid:
-            refer_trx = self._http.api.trx(trx_id=refer_tid, group_id=group_id)
-        params = utils.trx_retweet_params_init(trx=trx, refer_trx=refer_trx, nicknames=nicknames)
-        return params
+    def update_profile(self, name=None, image=None, wallet: Union[str, Dict, None] = None, group_id=None):
+        """user update the profile: name, image, or wallet.
 
-    def search_file_trxs(self, trx_id=None, group_id=None):
-        trxs = self.get_group_all_contents(trx_id=trx_id, group_id=group_id)
-        infos = []
-        filetrxs = []
-        for trx in trxs:
-            if trx["Content"].get("name") == "fileinfo":
-                info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
-                logger.debug(f"{info}")
-                infos.append(info)
-            if trx["Content"].get("type") == "File":
-                filetrxs.append(trx)
-        return infos, filetrxs
+        name: nickname of user
+        image: one image, as file_path or bytes or bytes-string
+        wallet:
+        """
+        group_id = self.check_group_joined_as_required(group_id)
+        trx = NewTrxPerson(group_id=group_id, name=name, image=image, wallet=wallet).to_dict()
+        return self._http.api._update_profile(trx)
+
+    def trx(self, trx_id: str, group_id=None):
+        """get trx data by trx_id"""
+        data = {}
+        if not trx_id:
+            return data
+
+        trxs = self._http.api.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
+        if len(trxs) > 1:
+            raise ParamOverflowError(
+                f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.",
+            )
+        elif len(trxs) == 1:
+            data = trxs[0]
+        else:
+            data = self._http.api.get_trx(trx_id=trx_id, group_id=group_id)
+        return data
 
     def upload_file(self, file_path, group_id=None, is_zip=False):
         utils.check_file(file_path)
+        group_id = self.check_group_joined_as_required(group_id)
 
         if is_zip:
             file_path = utils.zip_file(file_path)
             utils.check_file(file_path)
 
-        for obj in utils.split_file_to_trx_objs(file_path):
-            resp = self._http.api._send(obj=obj, activity_type="Add", group_id=group_id)
+        for piece in utils.split_file_to_pieces(file_path):
+            trx = NewTrxFile(group_id, **piece).to_dict()
+            resp = self._http.api._post_trx(trx)
 
     def download_files(self, file_dir, group_id=None):
         utils.check_dir(file_dir)
@@ -287,31 +309,27 @@ class BaseAPI:
         )
         return users_data
 
-    def groups(self) -> List:
-        resp = self._http.api._groups()
-        if "groups" in resp:
-            return resp["groups"] or []
-        raise RumException(json.dumps(resp))
+    def trx_retweet_params(self, trx, group_id=None, nicknames={}):
+        """trans from trx to an object of new trx to send to chain.
+        Returns:
+            obj: object of new trx,can be used as: self.send_note(obj=obj).
+        """
+        refer_tid = utils.get_refer_trxid(trx)
+        refer_trx = None
+        if refer_tid:
+            refer_trx = self._http.api.trx(trx_id=refer_tid, group_id=group_id)
+        params = utils.trx_retweet_params_init(trx=trx, refer_trx=refer_trx, nicknames=nicknames)
+        return params
 
-    @property
-    def groups_id(self) -> List:
-        """return list of group_id which node has joined"""
-        return [i["group_id"] for i in self.groups()]
-
-    def trx(self, trx_id: str, group_id=None):
-        """get trx data by trx_id"""
-        data = {}
-        if not trx_id:
-            return data
-
-        trxs = self._http.api.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
-        if len(trxs) > 1:
-            raise ParamOverflowError(
-                403,
-                f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.",
-            )
-        elif len(trxs) == 1:
-            data = trxs[0]
-        else:
-            data = self._http.api.get_trx(trx_id=trx_id, group_id=group_id)
-        return data
+    def search_file_trxs(self, trx_id=None, group_id=None):
+        trxs = self.get_group_all_contents(trx_id=trx_id, group_id=group_id)
+        infos = []
+        filetrxs = []
+        for trx in trxs:
+            if trx["Content"].get("name") == "fileinfo":
+                info = eval(base64.b64decode(trx["Content"]["file"]["content"]).decode("utf-8"))
+                logger.debug(f"{info}")
+                infos.append(info)
+            if trx["Content"].get("type") == "File":
+                filetrxs.append(trx)
+        return infos, filetrxs

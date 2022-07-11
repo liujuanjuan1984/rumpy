@@ -5,7 +5,7 @@ import logging
 import os
 import time
 import urllib
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import filetype
 
@@ -122,7 +122,6 @@ class FullNodeAPI(BaseAPI):
         # check consensus_type
         if consensus_type.lower() not in ("poa",):
             raise ParamValueError(
-                403,
                 "consensus_type should be `poa` or `pos` or `pow`, but only `poa` is supported now.",
             )
 
@@ -138,7 +137,7 @@ class FullNodeAPI(BaseAPI):
 
     def seed(self, group_id=None) -> Dict:
         """get the seed of a group which you've joined in."""
-        group_id = self.check_group_id_as_required(group_id)
+        group_id = self.check_group_joined_as_required(group_id)
         seed = self._get(f"/api/v1/group/{group_id}/seed")
         return seed  # utils.check_seed(seed)
 
@@ -226,10 +225,8 @@ class FullNodeAPI(BaseAPI):
         trxs = self._post(apiurl) or []
         return utils.unique_trxs(trxs)
 
-    def _send(self, activity_type=None, group_id=None, obj=None, **kwargs) -> Dict:
-        group_id = self.check_group_joined_as_required(group_id)
-        payload = NewTrx(group_id=group_id, obj=obj, activity_type=activity_type, **kwargs).__dict__
-        return self._post("/api/v1/group/content", payload)
+    def _post_trx(self, trx):
+        return self._post("/api/v1/group/content", trx)
 
     def block(self, block_id: str, group_id=None):
         """get the info of a block in a group"""
@@ -589,17 +586,8 @@ class FullNodeAPI(BaseAPI):
         }
         return self._post("/api/v1/group/producer", payload)
 
-    def update_profile(self, name=None, image=None, mixin_id=None, group_id=None):
-        """user update the profile: name, image, or wallet.
-
-        name: nickname of user
-        image: one image, as file_path or bytes or bytes-string
-        mixin_id: one kind of wallet
-        """
-        group_id = self.check_group_joined_as_required(group_id)
-        obj = PersonObj(name=name, image=image, wallet={"wallet_id": mixin_id})
-        payload = NewTrx(activity_type="Update", group_id=group_id, obj=obj).__dict__
-        return self._post("/api/v1/group/profile", payload)
+    def _update_profile(self, trx):
+        return self._post("/api/v1/group/profile", trx)
 
     def pubkey_to_addr(self, pubkey):
         payload = {"encoded_pubkey": pubkey}

@@ -258,7 +258,7 @@ def zip_image(path_bytes_string, kb=IMAGE_MAX_SIZE_KB):
     return img_bytes
 
 
-def split_file_to_trx_objs(path_bytes_string):
+def split_file_to_pieces(path_bytes_string):
     file_bytes, _ = get_filebytes(path_bytes_string)
     total_size = len(file_bytes)
     file_name = filename_init(path_bytes_string)
@@ -273,22 +273,22 @@ def split_file_to_trx_objs(path_bytes_string):
 
     n = math.ceil(total_size / CHUNK_SIZE)
     chunks = [file_bytes[i * CHUNK_SIZE : (i + 1) * CHUNK_SIZE] for i in range(n)]
-    objs = []
+    peices = []
     for i in range(n):
         ibytes = file_bytes[i * CHUNK_SIZE : (i + 1) * CHUNK_SIZE]
         fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": sha256(ibytes)})
-        objs.append(
-            FileObj(
+        peices.append(
+            dict(
                 name=f"seg-{i + 1}",
                 content=ibytes,
                 mediaType="application/octet-stream",
             )
         )
     content = json.dumps(fileinfo).encode()
-    obj = FileObj(content=content, name="fileinfo", mediaType="application/json")
-    objs.insert(0, obj)
-    logger.info(f"{file_name} objs {len(objs)}...")
-    return objs
+    peice = dict(content=content, name="fileinfo", mediaType="application/json")
+    peices.insert(0, peice)
+    logger.info(f"{file_name} peices {len(peices)}...")
+    return peices
 
 
 def merge_trxs_to_file(file_dir, info, trxs):
