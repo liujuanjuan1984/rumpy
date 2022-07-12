@@ -273,11 +273,11 @@ def split_file_to_pieces(path_bytes_string):
 
     n = math.ceil(total_size / CHUNK_SIZE)
     chunks = [file_bytes[i * CHUNK_SIZE : (i + 1) * CHUNK_SIZE] for i in range(n)]
-    peices = []
+    pieces = []
     for i in range(n):
         ibytes = file_bytes[i * CHUNK_SIZE : (i + 1) * CHUNK_SIZE]
         fileinfo["segments"].append({"id": f"seg-{i+1}", "sha256": sha256(ibytes)})
-        peices.append(
+        pieces.append(
             dict(
                 name=f"seg-{i + 1}",
                 content=ibytes,
@@ -285,10 +285,10 @@ def split_file_to_pieces(path_bytes_string):
             )
         )
     content = json.dumps(fileinfo).encode()
-    peice = dict(content=content, name="fileinfo", mediaType="application/json")
-    peices.insert(0, peice)
-    logger.info(f"{file_name} peices {len(peices)}...")
-    return peices
+    piece = dict(content=content, name="fileinfo", mediaType="application/json")
+    pieces.insert(0, piece)
+    logger.info(f"{file_name} pieces {len(pieces)}...")
+    return pieces
 
 
 def merge_trxs_to_file(file_dir, info, trxs):

@@ -160,7 +160,7 @@ class NewTrxBase(BaseData):
         elif person and isinstance(person, dict):
             self.person = person
         else:
-            err = "object or person param is requried"
+            err = "object or person param is required"
             raise ParamValueError(err)
 
 

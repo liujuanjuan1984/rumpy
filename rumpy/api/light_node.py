@@ -56,6 +56,9 @@ class LightNodeAPI(BaseAPI):
         if pair_alias:
             sign_alias = pair_alias + "_sign"
             encrypt_alias = pair_alias + "_encrypt"
+        if not sign_alias:
+            err = 'sign_alias is required.'
+            raise ParamValueError(err)
         if v == 1:  # TODO:等 quorum main 合并了 seed 分支后，需升级该方法
             payload = {
                 "seed": seed,
