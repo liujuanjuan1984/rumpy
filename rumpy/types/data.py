@@ -48,9 +48,9 @@ class ApiBaseURLS:
     LIGHT_NODE: str
     PAYMENT_GATEWAY: str = "https://prs-bp2.press.one/api"
 
-    def __init__(self, port=8080, host="127.0.0.1"):
-        self.FULL_NODE = URL(host=host, port=port).url
-        self.LIGHT_NODE = URL(host=host, port=port, path="/nodesdk_api").url
+    def __init__(self, protocol="https", port=8080, host="127.0.0.1"):
+        self.FULL_NODE = URL(protocol=protocol, host=host, port=port).url
+        self.LIGHT_NODE = URL(protocol=protocol, host=host, port=port, path="/nodesdk_api").url
 
 
 @dataclass
