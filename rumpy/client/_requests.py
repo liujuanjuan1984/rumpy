@@ -15,15 +15,13 @@ logger = logging.getLogger(__name__)
 class HttpRequest:
     def __init__(
         self,
-        host: str = "127.0.0.1",
-        port: str = "8080",
         api_base: str = None,
         crtfile: str = None,
         jwt_token: str = None,
     ):
 
         requests.adapters.DEFAULT_RETRIES = 5
-        self.api_base = api_base or f"https://{host}:{port}"
+        self.api_base = api_base
         self._session = requests.Session()
         self._session.verify = utils.check_crtfile(crtfile)
         self._session.keep_alive = False
@@ -40,11 +38,12 @@ class HttpRequest:
         if "127.0.0.1" in self.api_base and self.api_base not in _no_proxy:
             os.environ["NO_PROXY"] = ",".join([_no_proxy, self.api_base])
 
-    def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None):
-        api_base = api_base or self.api_base
-        if not api_base:
-            raise ParamValueError(f"api_base is null, {api_base}")
-        url = utils.get_url(api_base, endpoint)
+    def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None, url=None):
+        if not url:
+            api_base = api_base or self.api_base
+            if not api_base:
+                raise ParamValueError(f"api_base is null, {api_base}")
+            url = utils.get_url(api_base, endpoint)
 
         try:
             resp = self._session.request(method=method, url=url, json=payload)
@@ -53,26 +52,26 @@ class HttpRequest:
             resp = self._session.request(method=method, url=url, json=payload, verify=False)
 
         try:
-            body_json = resp.json()
+            resp_json = resp.json()
         except Exception as e:
             logger.warning(f"Exception {e}")
-            body_json = {}
+            resp_json = {}
 
         if resp.status_code != 200:
             logger.info(f"payload:{payload}")
             logger.info(f"url:{url}")
-            logger.info(f"body_json:{body_json}")
+            logger.info(f"resp_json:{resp_json}")
             logger.info(f"resp.status_code:{resp.status_code}")
 
         logger.debug(f"payload:{payload}")
         logger.debug(f"url:{url}")
-        logger.debug(f"body_json:{body_json}")
+        logger.debug(f"resp_json:{resp_json}")
         logger.debug(f"resp.status_code:{resp.status_code}")
 
-        return body_json
+        return resp_json
 
-    def get(self, endpoint: str, payload: Dict = {}, api_base=None):
-        return self._request("get", endpoint, payload, api_base)
+    def get(self, endpoint: str, payload: Dict = {}, api_base=None, url=None):
+        return self._request("get", endpoint, payload, api_base, url)
 
-    def post(self, endpoint: str, payload: Dict = {}, api_base=None):
-        return self._request("post", endpoint, payload, api_base)
+    def post(self, endpoint: str, payload: Dict = {}, api_base=None, url=None):
+        return self._request("post", endpoint, payload, api_base, url)
