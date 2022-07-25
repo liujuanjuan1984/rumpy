@@ -12,12 +12,17 @@ logger = logging.getLogger(__name__)
 class FullNode:
     _group_id = None
 
-    def __init__(self, protocol="http", port=None, host="127.0.0.1", crtfile=None):
+    def __init__(self, protocol=None, port=None, host="127.0.0.1", crtfile=None):
         if port is None:
             port = os.getenv("RUM_PORT", 51194)
         if crtfile is None:
             local_crtfile = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
             crtfile = os.getenv("RUM_CRTFILE", local_crtfile)
+        if protocol is None:
+            if host == "127.0.0.1":
+                protocol = "http"
+            else:
+                protocol = "https"
         _apis = ApiBaseURLS(protocol=protocol, port=port, host=host)
         self.http = HttpRequest(api_base=_apis.FULL_NODE, crtfile=crtfile)
         self.api = self.http.api = FullNodeAPI(self.http)
