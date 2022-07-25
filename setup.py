@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="rumpy",
-    version="0.6.2",
+    version="0.6.3",
     author="liujuanjuan1984",
     author_email="qiaoanlu@163.com",
     description="python sdk for quorum: https://github.com/rumsystem/quorum",
