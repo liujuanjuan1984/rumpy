@@ -47,7 +47,7 @@ class BlazeBot:
                 self.rum.group_id = _gid
                 groups[_gid] = {
                     "group_id": _gid,
-                    "group_name": self.rum.api.seed().get("group_name"),
+                    "group_name": utils.group_name(self.rum.api.seed(_gid)["seed"]),
                     "minutes": RSS_BOT_COMMANDS[k].get("minutes") or DEFAULT_MINUTES,
                 }
         return groups

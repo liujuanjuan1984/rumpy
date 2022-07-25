@@ -579,3 +579,7 @@ def decode_seed_url(url):
 def decode_seed(seed):
     url = get_seed_url(seed)
     return decode_seed_url(url)
+
+
+def group_name(seedurl):
+    return _get_seed_query(seedurl).get("a")

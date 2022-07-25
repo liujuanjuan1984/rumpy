@@ -59,6 +59,12 @@ class BaseAPI:
         """return list of group_id which node has joined"""
         return [i["group_id"] for i in self.groups()]
 
+    @property
+    def group_name(self):
+        self.check_group_joined_as_required(group_id)
+        url = self.api.seed()["seed"]
+        return utils.group_name(url)
+
     def is_joined(self, group_id=None) -> bool:
         try:
             self.check_group_joined_as_required(group_id)

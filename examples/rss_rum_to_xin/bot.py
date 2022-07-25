@@ -133,7 +133,7 @@ class RssBot:
             if _gid not in (None, -1):
                 groups[_gid] = {
                     "group_id": _gid,
-                    "group_name": self.rum.api.seed(_gid).get("group_name"),
+                    "group_name": utils.group_name(self.rum.api.seed(_gid)["seed"]),
                     "minutes": RSS_BOT_COMMANDS[k].get("minutes") or DEFAULT_MINUTES,
                 }
         return groups
@@ -419,7 +419,7 @@ class RssBot:
         return counts_result
 
     def airdrop_to_group(self, group_id, num_trxs=1, days=-1, memo=None):
-        group_name = self.rum.api.seed(group_id).get("group_name")
+        group_name = utils.group_name(self.rum.api.seed(group_id)["seed"])
         logger.debug(f"airdrop_to_group {group_id}, {group_name}, ...")
 
         counts_result = self.counts_trxs(group_id, days=days)
