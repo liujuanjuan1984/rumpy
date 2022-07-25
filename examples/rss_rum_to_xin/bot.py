@@ -24,7 +24,6 @@ from config_rss import *
 from modules import *
 from sqlalchemy import Boolean, Column, Integer, String, and_, distinct
 
-sys.path.insert(0, RUMPY_PATH)
 import rumpy
 import rumpy.utils as utils
 from rumpy import FullNode

@@ -10,7 +10,6 @@ from config_rss import *
 from rumpy import FullNode
 import rumpy.utils as utils
 
-sys.path.insert(0, RUMPY_PATH)
 sys.path.insert(0, MIXIN_SDK_PATH)
 from mixinsdk.clients.blaze_client import BlazeClient
 from mixinsdk.clients.http_client import HttpClient_AppAuth
