@@ -8,6 +8,7 @@ import time
 from config_rss import *
 
 from rumpy import FullNode
+import rumpy.utils as utils
 
 sys.path.insert(0, RUMPY_PATH)
 sys.path.insert(0, MIXIN_SDK_PATH)
