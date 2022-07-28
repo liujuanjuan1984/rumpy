@@ -8,9 +8,10 @@ import math
 import os
 import re
 import uuid
+import zipfile
 from typing import Any, Dict, List
 from urllib import parse
-import zipfile
+
 import filetype
 from PIL import Image
 

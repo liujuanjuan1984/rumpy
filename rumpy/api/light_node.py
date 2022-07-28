@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Union
 from rumpy.api.base import BaseAPI
 from rumpy.exceptions import *
 
-
 logger = logging.getLogger(__name__)
 
 

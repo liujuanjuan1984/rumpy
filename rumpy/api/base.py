@@ -105,7 +105,14 @@ class BaseAPI:
     def del_note(self, trx_id, group_id=None):
         return self.__post_content(del_trx_id=trx_id, group_id=group_id)
 
-    def edit_note(self, trx_id, content: str = None, images: List = None, name=None, group_id=None):
+    def edit_note(
+        self,
+        trx_id,
+        content: str = None,
+        images: List = None,
+        name=None,
+        group_id=None,
+    ):
         return self.__post_content(
             edit_trx_id=trx_id,
             content=content,
@@ -122,7 +129,13 @@ class BaseAPI:
             group_id=group_id,
         )
 
-    def update_profile(self, name=None, image=None, wallet: Union[str, Dict, None] = None, group_id=None):
+    def update_profile(
+        self,
+        name=None,
+        image=None,
+        wallet: Union[str, Dict, None] = None,
+        group_id=None,
+    ):
         """user update the profile: name, image, or wallet.
 
         name: nickname of user

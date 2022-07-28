@@ -7,8 +7,8 @@ import time
 
 from config_rss import *
 
-from rumpy import FullNode
 import rumpy.utils as utils
+from rumpy import FullNode
 
 sys.path.insert(0, MIXIN_SDK_PATH)
 from mixinsdk.clients.blaze_client import BlazeClient

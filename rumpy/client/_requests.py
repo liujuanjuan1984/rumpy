@@ -38,7 +38,14 @@ class HttpRequest:
         if "127.0.0.1" in self.api_base and self.api_base not in _no_proxy:
             os.environ["NO_PROXY"] = ",".join([_no_proxy, self.api_base])
 
-    def _request(self, method: str, endpoint: str, payload: Dict = {}, api_base=None, url=None):
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        payload: Dict = {},
+        api_base=None,
+        url=None,
+    ):
         if not url:
             api_base = api_base or self.api_base
             if not api_base:
