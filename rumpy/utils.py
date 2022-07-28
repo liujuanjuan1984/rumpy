@@ -571,6 +571,8 @@ def decode_seed_url(url):
         "group_name": q.get("a"),
         "app_key": q.get("y"),
         "owner": _decode_pubkey(q.get("k")),
+        "chiperkey": _decode_cipher_key(q.get("c")),
+        "url": q.get("u"),
         "created_at": timestamp_to_datetime(timestamp, "str"),
         "genesis_block_id": _decode_uuid(q.get("b")),
     }
