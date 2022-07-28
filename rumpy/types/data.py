@@ -220,7 +220,7 @@ class ImgContent:
             self.name = utils.filename_init(path_bytes_string)
             file_bytes = utils.zip_image(path_bytes_string, kb)
             self.mediaType = filetype.guess(file_bytes).mime
-            self.content = file_bytes  # TODO:临时修改，要确认是否可行。base64.b64encode(file_bytes).decode("utf-8")
+            self.content = base64.b64encode(file_bytes).decode("utf-8")
 
     def person_img(self):
         return {"content": self.content, "mediaType": self.mediaType}

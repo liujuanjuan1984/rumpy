@@ -5,6 +5,7 @@ from rumpy.client._requests import HttpRequest
 
 logger = logging.getLogger(__name__)
 
+import base64
 from typing import Any, Dict, List
 from urllib import parse
 
@@ -60,6 +61,17 @@ class MiniNode:
             timestamp = time.mktime(time.strptime(timestamp, "%Y-%m-%d %H:%M"))
         # TODO:增加 obj 字段合法性的检查
         obj = ContentObj(content, name, images, edit_trx_id, del_trx_id, reply_trx_id).to_dict()
+
+        # pb的image的content需要bytes形式，但其它版本需要的是 string形式的
+        if "image" in obj:
+            new_img = []
+            for img in obj["image"]:
+                if isinstance(img["content"], str):
+                    img.update({"content": base64.b64decode(img["content"])})
+                new_img.append(img)
+
+            obj["image"] = new_img
+
         trx = TrxEncrypt(self.group_id, self.aes_key, private_key, obj, timestamp)
         resp = self.http.post(endpoint=f"/trx/{self.group_id}", payload=trx)
         return resp
