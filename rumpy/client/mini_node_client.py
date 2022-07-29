@@ -48,11 +48,14 @@ class MiniNode:
         edit_trx_id: str = None,
         del_trx_id: str = None,
         reply_trx_id: str = None,
+        seedurl=None,
     ):
 
         """
         timestamp:2022-10-05 12:34
         """
+        if seedurl:
+            self.__init__(seedurl)
 
         if isinstance(private_key, str):
             private_key = bytes.fromhex(private_key)
