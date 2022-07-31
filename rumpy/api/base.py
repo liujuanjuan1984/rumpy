@@ -9,6 +9,7 @@ import rumpy.utils as utils
 from rumpy.client._requests import HttpRequest
 from rumpy.exceptions import *
 from rumpy.types.data import *
+from rumpy.types.pack_trx import *
 
 logger = logging.getLogger(__name__)
 
@@ -86,9 +87,9 @@ class BaseAPI:
                 raise RumChainException(err)
         return resp
 
-    def like(self, trx_id: str, group_id=None, type="Like") -> Dict:
+    def like(self, trx_id: str, group_id=None, like_type="Like") -> Dict:
         group_id = self.check_group_joined_as_required(group_id)
-        trx = NewTrxLike(trx_id, group_id, type).to_dict()
+        trx = pack_like_trx(group_id, trx_id, like_type)
         return self._http.api._post_trx(trx)
 
     def dislike(self, trx_id: str, group_id=None) -> Dict:
@@ -96,7 +97,7 @@ class BaseAPI:
 
     def __post_content(self, group_id=None, **kwargs):
         group_id = self.check_group_joined_as_required(group_id)
-        trx = NewTrxContent(group_id, **kwargs).to_dict()
+        trx = pack_note_trx(group_id, **kwargs)
         return self._http.api._post_trx(trx)
 
     def send_note(self, content: str = None, images: List = None, name=None, group_id=None):
@@ -143,7 +144,7 @@ class BaseAPI:
         wallet:
         """
         group_id = self.check_group_joined_as_required(group_id)
-        trx = NewTrxPerson(group_id=group_id, name=name, image=image, wallet=wallet).to_dict()
+        trx = pack_person_trx(group_id, name, image, wallet)
         return self._http.api._update_profile(trx)
 
     def trx(self, trx_id: str, group_id=None):

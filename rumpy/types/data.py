@@ -166,16 +166,6 @@ class NewTrxBase(BaseData):
 
 
 @dataclass
-class NewTrxLike(NewTrxBase):
-    def __init__(self, trx_id, group_id, type="Like"):
-        if type not in ("Like", "Dislike"):
-            err = f"param type should be Like or Dislike"
-            raise ParamOverflowError(err)
-        object = {"id": trx_id}
-        super().__init__(type, group_id, object=object)
-
-
-@dataclass
 class WalletInfo:
     id: str
     type: str = field(default="mixin")
@@ -242,16 +232,6 @@ class PersonObj(BaseData):
             self.image = ImgContent(self.image).person_img()
         if self.wallet:
             self.wallet = PersonWallets(self.wallet).rlt
-
-
-@dataclass
-class NewTrxPerson(NewTrxBase):
-    def __init__(self, group_id, name=None, image=None, wallet=None):
-        try:
-            person = PersonObj(name, image, wallet).to_dict()
-        except Exception as e:
-            raise ParamValueError(e)
-        super().__init__("Update", group_id, person=person)
 
 
 @dataclass
@@ -352,12 +332,9 @@ class ContentObj(BaseData):
                 if value and key not in ["type", "id", "content"]:
                     raise ParamOverflowError(f"del object got a no-need param {key}:{value}")
 
-
-@dataclass
-class NewTrxContent(NewTrxBase):
-    def __init__(self, group_id, **kwargs):
-        try:
-            object = ContentObj(**kwargs).to_dict()
-        except Exception as e:
-            raise ParamValueError(e)
-        super().__init__("Add", group_id, object=object)
+    def image_to_bytes(self):
+        if self.image:  # convert image to bytes
+            for i in self.image:
+                if isinstance(i["content"], str):
+                    i["content"] = base64.b64decode(i["content"])
+        return self
