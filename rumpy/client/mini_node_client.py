@@ -1,7 +1,6 @@
 import logging
 import time
-
-from rumpy.client._requests import HttpRequest
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ from rumpy.types.pack_trx import *
 class MiniNode:
     """TODO: add more methods
     r.POST("/v1/node/groupctn/:group_id", h.GetContentNSdk)
-        r.POST("/v1/node/getchaindata/:group_id", h.GetDataNSdk)
+    r.POST("/v1/node/getchaindata/:group_id", h.GetDataNSdk)
     """
 
     def __init__(self, seedurl: str):
@@ -33,11 +32,10 @@ class MiniNode:
             jwt = ["jwt"][0]
         else:
             jwt = None
-        api_base = f"{url.scheme}://{url.netloc}/api/v1/node"
-
+        self.api_base = f"{url.scheme}://{url.netloc}/api/v1/node"
+        self.jwt = jwt
         self.group_id = info["group_id"]
         self.aes_key = bytes.fromhex(info["chiperkey"])
-        self.http = HttpRequest(api_base=api_base, jwt_token=jwt)
 
     def send_note(
         self,
@@ -58,6 +56,17 @@ class MiniNode:
         obj = Mini.pack_like_obj(trx_id, like_type)
         return self.send_trx(private_key, obj, timestamp, seedurl)
 
+    def _post(self, endpoint="", payload=None):
+        headers = {
+            "USER-AGENT": "rumpy.api",
+            "Content-Type": "application/json",
+            "Connection": "close",
+        }
+        if self.jwt:
+            headers["Authorization"] = f"Bearer {self.jwt}"
+
+        requests.post(self.api_base + endpoint, json=payload, headers=headers)
+
     def send_trx(self, private_key, obj, timestamp=None, seedurl=None):
         """
         obj: dict,packed from rumpy.types.pack_trx
@@ -72,8 +81,20 @@ class MiniNode:
             timestamp = timestamp.replace("/", "-")[:16]
             timestamp = time.mktime(time.strptime(timestamp, "%Y-%m-%d %H:%M"))
         trx = trx_encrypt(self.group_id, self.aes_key, private_key, obj, timestamp)
-        resp = self.http.post(endpoint=f"/trx/{self.group_id}", payload=trx)
-        return resp
+        resp = self._post(endpoint=f"/trx/{self.group_id}", payload=trx)
+
+        try:
+            resp_json = resp.json()
+        except Exception as e:
+            logger.warning(f"Exception {e}")
+            resp_json = {"error": str(e)}
+
+        if resp.status_code != 200:
+            logger.info(f"payload:{payload}")
+            logger.info(f"url:{url}")
+            logger.info(f"resp_json:{resp_json}")
+            logger.info(f"resp.status_code:{resp.status_code}")
+        return resp_json
 
     def encrypt_trx(self, encrypted_trx: dict):
         return trx_decrypt(self.aes_key, encrypted_trx)
