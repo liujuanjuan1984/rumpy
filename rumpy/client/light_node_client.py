@@ -19,7 +19,7 @@ class LightNode:
             local_crtfile = r"C:\Users\75801\AppData\Local\Programs\prs-atm-app\resources\quorum-bin\certs\server.crt"
             crtfile = os.getenv("RUM_CRTFILE", local_crtfile)
         if protocol is None:
-            if host == "127.0.0.1":
+            if host in ["127.0.0.1", "localhost"]:
                 protocol = "http"
             else:
                 protocol = "https"
