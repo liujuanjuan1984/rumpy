@@ -29,7 +29,7 @@ class MiniNode:
             raise ParamValueError("Invalid seed url. param u is required.eg:  u=http://127.0.0.1:51234?jwt=xxx")
         jwt = parse.parse_qs(url.query)
         if jwt:
-            jwt = ["jwt"][0]
+            jwt = jwt["jwt"][0]
         else:
             jwt = None
         self.api_base = f"{url.scheme}://{url.netloc}/api/v1/node"
@@ -64,8 +64,21 @@ class MiniNode:
         }
         if self.jwt:
             headers["Authorization"] = f"Bearer {self.jwt}"
+        url = f"{self.api_base}{endpoint}"
+        resp = requests.post(url, json=payload, headers=headers)
 
-        requests.post(self.api_base + endpoint, json=payload, headers=headers)
+        try:
+            resp_json = resp.json()
+        except Exception as e:
+            logger.warning(f"Exception {e}")
+            resp_json = {"error": str(e)}
+
+        if resp.status_code != 200:
+            logger.info(f"payload:{payload}")
+            logger.info(f"resp_json:{resp_json}")
+            logger.info(f"resp.status_code:{resp.status_code}")
+
+        return resp_json
 
     def send_trx(self, private_key, obj, timestamp=None, seedurl=None):
         """
@@ -81,20 +94,7 @@ class MiniNode:
             timestamp = timestamp.replace("/", "-")[:16]
             timestamp = time.mktime(time.strptime(timestamp, "%Y-%m-%d %H:%M"))
         trx = trx_encrypt(self.group_id, self.aes_key, private_key, obj, timestamp)
-        resp = self._post(endpoint=f"/trx/{self.group_id}", payload=trx)
-
-        try:
-            resp_json = resp.json()
-        except Exception as e:
-            logger.warning(f"Exception {e}")
-            resp_json = {"error": str(e)}
-
-        if resp.status_code != 200:
-            logger.info(f"payload:{payload}")
-            logger.info(f"url:{url}")
-            logger.info(f"resp_json:{resp_json}")
-            logger.info(f"resp.status_code:{resp.status_code}")
-        return resp_json
+        return self._post(endpoint=f"/trx/{self.group_id}", payload=trx)
 
     def encrypt_trx(self, encrypted_trx: dict):
         return trx_decrypt(self.aes_key, encrypted_trx)
