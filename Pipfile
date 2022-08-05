@@ -10,6 +10,9 @@ pytest = "*"
 Pillow = "*"
 python-dotenv = "*"
 pip = "==22.1.1"
+eth-keys = "*"
+pycryptodome = "*"
+protobuf = "*"
 
 [dev-packages]
 officy = "*"
