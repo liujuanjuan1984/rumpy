@@ -18,21 +18,28 @@ class HttpRequest:
         api_base: str = None,
         crtfile: str = None,
         jwt_token: str = None,
+        is_session: bool = True,
+        is_connection: bool = False,
     ):
 
         requests.adapters.DEFAULT_RETRIES = 5
-        self.api_base = api_base
-        self._session = requests.Session()
+        self.api_base = api_base or "http://127.0.0.1"
+        if is_session:
+            self._session = requests.Session()
+        else:
+            self._session = requests
+
         self._session.verify = utils.check_crtfile(crtfile)
-        self._session.keep_alive = False
-        self._session.headers.update(
-            {
-                "USER-AGENT": "rumpy.api",
-                "Content-Type": "application/json",
-            }
-        )
+        self._session.keep_alive = self.is_connection = is_connection
+
+        self.headers = {
+            "USER-AGENT": "rumpy.api",
+            "Content-Type": "application/json",
+        }
         if jwt_token:
-            self._session.headers.update({"Authorization": f"Bearer {jwt_token}"})
+            self.headers.update({"Authorization": f"Bearer {jwt_token}"})
+        if not is_connection:
+            self.headers.update({"Connection": "close"})
 
         _no_proxy = os.getenv("NO_PROXY", "")
         if "127.0.0.1" in self.api_base and self.api_base not in _no_proxy:
@@ -53,10 +60,10 @@ class HttpRequest:
             url = utils.get_url(api_base, endpoint)
 
         try:
-            resp = self._session.request(method=method, url=url, json=payload)
+            resp = self._session.request(method=method, url=url, json=payload, headers=self.headers)
         except Exception as e:  # SSLCertVerificationError
             logger.warning(f"Exception {e}")
-            resp = self._session.request(method=method, url=url, json=payload, verify=False)
+            resp = self._session.request(method=method, url=url, json=payload, verify=False, headers=self.headers)
 
         try:
             resp_json = resp.json()
