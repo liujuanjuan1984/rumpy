@@ -6,6 +6,9 @@ logger = logging.getLogger(__name__)
 from typing import Any, Dict, List
 from urllib import parse
 
+from eth_account import Account
+from eth_utils.hexadecimal import encode_hex
+
 import rumpy.utils as utils
 from rumpy.client import HttpRequest
 from rumpy.exceptions import *
@@ -38,6 +41,29 @@ class MiniNode:
         self.group_id = info["group_id"]
         self.aes_key = bytes.fromhex(info["chiperkey"])
 
+    def create_private_key(self):
+        acc = Account.create()
+        private_key = encode_hex(acc.privateKey)
+        return private_key
+
+    def check_private_key(self, private_key: str) -> bytes:
+        if isinstance(private_key, int):
+            private_key = hex(private_key)
+        if isinstance(private_key, str):
+            if private_key.startswith("0x"):
+                private_key = bytes.fromhex(private_key[2:])
+            else:
+                private_key = bytes.fromhex(private_key)
+        elif isinstance(private_key, bytes):
+            pass
+        else:
+            raise ParamValueError(
+                "Invalid private key. param private_key is required.eg:  private_key=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+            )
+        if len(private_key) != 32:
+            raise ParamValueError("Invalid private key. param private_key is required.eg:  private_key=xxx")
+        return private_key
+
     def send_note(
         self,
         private_key,
@@ -64,8 +90,7 @@ class MiniNode:
         """
         if seedurl:
             self.__init__(seedurl)
-        if isinstance(private_key, str):
-            private_key = bytes.fromhex(private_key)
+        private_key = self.check_private_key(private_key)
         # 此处开放了时间戳的自定义
         if timestamp and isinstance(timestamp, str):
             timestamp = timestamp.replace("/", "-")[:16]

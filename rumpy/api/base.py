@@ -299,6 +299,7 @@ class BaseAPI:
         # check group_id
 
         group_id = users_data.get("group_id") or self.check_group_id_as_required(group_id)
+        group_id = self.check_group_joined_as_required(group_id)
 
         # get new trxs from the trx_id
         trx_id = users_data.get("trx_id", None)
