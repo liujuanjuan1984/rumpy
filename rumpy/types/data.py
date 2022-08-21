@@ -233,6 +233,12 @@ class PersonObj(BaseData):
         if self.wallet:
             self.wallet = PersonWallets(self.wallet).rlt
 
+    def image_to_bytes(self):
+        if self.image:  # convert image to bytes
+            if isinstance(self.image["content"], str):
+                self.image["content"] = base64.b64decode(self.image["content"])
+        return self
+
 
 @dataclass
 class FileInfo:

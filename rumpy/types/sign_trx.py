@@ -54,10 +54,18 @@ def trx_encrypt(
     group_id: str,
     aes_key: bytes,
     private_key: bytes,
-    obj: Dict[str, Any],
+    obj: Dict[str, Any] = None,
+    person: Dict[str, Any] = None,
     timestamp=None,
 ) -> Dict[str, str]:
-    obj_pb = pbQuorum.Object(**obj)
+    if obj is None and person is None:
+        raise ParamValueError("obj and person is None")
+    if obj is not None and person is not None:
+        raise ParamValueError("obj and person is not None")
+    if obj is not None:
+        obj_pb = pbQuorum.Object(**obj)
+    elif person is not None:
+        obj_pb = pbQuorum.Person(**person)
     any_obj_pb = any_pb2.Any()
     any_obj_pb.Pack(obj_pb, type_url_prefix="type.googleapis.com/")
     data = any_obj_pb.SerializeToString()
@@ -119,14 +127,21 @@ def trx_decrypt(aes_key: bytes, encrypted_trx: dict):
     data = base64.b64decode(data)
     data = aes_decrypt(aes_key, data)
     any_obj = any_pb2.Any().FromString(data)
-    obj = pbQuorum.Object()
+    if any_obj.type_url.find("quorum.pb.Person") >= 0:
+        typeurl = "quorum.pb.Person"
+        obj = pbQuorum.Person()
+    elif any_obj.type_url.find("quorum.pb.Object") >= 0:
+        typeurl = "quorum.pb.Object"
+        obj = pbQuorum.Object()
+    else:
+        raise ParamValueError("type_url is not quorum.pb.Person or quorum.pb.Object")
     any_obj.Unpack(obj)
     dict_obj = json_format.MessageToDict(obj)
     decrpyted_trx = {
         "TrxId": encrypted_trx.get("TrxId"),
         "Publisher": encrypted_trx.get("SenderPubkey"),
         "Content": dict_obj,
-        "TypeUrl": "quorum.pb.Object",
+        "TypeUrl": typeurl,
         "TimeStamp": encrypted_trx.get("TimeStamp"),
     }
     return decrpyted_trx

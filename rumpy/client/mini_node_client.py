@@ -77,13 +77,19 @@ class MiniNode:
         seedurl=None,
     ):
         obj = Mini.pack_note_obj(content, name, images, edit_trx_id, del_trx_id, reply_trx_id)
-        return self.send_trx(private_key, obj, timestamp, seedurl)
+        return self.send_trx(private_key, obj=obj, timestamp=timestamp, seedurl=seedurl)
 
     def like(self, private_key, trx_id, like_type="Like", timestamp=None, seedurl=None):
         obj = Mini.pack_like_obj(trx_id, like_type)
-        return self.send_trx(private_key, obj, timestamp, seedurl)
+        return self.send_trx(private_key, obj=obj, timestamp=timestamp, seedurl=seedurl)
 
-    def send_trx(self, private_key, obj, timestamp=None, seedurl=None):
+    def update_profile(self, private_key, name=None, image=None, timestamp=None, seedurl=None):
+        if name is None and image is None:
+            raise ParamValueError("Invalid profile. param name or image is required.eg:  name=xxx or image=xxx")
+        person = Mini.pack_person_obj(name=name, image=image)
+        return self.send_trx(private_key, person=person, timestamp=timestamp, seedurl=seedurl)
+
+    def send_trx(self, private_key, obj=None, person=None, timestamp=None, seedurl=None):
         """
         obj: dict,packed from rumpy.types.pack_trx
         timestamp:2022-10-05 12:34
@@ -95,7 +101,7 @@ class MiniNode:
         if timestamp and isinstance(timestamp, str):
             timestamp = timestamp.replace("/", "-")[:16]
             timestamp = time.mktime(time.strptime(timestamp, "%Y-%m-%d %H:%M"))
-        trx = trx_encrypt(self.group_id, self.aes_key, private_key, obj, timestamp)
+        trx = trx_encrypt(self.group_id, self.aes_key, private_key, obj=obj, person=person, timestamp=timestamp)
         return self.http.post(endpoint=f"/node/trx/{self.group_id}", payload=trx)
 
     def get_trx(self, trx_id):

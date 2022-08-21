@@ -25,6 +25,11 @@ class Mini:
         obj = {"id": trx_id, "type": like_type}
         return obj
 
+    @staticmethod
+    def pack_person_obj(name: str = None, image=None) -> Dict:
+        obj = PersonObj(name, image).image_to_bytes().to_dict()
+        return obj
+
 
 def pack_person_trx(group_id: str, name: str = None, image=None, wallet=None) -> Dict:
     obj = PersonObj(name, image, wallet).to_dict()
