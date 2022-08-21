@@ -506,7 +506,7 @@ class FullNodeAPI(BaseAPI):
         }
         return self._post("/api/v1/group/announce", payload)
 
-    def announce_as_user(self, group_id=None):
+    def announce_as_user(self, group_id=None, memo=None):
         """announce self as user
 
         申请成为私有组用户
@@ -519,7 +519,8 @@ class FullNodeAPI(BaseAPI):
                 return status
         except:
             pass
-        return self.announce("add", "user", "rumpy.api,announce self as user", group_id)
+        memo = memo or "rumpy.api,announce self as user"
+        return self.announce("add", "user", memo, group_id)
 
     def announce_as_producer(self, group_id=None):
         """announce self as producer"""
@@ -566,7 +567,14 @@ class FullNodeAPI(BaseAPI):
 
         pubkey: 用户公钥, 如果不提供该参数, 默认将 owner 自己添加为私有组用户
         """
-        return self.update_user(pubkey=pubkey or self.pubkey, group_id=group_id)
+        pubkey = pubkey or self.pubkey
+        try:
+            status = self.announced_user(pubkey)
+            if status.get("Result") == "APPROVED":
+                return status
+        except:
+            pass
+        return self.update_user(pubkey=pubkey, group_id=group_id)
 
     def update_producer(self, pubkey=None, group_id=None, action="add"):
         """Only group owner can update producers: add, or remove.
