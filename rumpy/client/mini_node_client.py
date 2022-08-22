@@ -41,12 +41,18 @@ class MiniNode:
         self.group_id = info["group_id"]
         self.aes_key = bytes.fromhex(info["chiperkey"])
 
-    def create_private_key(self):
+    @staticmethod
+    def create_private_key() -> str:
         acc = Account.create()
         private_key = encode_hex(acc.privateKey)
         return private_key
 
-    def check_private_key(self, private_key: str) -> bytes:
+    @staticmethod
+    def private_key_to_address(private_key) -> str:
+        return Account.from_key(private_key).address
+
+    @staticmethod
+    def check_private_key(private_key: str) -> bytes:
         if isinstance(private_key, int):
             private_key = hex(private_key)
         if isinstance(private_key, str):
@@ -62,6 +68,16 @@ class MiniNode:
             )
         if len(private_key) != 32:
             raise ParamValueError("Invalid private key. param private_key is required.eg:  private_key=xxx")
+        return private_key
+
+    @staticmethod
+    def private_key_to_keystore(private_key, password: str):
+        return Account.from_key(private_key).encrypt(password=password)
+
+    @staticmethod
+    def keystore_to_private_key(keystore: Dict, password: str) -> str:
+        pvtkey = Account.decrypt(keystore, password)
+        private_key = encode_hex(pvtkey)
         return private_key
 
     def send_note(
