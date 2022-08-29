@@ -14,14 +14,11 @@ from rumpy.client import HttpRequest
 from rumpy.exceptions import *
 from rumpy.types.data import *
 from rumpy.types.pack_trx import *
-from rumpy.types.sign_trx import trx_decrypt, trx_encrypt
+from rumpy.types.sign_trx import get_content_param, trx_decrypt, trx_encrypt
 
 
 class MiniNode:
-    """TODO: add more methods
-    r.POST("/v1/node/groupctn/:group_id", h.GetContentNSdk)
-    r.POST("/v1/node/getchaindata/:group_id", h.GetDataNSdk)
-    """
+    # TODO: r.POST("/v1/node/getchaindata/:group_id", h.GetDataNSdk)
 
     def __init__(self, seedurl: str):
 
@@ -129,3 +126,20 @@ class MiniNode:
     def trx(self, trx_id):
         encrypted_trx = self.get_trx(trx_id)
         return self.encrypt_trx(encrypted_trx)
+
+    def get_content(
+        self,
+        start_trx: str = None,
+        num: int = 20,
+        reverse: bool = False,
+        include_start_trx: bool = False,
+        senders=None,
+    ):
+        payload = get_content_param(self.aes_key, self.group_id, start_trx, num, reverse, include_start_trx, senders)
+        encypted_trxs = self.http.post(f"/node/groupctn/{self.group_id}", payload=payload)
+        try:
+            trxs = [self.encrypt_trx(i) for i in encypted_trxs]
+            return trxs
+        except Exception as e:
+            logger.warning(f"get_content error: {e}")
+            return encypted_trxs

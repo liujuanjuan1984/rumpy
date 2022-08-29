@@ -33,5 +33,6 @@ setuptools.setup(
         "eth_keys",
         "pycryptodome",
         "protobuf",
+        "eth_account",
     ],
 )
