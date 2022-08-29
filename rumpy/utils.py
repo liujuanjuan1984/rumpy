@@ -343,6 +343,20 @@ def trx_typeurl(trx):
     return typeurl
 
 
+CLIENT_TRX_TYPES = [
+    "encrypted",
+    "person",
+    "announce",
+    "reply",
+    "image_only",
+    "image_text",
+    "text_only",
+    "like",
+    "dislike",
+    "other",
+]
+
+
 def trx_type(trx: Dict):
     """get type of trx, trx is one of group content list"""
     typeurl = trx_typeurl(trx)

@@ -134,12 +134,36 @@ class MiniNode:
         reverse: bool = False,
         include_start_trx: bool = False,
         senders=None,
+        trx_types=None,
     ):
         payload = get_content_param(self.aes_key, self.group_id, start_trx, num, reverse, include_start_trx, senders)
         encypted_trxs = self.http.post(f"/node/groupctn/{self.group_id}", payload=payload)
         try:
             trxs = [self.encrypt_trx(i) for i in encypted_trxs]
-            return trxs
+            if trx_types:
+                return [trx for trx in trxs if (utils.trx_type(trx) in trx_types)]
+            else:
+                return trxs
         except Exception as e:
             logger.warning(f"get_content error: {e}")
             return encypted_trxs
+
+    def get_all_contents(self, senders=None, trx_types=None):
+        """获取所有内容trxs的生成器，可以用 for...in...来迭代。"""
+        trx_id = None
+        trxs = self.get_content(start_trx=trx_id, num=200, senders=senders, trx_types=trx_types)
+        checked_trxids = []
+        trx_types = trx_types or []
+        senders = senders or []
+        while trxs:
+            if trx_id in checked_trxids:
+                break
+            else:
+                checked_trxids.append(trx_id)
+            for trx in trxs:
+                flag1 = (utils.trx_type(trx) in trx_types) or (not trx_types)
+                flag2 = (trx.get("Publisher", "") in senders) or (not senders)
+                if flag1 and flag2:
+                    yield trx
+            trx_id = utils.get_last_trxid_by_chain(trx_id, trxs, reverse=False)
+            trxs = self.get_content(start_trx=trx_id, num=200, senders=senders, trx_types=trx_types)
