@@ -136,10 +136,20 @@ class MiniNode:
         senders=None,
         trx_types=None,
     ):
-        payload = get_content_param(self.aes_key, self.group_id, start_trx, num, reverse, include_start_trx, senders)
+        # TODO:如果把 senders 传入 quorum，会导致拿不到数据，或数据容易中断，所以实现时拿了全部数据，再筛选senders
+        payload = get_content_param(
+            self.aes_key, self.group_id, start_trx, num, reverse, include_start_trx, senders=None
+        )
         encypted_trxs = self.http.post(f"/node/groupctn/{self.group_id}", payload=payload)
+        # check trx_types:
+        if trx_types:
+            for i in trx_types:
+                if i not in utils.CLIENT_TRX_TYPES:
+                    raise ParamValueError(f"Invalid trx_type. param trx_type is one of {utils.CLIENT_TRX_TYPES}")
         try:
             trxs = [self.encrypt_trx(i) for i in encypted_trxs]
+            if senders:
+                trxs = [i for i in trxs if i["Publisher"] in senders]
             if trx_types:
                 return [trx for trx in trxs if (utils.trx_type(trx) in trx_types)]
             else:
@@ -148,22 +158,22 @@ class MiniNode:
             logger.warning(f"get_content error: {e}")
             return encypted_trxs
 
-    def get_all_contents(self, senders=None, trx_types=None):
+    def get_all_contents(self, start_trx=None, senders=None, trx_types=None):
         """获取所有内容trxs的生成器，可以用 for...in...来迭代。"""
-        trx_id = None
-        trxs = self.get_content(start_trx=trx_id, num=200, senders=senders, trx_types=trx_types)
+        # TODO:如果把 senders 传入 quorum，会导致拿不到数据，或数据容易中断，所以实现时拿了全部数据，再筛选senders
+        trxs = self.get_content(start_trx=start_trx, num=200, senders=None, trx_types=trx_types)
         checked_trxids = []
         trx_types = trx_types or []
         senders = senders or []
         while trxs:
-            if trx_id in checked_trxids:
+            if start_trx in checked_trxids:
                 break
             else:
-                checked_trxids.append(trx_id)
+                checked_trxids.append(start_trx)
             for trx in trxs:
                 flag1 = (utils.trx_type(trx) in trx_types) or (not trx_types)
                 flag2 = (trx.get("Publisher", "") in senders) or (not senders)
                 if flag1 and flag2:
                     yield trx
-            trx_id = utils.get_last_trxid_by_chain(trx_id, trxs, reverse=False)
-            trxs = self.get_content(start_trx=trx_id, num=200, senders=senders, trx_types=trx_types)
+            start_trx = utils.get_last_trxid_by_chain(start_trx, trxs, reverse=False)
+            trxs = self.get_content(start_trx=start_trx, num=200, senders=None, trx_types=trx_types)
