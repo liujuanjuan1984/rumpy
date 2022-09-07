@@ -3,12 +3,10 @@ import os
 from typing import Any, Dict, List
 
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import rumpy.utils as utils
 from rumpy.exceptions import *
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 logger = logging.getLogger(__name__)
 
 
@@ -63,7 +61,9 @@ class HttpRequest:
             resp = self._session.request(method=method, url=url, json=payload, headers=self.headers)
         except Exception as e:  # SSLCertVerificationError
             logger.warning(f"Exception {e}")
-            resp = self._session.request(method=method, url=url, json=payload, verify=False, headers=self.headers)
+            resp = self._session.request(
+                method=method, url=url, json=payload, verify=False, headers=self.headers
+            )
 
         try:
             resp_json = resp.json()

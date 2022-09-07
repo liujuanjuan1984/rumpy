@@ -16,7 +16,9 @@ class ExportData:
         trxs = self.rum.api.get_group_all_contents(group_id=group_id, senders=senders)
         nicknames = self.rum.api.get_profiles(group_id=group_id, types=("name",))
         for trx in trxs:
-            params = self.rum.api.trx_retweet_params(group_id=group_id, trx=trx, nicknames=nicknames)
+            params = self.rum.api.trx_retweet_params(
+                group_id=group_id, trx=trx, nicknames=nicknames
+            )
             params.update({"trx_id": trx["TrxId"]})
             yield params
 

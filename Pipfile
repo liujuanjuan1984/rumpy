@@ -4,18 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "==2.24.0"
+requests = "*"
 filetype = "*"
-pytest = "*"
-Pillow = "*"
-python-dotenv = "*"
-pip = "==22.1.1"
-eth-keys = "*"
-pycryptodome = "*"
-protobuf = "*"
+pillow = "*"
 
 [dev-packages]
-officy = "*"
 
 [requires]
 python_version = "3.9"

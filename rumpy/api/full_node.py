@@ -445,7 +445,9 @@ class FullNodeAPI(BaseAPI):
         }
         return self._update_appconfig(**payload)
 
-    def set_group_default_permission(self, default_permission, action="add", memo=None, group_id=None):
+    def set_group_default_permission(
+        self, default_permission, action="add", memo=None, group_id=None
+    ):
         payload = {
             "key_name": "group_default_permission",
             "key_type": "string",
@@ -473,7 +475,9 @@ class FullNodeAPI(BaseAPI):
         if announcement:
             self.set_group_announcement(announcement, action=action, memo=memo, group_id=group_id)
         if default_permission:
-            self.set_group_default_permission(default_permission, action=action, memo=memo, group_id=group_id)
+            self.set_group_default_permission(
+                default_permission, action=action, memo=memo, group_id=group_id
+            )
 
     def keylist(self, group_id=None):
         """获取组的所有配置项"""

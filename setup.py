@@ -30,9 +30,5 @@ setuptools.setup(
         "requests",
         "filetype",
         "pillow",
-        "eth_keys",
-        "pycryptodome",
-        "protobuf",
-        "eth_account",
     ],
 )

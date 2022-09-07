@@ -153,7 +153,9 @@ class BaseAPI:
         if not trx_id:
             return data
 
-        trxs = self._http.api.get_group_content(trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id)
+        trxs = self._http.api.get_group_content(
+            trx_id=trx_id, num=1, includestarttrx=True, group_id=group_id
+        )
         if len(trxs) > 1:
             raise ParamOverflowError(
                 f"{len(trxs)} trxs got from group: <{group_id}> with trx: <{trx_id}>.",
@@ -191,7 +193,9 @@ class BaseAPI:
         num=20,
     ):
         """返回的是一个生成器，可以用 for ... in ... 来迭代访问。trx_types 的取值见 utils.trx_type() 的各种返回值"""
-        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=num, reverse=reverse)
+        trxs = self._http.api.get_group_content(
+            group_id=group_id, trx_id=trx_id, num=num, reverse=reverse
+        )
         checked_trxids = []
         trx_types = trx_types or []
         senders = senders or []
@@ -215,7 +219,9 @@ class BaseAPI:
             if stop:
                 break
             trx_id = utils.get_last_trxid_by_chain(trx_id, trxs, reverse=reverse)
-            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=num, reverse=reverse)
+            trxs = self._http.api.get_group_content(
+                group_id=group_id, trx_id=trx_id, num=num, reverse=reverse
+            )
 
     def get_group_all_contents(
         self,
@@ -226,7 +232,9 @@ class BaseAPI:
         reverse=False,
     ):
         """返回的是一个生成器，可以用 for ... in ... 来迭代访问。trx_types 的取值见 utils.trx_type() 的各种返回值"""
-        trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=200, reverse=reverse)
+        trxs = self._http.api.get_group_content(
+            group_id=group_id, trx_id=trx_id, num=200, reverse=reverse
+        )
         checked_trxids = []
         trx_types = trx_types or []
         senders = senders or []
@@ -241,7 +249,9 @@ class BaseAPI:
                 if flag1 and flag2:
                     yield trx
             trx_id = utils.get_last_trxid_by_chain(trx_id, trxs, reverse=reverse)
-            trxs = self._http.api.get_group_content(group_id=group_id, trx_id=trx_id, num=200, reverse=reverse)
+            trxs = self._http.api.get_group_content(
+                group_id=group_id, trx_id=trx_id, num=200, reverse=reverse
+            )
 
     def get_profiles(
         self,
@@ -330,11 +340,12 @@ class BaseAPI:
         )
         return users_data
 
-    def trx_retweet_params(self, trx, group_id=None, nicknames={}):
+    def trx_retweet_params(self, trx, group_id=None, nicknames=None):
         """trans from trx to an object of new trx to send to chain.
         Returns:
             obj: object of new trx,can be used as: self.send_note(obj=obj).
         """
+
         refer_tid = utils.get_refer_trxid(trx)
         refer_trx = None
         if refer_tid:

@@ -34,7 +34,9 @@ class SearchUser:
         logger.debug(f"search in group <{group_id}> start from trx: <{trx_id}>")
 
         group_rlt = group_rlt or {}
-        trxs = self.rum.api.get_group_all_contents(group_id=group_id, trx_id=trx_id, trx_types=("person",))
+        trxs = self.rum.api.get_group_all_contents(
+            group_id=group_id, trx_id=trx_id, trx_types=("person",)
+        )
 
         progress_tid = trx_id
         for trx in trxs:

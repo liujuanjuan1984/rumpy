@@ -414,8 +414,8 @@ def _get_content(trx_content):
     return _text, _imgs
 
 
-def trx_retweet_params_init(trx, refer_trx=None, nicknames={}):
-
+def trx_retweet_params_init(trx, refer_trx=None, nicknames=None):
+    nicknames = nicknames or {}
     refer_trx = refer_trx or {}
     refer_pubkey = refer_trx.get("Publisher", "")
     refer_nickname = get_nickname(refer_pubkey, nicknames)

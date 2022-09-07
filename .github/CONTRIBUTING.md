@@ -6,13 +6,11 @@ rumpy 欢迎任何人提交 issue 和 Pull Requests 贡献代码，在您创建 
 
 tbd
 
-## lint
+## lint & 静态类型检查
 
-tbd
-
-## 静态类型检查
-
-tbd
+```bash
+pylint rumpy >> pylint_rumpy.log
+```
 
 ## 代码格式化
 
@@ -29,7 +27,7 @@ Format:
 
 ```bash
 isort rumpy
-black -l 120 -t py39 rumpy
+black -l 100 -t py39 rumpy
 ```
 
 ## 自动化测试
