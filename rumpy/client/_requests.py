@@ -18,6 +18,7 @@ class HttpRequest:
         jwt_token: str = None,
         is_session: bool = True,
         is_connection: bool = False,
+        no_proxy: bool = True,
     ):
 
         requests.adapters.DEFAULT_RETRIES = 5
@@ -39,9 +40,9 @@ class HttpRequest:
         if not is_connection:
             self.headers.update({"Connection": "close"})
 
-        _no_proxy = os.getenv("NO_PROXY", "")
-        if "127.0.0.1" in self.api_base and self.api_base not in _no_proxy:
-            os.environ["NO_PROXY"] = ",".join([_no_proxy, self.api_base])
+        flag = ("127.0.0.1" in self.api_base and self.api_base not in _no_proxy) or no_proxy
+        if flag:
+            os.environ["NO_PROXY"] = ",".join([os.getenv("NO_PROXY", ""), self.api_base])
 
     def _request(
         self,

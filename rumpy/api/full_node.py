@@ -296,7 +296,7 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_owner_as_required(group_id)
         mode = utils.check_trx_mode(mode)
 
-        trx_type = utils.check_trx_type(trx_type).upper()
+        trx_type = utils.check_trx_type(trx_type)
         if not memo:
             raise ParamValueError("say something in param:memo")
 
@@ -320,7 +320,7 @@ class FullNodeAPI(BaseAPI):
         mode = utils.check_trx_mode(mode)
 
         trx_types = trx_types or ["post"]
-        trx_types = [utils.check_trx_type(trx_type).upper() for trx_type in trx_types]
+        trx_types = [utils.check_trx_type(trx_type) for trx_type in trx_types]
 
         _params = {"action": "add", "pubkey": pubkey, "trx_type": trx_types}
         payload = {

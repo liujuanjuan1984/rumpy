@@ -36,9 +36,10 @@ def check_trx_mode(mode: str):
 
 
 def check_trx_type(trx_type: str):
-    if trx_type.upper() not in TRX_TYPES:
+    trx_type = trx_type.upper()
+    if trx_type not in TRX_TYPES:
         raise ParamValueError(f"{trx_type} must be one of {TRX_TYPES}")
-    return trx_type.lower()
+    return trx_type
 
 
 def check_crtfile(crtfile):
