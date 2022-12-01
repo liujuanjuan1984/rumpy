@@ -18,35 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class FullNodeAPI(BaseAPI):
-    @property
     def node_info(self):
-        """return node info, dataclasses.dataclass type"""
-        resp = self._get("/api/v1/node")
-        return NodeInfo(**resp)
-
-    @property
-    def node_id(self) -> str:
-        """return node_id of this node"""
-        return self.node_info.node_id
-
-    @property
-    def node_pubkey(self) -> str:
-        """return pubkey of this node; be attention: node will get different pubkey in groups"""
-        return self.node_info.node_publickey
-
-    @property
-    def node_status(self) -> str:
-        """return status of this node; unknown, online or offline"""
-        return self.node_info.node_status
-
-    @property
-    def peers(self) -> Dict:
-        """return dict of different peers which this node has connected"""
-        return self.node_info.peers
+        """return node info"""
+        return self._get("/api/v1/node")
 
     def connect(self, peers: List):
         """直连指定节点
-
         peers = [
             "/ip4/94.23.17.189/tcp/10666/p2p/16Uiu2HAmGTcDnhj3KVQUwVx8SGLyKBXQwfAxNayJdEwfsnUYKK4u"
             ]
@@ -59,7 +36,6 @@ class FullNodeAPI(BaseAPI):
 
     def psping(self, peer_id: str):
         """ping 一个节点
-
         peer_id: 节点 ID, 例如 "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
         """
         return self._post("/api/v1/psping", {"peer_id": peer_id})
@@ -133,13 +109,13 @@ class FullNodeAPI(BaseAPI):
         }
 
         seed = self._post("/api/v1/group", payload)
-        return seed  # utils.check_seed(seed)
+        return seed
 
     def seed(self, group_id=None) -> Dict:
         """get the seed of a group which you've joined in."""
         group_id = self.check_group_joined_as_required(group_id)
         seed = self._get(f"/api/v1/group/{group_id}/seed")
-        return seed  # utils.check_seed(seed)
+        return seed
 
     def group_info(self, group_id=None):
         """return group info,type: datacalss"""
@@ -150,7 +126,7 @@ class FullNodeAPI(BaseAPI):
                 info = _info
                 break
         info["snapshot_info"] = info.get("snapshot_info", {})
-        return GroupInfo(**info)
+        return info
 
     @property
     def pubkey(self):
@@ -164,10 +140,9 @@ class FullNodeAPI(BaseAPI):
     def eth_addr(self):
         return self.group_info().user_eth_addr
 
-    def join_group(self, seed: Dict, v=1):
+    def join_group(self, seed: Dict, v=2):
         """join a group with the seed of the group"""
 
-        # seed = utils.check_seed(seed)
         # 兼容新版本 seed
         if type(seed) == str and seed.startswith("rum://seed?"):
             seed = {"seed": seed}

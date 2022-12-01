@@ -53,24 +53,6 @@ def check_crtfile(crtfile):
     return crtfile
 
 
-def check_seed(seed: Dict):
-    if is_seed(seed):
-        return seed
-    try:
-        Seed(**seed)
-    except Exception as e:
-        raise RumChainException(f"{seed.get('error')}\n\n{e}")
-
-
-def is_seed(seed: Dict) -> bool:
-    try:
-        Seed(**seed)
-        return True
-    except Exception as e:
-        logger.error(f"{e}")
-        return False
-
-
 def group_icon(icon):
     """icon: one image as file path, or bytes, or bytes-string."""
 

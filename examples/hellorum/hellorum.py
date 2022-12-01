@@ -59,8 +59,8 @@ def main():
     print(info.__dict__)
 
     # node info
-    print(client.api.node_id)
-    print(client.api.node_status)
+    print(info.get("node_id"))
+    print(info.get("node_status"))
 
 
 if __name__ == "__main__":

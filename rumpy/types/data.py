@@ -55,68 +55,6 @@ class ApiBaseURLS:
 
 
 @dataclass
-class NodeInfo:
-    node_id: str
-    node_publickey: str
-    node_status: str
-    node_type: str
-    node_version: str
-    peers: Dict
-
-
-@dataclass
-class Block:
-    BlockId: str
-    GroupId: str
-    ProducerPubKey: str
-    Hash: str
-    Signature: str
-    TimeStamp: str
-
-
-@dataclass
-class Seed:
-    genesis_block: Block.__dict__
-    group_id: str
-    group_name: str
-    consensus_type: str
-    encryption_type: str
-    cipher_key: str
-    app_key: str
-    signature: str
-    owner_pubkey: str
-    owner_encryptpubkey: str = None  # 新版本似乎弃用该字段了
-
-
-@dataclass
-class SnapShotInfo:
-    TimeStamp: int
-    HighestHeight: int
-    HighestBlockId: str
-    Nonce: int
-    SnapshotPackageId: str
-    SenderPubkey: str
-
-
-@dataclass
-class GroupInfo:
-    group_id: str
-    group_name: str
-    owner_pubkey: str
-    user_pubkey: str
-    user_eth_addr: str
-    consensus_type: str
-    encryption_type: str
-    cipher_key: str
-    app_key: str
-    last_updated: int
-    highest_height: int
-    highest_block_id: str
-    group_status: str
-    snapshot_info: SnapShotInfo.__dict__
-
-
-@dataclass
 class BaseData:
     def to_dict(self, with_keys=None, without_keys=None):
         rlt = {}

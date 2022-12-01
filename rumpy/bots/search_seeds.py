@@ -22,8 +22,7 @@ class SearchSeeds:
         for i in re.findall(pttn, text or "", re.S):
             try:
                 iseed = json.loads(i)
-                if utils.is_seed(iseed):
-                    seeds.append(iseed)
+                seeds.append(iseed)
             except json.JSONDecodeError:
                 continue
             except Exception as e:

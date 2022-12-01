@@ -8,10 +8,9 @@ from tests import client, group_names_to_leave
 
 class TestCase:
     def test_node(self):
-        r = client.api.node_info
-        assert dataclasses.is_dataclass(r)
+        r = client.api.node_info()
 
-        r0 = client.api.node_status
+        r0 = client.api.node_info().get("node_status")
         assert r0.lower().find("online") >= 0
 
         r1 = client.api.create_group("mytest_pytest")
@@ -35,29 +34,10 @@ class TestCase:
         r5 = client.api.is_joined()
         assert r5 == False
 
-        seed = {
-            "genesis_block": {
-                "BlockId": "883a30fa-98ed-48ec-98a6-e76aa41cbef3",
-                "GroupId": "4e784292-6a65-471e-9f80-e91202e3358c",
-                "ProducerPubKey": "CAISIQNK024r4gdSjIK3HoQlPbmIhDNqElIoL/6nQiYFv3rTtw==",
-                "Hash": "zxemQb40qFA4dDbB2jXZ9kDYeyugBmyCE97FZU+STwQ=",
-                "Signature": "MEYCIQCHgaOQw9rElx7xdxd4Q99arzVLJE20gE96HNakoKPhrgIhANjCdhohoQ/FvsvsPyxqiQeNuDGzLQ13B5iY1mAk7PI3",
-                "TimeStamp": "1637574056648598000",
-            },
-            "group_id": "4e784292-6a65-471e-9f80-e91202e3358c",
-            "group_name": "刘娟娟的朋友圈",
-            "owner_pubkey": "CAISIQNK024r4gdSjIK3HoQlPbmIhDNqElIoL/6nQiYFv3rTtw==",
-            "owner_encryptpubkey": "age1y8ug7lw8ewauanaegynpnc5yqfrap9kzw49hwp6wrf2dcx0p8c8qexffqm",
-            "consensus_type": "poa",
-            "encryption_type": "public",
-            "cipher_key": "3cdaaad37b20edb92ac5f2d505262ba5a27f0b0d650e5aa40d8231cd238c448b",
-            "app_key": "group_timeline",
-            "signature": "30450221009d00d86876d4e37b8408620dca823d0409afa03ae49c5c78526669f5d2a3c8fe022073cf3f3bbb19534614ae6d3eca65ac05d374909444825f59be44f1fe0fd1a0ca",
-        }
-        r = utils.is_seed(seed)
+        seed = 'rum://seed?v=1&e=0&n=0&c=-bCchKGC1NobmUx86u3QkvcZxle3KfMsNMKj3A_PLMs&g=tQmVSPw_RYigQYMBFr_H5Q&k=A7RGSKpyN3DJtIk16vpBC9TM6KixsUxuOQhPuSmSiEr1&s=ImAlacvGPWb_C4OQUJuJDbJT8MFl2bDgVoSiXtUN0Ug6IQQ783PcJyMWbQpdlRBaXlth8KcbrvQ6pWJhLaQCjgA&t=FyyrjigQSA8&a=%E5%8F%AA%E6%9C%89owner%E5%87%BA%E5%9D%97&y=group_timeline&u=http%3A%2F%2F106.54.162.192%3A62613%3Fjwt%3DeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbGxvd0dyb3VwcyI6WyJiNTA5OTU0OC1mYzNmLTQ1ODgtYTA0MS04MzAxMTZiZmM3ZTUiXSwiZXhwIjoxODI3NTc4MTg5LCJuYW1lIjoiYWxsb3ctYjUwOTk1NDgtZmMzZi00NTg4LWEwNDEtODMwMTE2YmZjN2U1Iiwicm9sZSI6Im5vZGUifQ.yJjzsaGG6q-mooiMvKXvPeoE1pqF4DpyI2Qgoh8uaLA'
         assert r == True
         r = client.api.join_group(seed)
-        client.group_id = seed["group_id"]
+        client.group_id = r["group_id"]
         r = client.api.is_joined()
         assert r == True
 
@@ -192,5 +172,5 @@ class TestCase:
 
 
 if __name__ == "__main__":
-    print(client.api.node_id)
+    print(client.api.node_info().get("node_id"))
     print(client.paid.dapp())

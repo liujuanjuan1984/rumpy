@@ -4,7 +4,7 @@ from tests import client
 def test_network():
     seed = client.api.create_group("mytest_network")
     client.group_id = seed["group_id"]
-    r = client.api.peers
+    r = client.api.node_info().get("peers")
     print(r)
     peers = [
         "/ip4/101.34.248.248/tcp/50124/ws/p2p/16Uiu2HAm5UUssKUda49331pt8uNzqxn789ZazQGmuP7G6ZX97MuZ",
