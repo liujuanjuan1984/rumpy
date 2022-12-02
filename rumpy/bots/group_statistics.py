@@ -57,7 +57,7 @@ class GroupStatistics:
                 dailypubkeys[iday].append(ipubkey)
 
         viewdata = {
-            "info": info.__dict__,
+            "info": info,
             "create_at": create_at,
             "update_at": update_at,
             "trxtype": trxtypes,

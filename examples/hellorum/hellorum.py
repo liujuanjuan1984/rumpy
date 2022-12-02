@@ -56,7 +56,7 @@ def main():
 
     # group info
     info = client.api.group_info()
-    print(info.__dict__)
+    print(info)
 
     # node info
     print(info.get("node_id"))

@@ -40,14 +40,9 @@ class FullNodeAPI(BaseAPI):
         """
         return self._post("/api/v1/psping", {"peer_id": peer_id})
 
-    @property
     def network(self) -> Dict:
         """return network info of this node"""
         return self._get("/api/v1/network")
-
-    @property
-    def node_eth_addr(self):
-        return self.network.get("eth_addr")
 
     def _groups(self) -> List:
         """return list of group info which node has joined"""

@@ -25,7 +25,7 @@ def main(is_create_new=False):
     for group_id in client.api.groups_id:
         client.group_id = group_id
         info = client.api.group_info()
-        name = info.group_name
+        name = info.get("group_name")
 
         # name in the list:
         if name in my_test_groups + TEST_GROUPS_TO_LEAVE:
@@ -48,7 +48,7 @@ def main(is_create_new=False):
                 "name with `mytest_`.",
             )
         # the group with 0 blocks
-        elif info.highest_height == 0:
+        elif info.get("highest_height") == 0:
             client.api.leave_group()
             print(
                 datetime.datetime.now(),
