@@ -11,4 +11,4 @@ def test_network():
         "/ip4/106.54.162.192/tcp/61985/ws/p2p/16Uiu2HAm7ktJbDJN85GduWQiGgyYYpTphKNEWGK23t7GHcPR16gq",
         "/ip4/94.23.17.189/tcp/10666/p2p/16Uiu2HAmGTcDnhj3KVQUwVx8SGLyKBXQwfAxNayJdEwfsnUYKK4u",
     ]
-    client.api.connect(peers)
+    client.api.connect_peers(peers)

@@ -19,54 +19,22 @@ logger = logging.getLogger(__name__)
 
 class FullNodeAPI(BaseAPI):
     def node_info(self):
-        """return node info"""
+        """get node info"""
         return self._get("/api/v1/node")
 
-    def connect(self, peers: List):
-        """直连指定节点
-        peers = [
-            "/ip4/94.23.17.189/tcp/10666/p2p/16Uiu2HAmGTcDnhj3KVQUwVx8SGLyKBXQwfAxNayJdEwfsnUYKK4u"
-            ]
-        """
-        return self._post("/api/v1/network/peers", peers)
-
-    def get_peers(self):
-        """获取能 ping 通的节点"""
-        return self._get("/api/v1/network/peers/ping")
-
-    def psping(self, peer_id: str):
-        """ping 一个节点
-        peer_id: 节点 ID, 例如 "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
-        """
-        return self._post("/api/v1/psping", {"peer_id": peer_id})
-
-    def network(self) -> Dict:
-        """return network info of this node"""
-        return self._get("/api/v1/network")
-
     def _groups(self) -> List:
-        """return list of group info which node has joined"""
+        """return list of groups info which this node has joined"""
         return self._get("/api/v1/groups")
 
-    def backup(self):
-        """Backup my group seed/keystore/config"""
-        return self._get("/api/v1/backup")
-
-    def token(self):
-        """Get a auth token for authorizing requests from remote"""
-        return self._post("/app/api/v1/token/apply")
-
-    def token_refresh(self):
-        """Get a new auth token"""
-        return self._post("/app/api/v1/token/refresh")
-
-    def network_stats(self, start: str = None, end: str = None):
-        """Get network stats summary
-
-        param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
-        """
-        api = utils.get_url(None, "/api/v1/network/stats", is_quote=True, start=start, end=end)
-        return self._get(api)
+    def group_info(self, group_id=None) -> Dict:
+        """get the group info"""
+        group_id = self.check_group_joined_as_required(group_id)
+        info = {}
+        for _info in self.groups():
+            if _info["group_id"] == group_id:
+                info = _info
+                break
+        return info
 
     def create_group(
         self,
@@ -103,46 +71,20 @@ class FullNodeAPI(BaseAPI):
             "app_key": app_key,
         }
 
-        seed = self._post("/api/v1/group", payload)
-        return seed
+        return self._post("/api/v1/group", payload)
 
-    def seed(self, group_id=None) -> Dict:
+    def seed(self, group_id=None) -> str:
         """get the seed of a group which you've joined in."""
         group_id = self.check_group_joined_as_required(group_id)
         seed = self._get(f"/api/v1/group/{group_id}/seed")
-        return seed
+        return seed.get("seed")
 
-    def group_info(self, group_id=None):
-        """return group info,type: datacalss"""
-        group_id = self.check_group_joined_as_required(group_id)
-        info = {}
-        for _info in self.groups():
-            if _info["group_id"] == group_id:
-                info = _info
-                break
-        info["snapshot_info"] = info.get("snapshot_info", {})
-        return info
-
-    @property
-    def pubkey(self):
-        return self.group_info().user_pubkey
-
-    @property
-    def owner(self):
-        return self.group_info().owner_pubkey
-
-    @property
-    def eth_addr(self):
-        return self.group_info().user_eth_addr
-
-    def join_group(self, seed: Dict, v=2):
-        """join a group with the seed of the group"""
-
-        # 兼容新版本 seed
-        if type(seed) == str and seed.startswith("rum://seed?"):
-            seed = {"seed": seed}
-        resp = self._post(f"/api/v{v}/group/join", seed)
-        return resp  # self.raise_error(resp, "Group with same GroupId existed")
+    def join_group(self, seed: str):
+        """join a group with the seed of the group
+        the seed is string startswith rum://
+        """
+        resp = self._post(f"/api/v2/group/join", {"seed": seed})
+        return resp
 
     def leave_group(self, group_id=None):
         """leave a group"""
@@ -154,10 +96,110 @@ class FullNodeAPI(BaseAPI):
         group_id = self.check_group_id_as_required(group_id)
         return self._post("/api/v1/group/clear", {"group_id": group_id})
 
+    def block(self, block_id, group_id=None):
+        """get the info of a block in a group, the block_id is uuid in old version, but int in new version"""
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/block/{group_id}/{block_id}")
+
+    ################ utils apis ################
+
+    def token_create(
+        self, name: str, role: str, allow_groups: List, expires_at: int
+    ):  # TODO: to fix expires_at
+        """Create a new auth token, only allow access from localhost"""
+        payload = {
+            "name": name,
+            "role": role,
+            "allow_groups": allow_groups,
+            "expires_at": expires_at,
+        }
+        return self._post("/app/api/v1/token/create", payload)
+
+    def token_refresh(self):  # TODO: to fix
+        """Get a new auth token"""
+        return self._post("/app/api/v1/token/refresh")
+
+    def pubkey_to_address(self, pubkey):
+        """convert pubkey to address"""
+        payload = {"encoded_pubkey": pubkey}
+        resp = self._post("/api/v1/tools/pubkeytoaddr", payload)
+        if addr := resp.get("addr"):
+            return addr
+        else:
+            raise ParamValueError(f"pubkey_to_addr failed. pubkey:{pubkey},resp: {resp}")
+
+    ################ network apis ################
+
+    def network(self) -> Dict:
+        """get network info of node"""
+        return self._get("/api/v1/network")
+
+    def connect_peers(self, peers: List):
+        """connect to peers.
+        one peer in the list is like:
+        "/ip4/10x.xx.xxx.xxx/tcp/31124/p2p/16Uiu2H...uisLB"
+        """
+        return self._post("/api/v1/network/peers", peers)
+
+    def ping_peers(self):
+        """list all the peers which you've connected"""
+        return self._get("/api/v1/network/peers/ping")
+
+    def ping_peer(self, peer_id: str):
+        """ping a peer with peer_id such as:
+        "16Uiu2HAxxxxxx...xxxxzEYBnEKFnao"
+        """
+        return self._post("/api/v1/psping", {"peer_id": peer_id})
+
+    def ask_for_relay(self, peers: List):
+        """node in private network ask for relay servers
+        one peer in the list is like:
+        "/ip4/10x.xx.xxx.xxx/tcp/31124/p2p/16Uiu2H...uisLB"
+        """
+        return self._post("/api/v1/network/relay", peers)
+
+    def network_stats(self, start: str = None, end: str = None):
+        """旧API，目前无效。Get network stats summary
+        param: start/end, str, query, "2022-04-28" or "2022-04-28 10:00" or "2022-04-28T10:00Z08:00"
+        """
+        api = utils.get_url(None, "/api/v1/network/stats", is_quote=True, start=start, end=end)
+        return self._get(api)
+
     def startsync(self, group_id=None):
-        """触发同步"""
+        """start sync data of a group"""
         group_id = self.check_group_id_as_required(group_id)
         return self._post(f"/api/v1/group/{group_id}/startsync")
+
+    ################ pubque apis ################
+
+    def pubqueue(self, group_id=None) -> List:
+        """get the pub queue list"""
+        group_id = self.check_group_id_as_required(group_id)
+        resp = self._get(f"/api/v1/group/{group_id}/pubqueue")
+        return resp.get("Data")
+
+    def ack(self, trx_ids: List):
+        """ack the trxs"""
+        if trx_ids == []:
+            return True
+        return self._post("/api/v1/trx/ack", {"trx_ids": trx_ids})
+
+    def autoack(self, group_id=None):
+        """auto ack the  Fail trxs"""
+        group_id = self.check_group_id_as_required(group_id)
+        tids = [i["Trx"]["TrxId"] for i in self.pubqueue(group_id) if i["State"] == "FAIL"]
+        return self.ack(tids)
+
+    ################ content apis ################
+    def get_trx(self, trx_id: str, group_id=None):
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/trx/{group_id}/{trx_id}")
+
+    def _update_profile(self, trx):
+        return self._post("/api/v1/group/profile", trx)
+
+    def _post_trx(self, trx):
+        return self._post("/api/v1/group/content", trx)
 
     def get_group_content(
         self,
@@ -195,36 +237,21 @@ class FullNodeAPI(BaseAPI):
         trxs = self._post(apiurl) or []
         return utils.unique_trxs(trxs)
 
-    def _post_trx(self, trx):
-        return self._post("/api/v1/group/content", trx)
-
-    def block(self, block_id: str, group_id=None):
-        """get the info of a block in a group"""
+    ################ appconfig apis ################
+    def keylist(self, group_id=None):
+        """get the keylist of the group appconfig"""
         group_id = self.check_group_id_as_required(group_id)
-        return self._get(f"/api/v1/block/{group_id}/{block_id}")
+        return self._get(f"/api/v1/group/{group_id}/appconfig/keylist")
 
-    def get_trx(self, trx_id: str, group_id=None):
+    def key(self, key: str, group_id=None):
+        """get the key value of the group appconfig by keyname"""
         group_id = self.check_group_id_as_required(group_id)
-        return self._get(f"/api/v1/trx/{group_id}/{trx_id}")
-
-    def pubqueue(self, group_id=None):
-        group_id = self.check_group_id_as_required(group_id)
-        resp = self._get(f"/api/v1/group/{group_id}/pubqueue")
-        return resp.get("Data")
-
-    def ack(self, trx_ids: List):
-        return self._post("/api/v1/trx/ack", {"trx_ids": trx_ids})
-
-    def autoack(self, group_id=None):
-        group_id = self.check_group_id_as_required(group_id)
-        tids = [i["Trx"]["TrxId"] for i in self.pubqueue(group_id) if i["State"] == "FAIL"]
-        return self.ack(tids)
+        return self._get(f"/api/v1/group/{group_id}/appconfig/{key}")
 
     def trx_mode(self, trx_type: str = "POST", group_id=None):
-        """获取某个 trx 类型的授权方式
-
+        """get the trx mode of trx type
         trx_type: "POST","ANNOUNCE","REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
-            "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
+        "BLOCK_SYNCED","BLOCK_PRODUCED" or "ASK_PEERID"
         """
         group_id = self.check_group_id_as_required(group_id)
         trx_type = utils.check_trx_type(trx_type)
@@ -232,22 +259,12 @@ class FullNodeAPI(BaseAPI):
 
     @property
     def mode(self):
-        """获取所有 trx 类型的授权方式"""
+        """get the trx mode of all the trx types"""
         rlt = {}
         for itype in TRX_TYPES:
             resp = self.trx_mode(itype)
             rlt[resp["TrxType"]] = resp["AuthType"]
         return rlt
-
-    def set_mode(self, mode, group_id=None):
-        """将所有 trx 类型设置为一种授权方式
-
-        mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
-        """
-        group_id = self.check_group_owner_as_required(group_id)
-        mode = utils.check_trx_mode(mode)
-        for itype in TRX_TYPES:
-            self.set_trx_mode(itype, mode, f"{itype} set mode to {mode}", group_id=group_id)
 
     def set_trx_mode(
         self,
@@ -256,20 +273,16 @@ class FullNodeAPI(BaseAPI):
         memo: str = "set trx auth type",
         group_id=None,
     ):
-        """设置某个 trx 类型的授权方式
-
+        """set the trx mode of trx type
         trx_type: "POST","ANNOUNCE","REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
-            "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
-        mode: 授权方式, "follow_alw_list"(白名单方式), "follow_dny_list"(黑名单方式)
-        memo: Memo
+            "BLOCK_SYNCED","BLOCK_PRODUCED" or "ASK_PEERID"
+        mode:
+            alw "follow_alw_list"
+            dny "follow_dny_list"
         """
         group_id = self.check_group_owner_as_required(group_id)
         mode = utils.check_trx_mode(mode)
-
         trx_type = utils.check_trx_type(trx_type)
-        if not memo:
-            raise ParamValueError("say something in param:memo")
-
         payload = {
             "group_id": group_id,
             "type": "set_trx_auth_mode",
@@ -283,16 +296,18 @@ class FullNodeAPI(BaseAPI):
         pubkey: str,
         mode: str,
         memo: str = "update list",
+        action: str = "add",
         trx_types: List = None,
         group_id=None,
     ):
+        """update the list for the trx mode"""
         group_id = self.check_group_owner_as_required(group_id)
         mode = utils.check_trx_mode(mode)
-
         trx_types = trx_types or ["post"]
         trx_types = [utils.check_trx_type(trx_type) for trx_type in trx_types]
-
-        _params = {"action": "add", "pubkey": pubkey, "trx_type": trx_types}
+        if action not in ["add", "remove"]:
+            raise ValueError("action must be add or remove")
+        _params = {"action": action, "pubkey": pubkey, "trx_type": trx_types}
         payload = {
             "group_id": group_id,
             "type": f"upd_{mode}_list",
@@ -301,65 +316,65 @@ class FullNodeAPI(BaseAPI):
         }
         return self._post("/api/v1/group/chainconfig", payload)
 
-    def update_allow_list(
-        self,
-        pubkey: str,
-        memo: str = "update allow list",
-        trx_types: List = None,
-        group_id=None,
-    ):
-        """将某个用户加入某个/某些 trx 类型的白名单中
-
-        pubkey: 用户公钥
-        memo: Memo
-        trx_types: Trx 类型组成的列表, Trx 类型有 "POST","ANNOUNCE",
-            "REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
-            "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
-        """
+    def add_allow_list(self, pubkey: str, trx_types: List = None, group_id=None):
+        """add pubkey to allow list of trx types"""
         group_id = self.check_group_owner_as_required(group_id)
-        return self._update_list(pubkey, "alw", memo, trx_types, group_id)
+        return self._update_list(
+            pubkey,
+            mode="alw",
+            memo="add allow list",
+            action="add",
+            trx_types=trx_types,
+            group_id=group_id,
+        )
 
-    def update_deny_list(
-        self,
-        pubkey: str,
-        memo: str = "update deny list",
-        trx_types: List = None,
-        group_id=None,
-    ):
-        """将某个用户加入某个/某些 trx 类型的黑名单中
+    def remove_allow_list(self, pubkey: str, trx_types: List = None, group_id=None):
+        """remove pubkey from allow list of trx types"""
+        return self._update_list(
+            pubkey,
+            mode="alw",
+            memo="remove allow list",
+            action="remove",
+            trx_types=trx_types,
+            group_id=group_id,
+        )
 
-        pubkey: 用户公钥
-        memo: Memo
-        trx_types: Trx 类型组成的列表, Trx 类型有 "POST","ANNOUNCE",
-            "REQ_BLOCK_FORWARD","REQ_BLOCK_BACKWARD",
-            "BLOCK_SYNCED","BLOCK_PRODUCED" 或 "ASK_PEERID"
-        """
+    def add_deny_list(self, pubkey: str, trx_types: List = None, group_id=None):
+        """add pubkey to deny list of trx types"""
         group_id = self.check_group_owner_as_required(group_id)
-        return self._update_list(pubkey, "dny", memo, trx_types, group_id)
+        return self._update_list(
+            pubkey,
+            mode="dny",
+            memo="add deny list",
+            action="add",
+            trx_types=trx_types,
+            group_id=group_id,
+        )
 
-    def _list(self, mode: str, group_id=None) -> List:
+    def remove_deny_list(self, pubkey: str, trx_types: List = None, group_id=None):
+        """remove pubkey from deny list of trx types"""
+        return self._update_list(
+            pubkey,
+            mode="dny",
+            memo="remove deny list",
+            action="remove",
+            trx_types=trx_types,
+            group_id=group_id,
+        )
+
+    def _get_list(self, mode: str, group_id=None) -> List:
         if mode not in ["allow", "deny"]:
             raise ParamValueError("mode must be one of these: allow,deny")
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/group/{group_id}/trx/{mode}list") or []
 
-    @property
-    def allow_list(self):
-        """获取某个组的白名单"""
-        return self._list("allow")
-
-    @property
-    def deny_list(self):
-        """获取某个组的黑名单"""
-        return self._list("deny")
-
     def get_allow_list(self, group_id=None):
-        """获取某个组的白名单"""
-        return self._list("allow", group_id)
+        """get allow list"""
+        return self._get_list("allow", group_id)
 
     def get_deny_list(self, group_id=None):
-        """获取某个组的黑名单"""
-        return self._list("deny", group_id)
+        """get deny list"""
+        return self._get_list("deny", group_id)
 
     def _update_appconfig(
         self,
@@ -371,6 +386,8 @@ class FullNodeAPI(BaseAPI):
         group_id=None,
     ):
         group_id = self.check_group_owner_as_required(group_id)
+        if action.lower() not in ["add", "remove"]:
+            raise ParamValueError("action must be add or remove")
 
         payload = {
             "action": action,
@@ -382,178 +399,145 @@ class FullNodeAPI(BaseAPI):
         }
         return self._post("/api/v1/group/appconfig", payload)
 
-    def set_group_desc(self, desc: str, action="add", memo=None, group_id=None):
+    def set_group_desc(self, desc: str, group_id=None):
+        """set group description as appconfig"""
         payload = {
             "key_name": "group_desc",
             "key_type": "string",
             "key_value": desc,
-            "action": action,
-            "memo": memo,
+            "action": "add",
+            "memo": "set group desc",
             "group_id": group_id,
         }
         return self._update_appconfig(**payload)
 
-    def set_group_icon(self, icon, action="add", memo=None, group_id=None):
+    def set_group_icon(self, icon, group_id=None):
+        """set group icon as appconfig"""
         payload = {
             "key_name": "group_icon",
             "key_type": "string",
             "key_value": utils.group_icon(icon),
-            "action": action,
-            "memo": memo,
+            "action": "add",
+            "memo": "set group icon",
             "group_id": group_id,
         }
         return self._update_appconfig(**payload)
 
-    def set_group_announcement(self, announcement, action="add", memo=None, group_id=None):
+    def set_group_announcement(self, announcement, group_id=None):
+        """set group announcement as appconfig"""
         payload = {
             "key_name": "group_announcement",
             "key_type": "string",
             "key_value": announcement,
-            "action": action,
-            "memo": memo,
+            "action": "add",
+            "memo": "set group announcement",
             "group_id": group_id,
         }
         return self._update_appconfig(**payload)
 
-    def set_group_default_permission(
-        self, default_permission, action="add", memo=None, group_id=None
-    ):
+    def set_group_default_permission(self, default_permission, group_id=None):
+        """set group default permission as appconfig
+        default_permission: WRITE or READ"""
+        if default_permission.upper() not in ["WRITE", "READ"]:
+            raise ParamValueError("default_permission must be one of these: WRITE,READ")
         payload = {
             "key_name": "group_default_permission",
             "key_type": "string",
-            "key_value": default_permission,  # WRITE or READ
-            "action": action,
-            "memo": memo,
+            "key_value": default_permission.upper(),
+            "action": "add",
+            "memo": "set group default permission",
             "group_id": group_id,
         }
         return self._update_appconfig(**payload)
 
-    def set_appconfig(
-        self,
-        desc: str = None,
-        icon=None,
-        announcement: str = None,
-        default_permission: str = None,
-        action="add",
-        memo=None,
-        group_id=None,
-    ):
-        if desc:
-            self.set_group_desc(desc, action=action, memo=memo, group_id=group_id)
-        if icon:
-            self.set_group_icon(icon, action=action, memo=memo, group_id=group_id)
-        if announcement:
-            self.set_group_announcement(announcement, action=action, memo=memo, group_id=group_id)
-        if default_permission:
-            self.set_group_default_permission(
-                default_permission, action=action, memo=memo, group_id=group_id
-            )
+    ################ announce api ################
 
-    def keylist(self, group_id=None):
-        """获取组的所有配置项"""
-        group_id = self.check_group_id_as_required(group_id)
-        return self._get(f"/api/v1/group/{group_id}/appconfig/keylist")
-
-    def key(self, key: str, group_id=None):
-        """获取组的某个配置项的信息
-
-        key: 配置项名称
+    def _announce(self, action, announce_type, memo, group_id=None):
+        """announce user or producer, only for self
+        action: "add" or "remove"
+        announce_type: "user" or "producer"
         """
         group_id = self.check_group_id_as_required(group_id)
-        return self._get(f"/api/v1/group/{group_id}/appconfig/{key}")
-
-    def announce(self, action="add", type="user", memo="rumpy.api", group_id=None):
-        """announce user or producer,add or remove
-
-        申请 成为/退出 producer/user
-
-        action: "add" 或 "remove", 申请成为/宣布退出
-        type: "user" 或 "producer"
-        memo: Memo
-        """
-        group_id = self.check_group_id_as_required(group_id)
+        if action.lower() not in ["add", "remove"]:
+            raise ParamValueError("action must be one of these: add, remove")
+        if announce_type.lower() not in ["user", "producer"]:
+            raise ParamValueError("announce_type must be one of these: user, producer")
         payload = {
             "group_id": group_id,
-            "action": action,  # add or remove
-            "type": type,  # user or producer
+            "action": action,
+            "type": announce_type,
             "memo": memo,
         }
         return self._post("/api/v1/group/announce", payload)
 
-    def announce_as_user(self, group_id=None, memo=None):
-        """announce self as user
+    ################ private group users apis ################
 
-        申请成为私有组用户
+    def announce_as_user(self, group_id=None):
+        """announce as user"""
+        return self._announce("add", "user", "announce self as user", group_id=group_id)
 
-        如果已经是用户, 返回申请状态
-        """
-        try:
-            status = self.announced_user(self.pubkey)
-            if status.get("Result") == "APPROVED":
-                return status
-        except:
-            pass
-        memo = memo or "rumpy.api,announce self as user"
-        return self.announce("add", "user", memo, group_id)
-
-    def announce_as_producer(self, group_id=None):
-        """announce self as producer"""
-        return self.announce("add", "producer", "rumpy.api,announce self as producer", group_id)
-
-    def announced_producers(self, group_id=None):
-        """获取申请 成为/退出 的 producers"""
-        group_id = self.check_group_id_as_required(group_id)
-        return self._get(f"/api/v1/group/{group_id}/announced/producers")
-
-    def announced_users(self, group_id=None):
-        """获取申请 成为/退出 的 users"""
+    def get_announced_users(self, group_id=None):
+        """get the announced users to approve(add or remove)"""
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/group/{group_id}/announced/users")
 
-    def announced_user(self, pubkey, group_id=None):
-        """获取申请 成为/退出 的 user 的申请状态
-
-        pubkey: 用户公钥
-        """
+    def is_announced_user(self, pubkey, group_id=None):
+        """check the user is announced or not"""
         group_id = self.check_group_id_as_required(group_id)
         return self._get(f"/api/v1/group/{group_id}/announced/user/{pubkey}")
 
-    def producers(self, group_id=None):
-        """获取已经批准的 producers"""
-        group_id = self.check_group_id_as_required(group_id)
-        return self._get(f"/api/v1/group/{group_id}/producers")
-
-    def update_user(self, pubkey, action="add", group_id=None):
-        """组创建者添加或移除私有组用户
-
+    def _approve_user(self, pubkey, action="add", group_id=None):
+        """update the user of the group
         action: "add" or "remove"
         """
         group_id = self.check_group_owner_as_required(group_id)
+        if action.lower() not in ["add", "remove"]:
+            raise ParamValueError("action must be one of these: add, remove")
         payload = {
             "user_pubkey": pubkey,
             "group_id": group_id,
-            "action": action,  # "add" or "remove"
+            "action": action,
         }
         return self._post("/api/v1/group/user", payload)
 
-    def approve_as_user(self, pubkey=None, group_id=None):  # TODO:这几个 用户 全选管理的方法 从语义的角落来看，挺臃肿的，待修改。
-        """approve pubkey as a user of group.
-
-        pubkey: 用户公钥, 如果不提供该参数, 默认将 owner 自己添加为私有组用户
-        """
-        pubkey = pubkey or self.pubkey
+    def add_user(self, pubkey, group_id=None):
+        """add pubkey as group user to the group"""
         try:
-            status = self.announced_user(pubkey)
+            status = self.is_announced_user(pubkey)
             if status.get("Result") == "APPROVED":
                 return status
         except:
             pass
-        return self.update_user(pubkey=pubkey, group_id=group_id)
+        return self._approve_user(pubkey, action="add", group_id=group_id)
 
-    def update_producer(self, pubkey=None, group_id=None, action="add"):
+    def remove_user(self, pubkey, group_id=None):
+        """remove pubkey as group user from the group"""
+        return self._approve_user(pubkey, action="remove", group_id=group_id)
+
+    ################ producer apis ################
+
+    def announce_as_producer(self, group_id=None):
+        """announce as producer"""
+        group_id = self.check_group_id_as_required(group_id)
+        return self._announce("add", "producer", "announce self as producer", group_id)
+
+    def announce_as_producer_to_remove(self, group_id=None):
+        """announce as producer to remove"""
+        group_id = self.check_group_id_as_required(group_id)
+        return self._announce("remove", "producer", "announce self as producer to remove", group_id)
+
+    def producers(self, group_id=None):
+        """get the producers of the group"""
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/producers")
+
+    def get_announced_producers(self, group_id=None):
+        """get the announced producers to be approved"""
+        group_id = self.check_group_id_as_required(group_id)
+        return self._get(f"/api/v1/group/{group_id}/announced/producers")
+
+    def _update_producer(self, pubkeys: List, action: str, group_id=None):
         """Only group owner can update producers: add, or remove.
-
-        pubkey: the producer's pubkey
         action: "add" or "remove"
         """
         group_id = self.check_group_owner_as_required(group_id)
@@ -561,28 +545,16 @@ class FullNodeAPI(BaseAPI):
         if action not in ("add", "remove"):
             raise ParamValueError("action should be `add` or `remove`")
         payload = {
-            "producer_pubkey": pubkey,
+            "producer_pubkey": pubkeys,
             "group_id": group_id,
             "action": action,
         }
         return self._post("/api/v1/group/producer", payload)
 
-    def _update_profile(self, trx):
-        return self._post("/api/v1/group/profile", trx)
+    def add_producer(self, pubkeys: List, group_id=None):
+        """add pubkey as group producer to the group"""
+        return self._update_producer(pubkeys, action="add", group_id=group_id)
 
-    def pubkey_to_addr(self, pubkey):
-        payload = {"encoded_pubkey": pubkey}
-        resp = self._post("/api/v1/tools/pubkeytoaddr", payload)
-        if addr := resp.get("addr"):
-            return addr
-        else:
-            raise ParamValueError(f"pubkey_to_addr failed. pubkey:{pubkey},resp: {resp}")
-
-    def ask_for_relay(self, reley_ips: List):
-        """owner in private network ask for relay servers
-
-        Args:
-            reley_ips (List): ["/ip4/10x.xx.xxx.xxx/tcp/31124/ws/p2p/16Uiu2H...uisLB""]
-        {'ok': True}
-        """
-        return self._post("/api/v1/network/relay", reley_ips)
+    def remove_producer(self, pubkeys, group_id=None):
+        """remove pubkey as group producer from the group"""
+        return self._update_producer(pubkeys, action="remove", group_id=group_id)

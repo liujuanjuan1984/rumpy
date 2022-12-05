@@ -30,9 +30,7 @@ def test_update():
     r = client.api.set_trx_mode("POST", "deny")
     print(r)
 
-    r = client.api.set_mode("alw")
-    print(r)
-    assert r == None
+
 
     pubkey = client.api.pubkey
     r = client.api.update_allow_list(pubkey)
