@@ -134,6 +134,18 @@ class FullNodeAPI(BaseAPI):
         """get network info of node"""
         return self._get("/api/v1/network")
 
+    def group_network(self, group_id=None):
+        """return the peers connented to the group"""
+        try:
+            group_id = self.check_group_joined_as_required(group_id)
+        except:
+            return []
+        net = self.network()
+        for i in net.get("groups", []):
+            if i.get("GroupId") == group_id:
+                return i.get("Peers", [])
+        return []
+
     def connect_peers(self, peers: List):
         """connect to peers.
         one peer in the list is like:
